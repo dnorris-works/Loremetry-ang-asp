@@ -1,0 +1,24 @@
+<section class="auth-page" aria-labelledby="auth-page-title">
+  <div class="auth-page__inner">
+    <h1 id="auth-page-title" class="auth-page__title">Loremetry</h1>
+
+    @if (auth.restoringSession()) {
+      <p class="auth-page__muted">Checking existing session…</p>
+    }
+
+    @if (auth.clerkEnabled()) {
+      <app-auth-clerk-sign-in />
+      @if (showOperator()) {
+        <hr class="auth-page__divider" />
+      }
+    } @else {
+      <p class="auth-page__lead">
+        Sign in with operator access, or configure Clerk via environment variables.
+      </p>
+    }
+
+    @if (showOperator()) {
+      <app-auth-operator-form />
+    }
+  </div>
+</section>

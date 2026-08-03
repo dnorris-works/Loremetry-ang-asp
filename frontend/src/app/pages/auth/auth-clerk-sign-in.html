@@ -1,0 +1,21 @@
+<section class="auth-clerk">
+  <div *clerkLoading>
+    <p class="auth-clerk__muted">Loading sign-in…</p>
+  </div>
+
+  <div *clerkLoaded>
+    <div *clerkSignedOut>
+      <p class="auth-clerk__lead">Sign in to continue.</p>
+      <clerk-sign-in [props]="{ routing: 'hash' }" />
+    </div>
+
+    <div *clerkSignedIn>
+      @if (!auth.enteredApp()) {
+        <p class="auth-clerk__muted">Finishing sign-in…</p>
+      }
+      @if (auth.sessionError()) {
+        <p class="auth-clerk__error" role="alert">{{ auth.sessionError() }}</p>
+      }
+    </div>
+  </div>
+</section>

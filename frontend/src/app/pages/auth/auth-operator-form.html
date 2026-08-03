@@ -1,0 +1,26 @@
+<section class="operator-block">
+  <h2 class="operator-block__heading">Operator access</h2>
+  <p class="operator-block__muted">
+    Set <code>admin_bypass_token</code> in the backend environment to enable operator sign-in.
+  </p>
+
+  <form class="operator-block__form" (submit)="onSubmit($event)">
+    <input
+      class="operator-block__input"
+      type="password"
+      autocomplete="off"
+      spellcheck="false"
+      placeholder="Operator bypass token"
+      [disabled]="submitting()"
+      [ngModel]="operatorToken()"
+      (ngModelChange)="operatorToken.set($event)"
+      name="operatorToken"
+    />
+    <button class="operator-block__button" type="submit" [disabled]="submitting()">
+      {{ submitting() ? 'Signing in…' : 'Continue as operator' }}
+    </button>
+    @if (operatorError()) {
+      <p class="operator-block__error" role="alert">{{ operatorError() }}</p>
+    }
+  </form>
+</section>

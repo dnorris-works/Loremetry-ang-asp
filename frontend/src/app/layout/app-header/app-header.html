@@ -19,4 +19,13 @@
       }
     </ul>
   </nav>
+
+  <div class="app-header__actions">
+    @if (userLabel()) {
+      <span class="app-header__user" [attr.title]="auth.me()?.email ?? ''">{{ userLabel() }}</span>
+    }
+    <button type="button" class="app-header__sign-out" (click)="onSignOut()">
+      Sign out
+    </button>
+  </div>
 </header>

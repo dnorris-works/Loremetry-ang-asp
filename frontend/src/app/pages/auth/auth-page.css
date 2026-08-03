@@ -1,0 +1,40 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg, #f8fafc);
+}
+
+.auth-page__inner {
+  width: 100%;
+  max-width: 440px;
+}
+
+.auth-page__title {
+  text-align: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 20px;
+}
+
+.auth-page__lead {
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  margin: 0 0 20px;
+  font-size: 0.95rem;
+}
+
+.auth-page__muted {
+  text-align: center;
+  color: var(--text-muted, #64748b);
+  font-size: 0.85rem;
+  margin: 0 0 16px;
+}
+
+.auth-page__divider {
+  border: none;
+  border-top: 1px solid var(--border, #cbd5e1);
+  margin: 28px 0;
+}
