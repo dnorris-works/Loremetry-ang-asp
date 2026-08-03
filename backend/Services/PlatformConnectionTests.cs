@@ -70,7 +70,7 @@ public sealed class PlatformConnectionTests(IHttpClientFactory httpClientFactory
 
         using var request = new HttpRequestMessage(
             HttpMethod.Get,
-            "https://rest.canopyapi.co/api/amazon/autocomplete?search_term=book&domain=US");
+            "https://rest.canopyapi.co/api/amazon/autocomplete?searchTerm=book&domain=US");
         request.Headers.Add("API-KEY", apiKey.Trim());
 
         return await SendAsync(client, request, "canopy", "Canopy", cancellationToken);
