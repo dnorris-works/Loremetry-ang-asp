@@ -12,6 +12,11 @@ export const routes: Routes = [
           import('./pages/landing/landing').then((m) => m.Landing),
       },
       {
+        path: 'settings',
+        loadComponent: () =>
+          import('./pages/settings/settings').then((m) => m.Settings),
+      },
+      {
         path: 'admin',
         loadComponent: () =>
           import('./pages/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),

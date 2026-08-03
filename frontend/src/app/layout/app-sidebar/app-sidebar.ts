@@ -1,15 +1,10 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-
-import { SettingsService } from '../../core/settings/settings.service';
-
-export type SidebarAction = 'settings';
 
 export interface SidebarItem {
   label: string;
   icon?: string;
-  route?: string;
-  action?: SidebarAction;
+  route: string;
 }
 
 @Component({
@@ -19,15 +14,9 @@ export interface SidebarItem {
   styleUrl: './app-sidebar.css',
 })
 export class AppSidebar {
-  private readonly settingsService = inject(SettingsService);
-
   readonly items = input<SidebarItem[]>([
     { label: 'Dashboard', route: '/', icon: '◉' },
     { label: 'Admin', route: '/admin', icon: '⛭' },
-    { label: 'Settings', action: 'settings', icon: '⚙' },
+    { label: 'Settings', route: '/settings', icon: '⚙' },
   ]);
-
-  protected openSettings(): void {
-    this.settingsService.open();
-  }
 }

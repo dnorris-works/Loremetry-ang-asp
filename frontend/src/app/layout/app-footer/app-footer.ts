@@ -10,7 +10,7 @@ import { DatabaseStatusService } from '../../core/database/database-status.servi
 export class AppFooter {
   private readonly databaseStatus = inject(DatabaseStatusService);
 
-  readonly appName = input('Loremetry');
+  readonly copyrightHolder = input('David Norris');
   readonly year = input(new Date().getFullYear());
 
   protected readonly dbStatus = this.databaseStatus.connectionStatus;

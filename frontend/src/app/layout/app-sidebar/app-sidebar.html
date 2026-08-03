@@ -5,30 +5,17 @@
     <ul class="app-sidebar__list">
       @for (item of items(); track item.label) {
         <li>
-          @if (item.action === 'settings') {
-            <button
-              type="button"
-              class="app-sidebar__link"
-              (click)="openSettings()"
-            >
-              @if (item.icon) {
-                <span class="app-sidebar__icon" aria-hidden="true">{{ item.icon }}</span>
-              }
-              <span>{{ item.label }}</span>
-            </button>
-          } @else if (item.route) {
-            <a
-              class="app-sidebar__link"
-              [routerLink]="item.route"
-              routerLinkActive="app-sidebar__link--active"
-              [routerLinkActiveOptions]="{ exact: item.route === '/' }"
-            >
-              @if (item.icon) {
-                <span class="app-sidebar__icon" aria-hidden="true">{{ item.icon }}</span>
-              }
-              <span>{{ item.label }}</span>
-            </a>
-          }
+          <a
+            class="app-sidebar__link"
+            [routerLink]="item.route"
+            routerLinkActive="app-sidebar__link--active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          >
+            @if (item.icon) {
+              <span class="app-sidebar__icon" aria-hidden="true">{{ item.icon }}</span>
+            }
+            <span>{{ item.label }}</span>
+          </a>
         </li>
       }
     </ul>

@@ -1,0 +1,39 @@
+<section class="settings" aria-labelledby="settings-title">
+  <header class="settings__header">
+    <h1 id="settings-title" class="settings__title">Settings</h1>
+    <p class="settings__subtitle">Manage your workspace preferences.</p>
+  </header>
+
+  @if (appSettings.loadError()) {
+    <p class="settings__error" role="alert">
+      {{ appSettings.loadError() }} Changes may not persist until this is resolved.
+    </p>
+  }
+
+  @if (appSettings.saveError()) {
+    <p class="settings__error" role="alert">{{ appSettings.saveError() }}</p>
+  }
+
+  <article class="settings__card">
+    <h2 class="settings__card-title">Appearance</h2>
+    <p class="settings__card-description">
+      Theme preferences are saved to the database and apply across sessions.
+    </p>
+
+    <label class="settings__field" for="theme-select">
+      <span class="settings__field-label">Theme</span>
+      <select
+        id="theme-select"
+        class="settings__select"
+        [value]="themeService.selectedThemeId()"
+        (change)="onThemeChange($event)"
+      >
+        @for (theme of themeService.themes; track theme.id) {
+          <option [value]="theme.id">{{ theme.name }}</option>
+        }
+      </select>
+    </label>
+
+    <p class="settings__hint">{{ selectedThemeDescription() }}</p>
+  </article>
+</section>
