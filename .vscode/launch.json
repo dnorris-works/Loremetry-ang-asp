@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend (.NET)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "dotnet run",
+      "cwd": "${workspaceFolder}/backend"
+    },
+    {
+      "name": "Backend (.NET Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/bin/Debug/net10.0/backend.dll",
+      "cwd": "${workspaceFolder}/backend",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Frontend (Angular)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run start",
+      "cwd": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Full Stack (BE + FE)",
+      "configurations": ["Backend (.NET)", "Frontend (Angular)"],
+      "stopAll": true
+    }
+  ]
+}
