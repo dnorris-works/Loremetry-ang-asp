@@ -9,6 +9,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
 
+    public DbSet<AppWideSetting> AppWideSettings => Set<AppWideSetting>();
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Story> Stories => Set<Story>();
@@ -44,6 +46,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(setting => setting.UpdatedAt).HasColumnName("updated_at");
         });
 
+        modelBuilder.Entity<AppWideSetting>(entity =>
+        {
+            entity.ToTable("app_settings", "lore");
+            entity.HasKey(setting => setting.SettingKey);
+            entity.Property(setting => setting.SettingKey).HasColumnName("key").HasMaxLength(120);
+            entity.Property(setting => setting.Value).HasColumnName("value").IsRequired();
+            entity.Property(setting => setting.UpdatedAt).HasColumnName("updated_at");
+        });
+
         modelBuilder.Entity<User>(entity =>
         {
             entity.ToTable("users", "lore");
@@ -68,7 +79,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(story => story.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
             entity.Property(story => story.CreatedAt).HasColumnName("created_at");
             entity.Property(story => story.UpdatedAt).HasColumnName("updated_at");
-            entity.HasIndex(story => story.UserId);
+            entity.HasIndex(story => new { story.UserId, story.UpdatedAt })
+                .IsDescending(false, true);
             entity.HasOne(story => story.User)
                 .WithMany()
                 .HasForeignKey(story => story.UserId)
@@ -88,7 +100,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(document => document.BinaryContent).HasColumnName("binary_content");
             entity.Property(document => document.SortOrder).HasColumnName("sort_order");
             entity.Property(document => document.CreatedAt).HasColumnName("created_at");
-            entity.HasIndex(document => document.StoryId);
+            entity.HasIndex(document => new { document.StoryId, document.SortOrder });
             entity.HasIndex(document => new { document.StoryId, document.Kind, document.FileName }).IsUnique();
             entity.HasOne(document => document.Story)
                 .WithMany(story => story.Documents)
@@ -105,7 +117,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(series => series.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
             entity.Property(series => series.CreatedAt).HasColumnName("created_at");
             entity.Property(series => series.UpdatedAt).HasColumnName("updated_at");
-            entity.HasIndex(series => series.UserId);
+            entity.HasIndex(series => new { series.UserId, series.UpdatedAt })
+                .IsDescending(false, true);
             entity.HasOne(series => series.User)
                 .WithMany()
                 .HasForeignKey(series => series.UserId)
@@ -124,7 +137,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(document => document.BinaryContent).HasColumnName("binary_content");
             entity.Property(document => document.SortOrder).HasColumnName("sort_order");
             entity.Property(document => document.CreatedAt).HasColumnName("created_at");
-            entity.HasIndex(document => document.SeriesId);
+            entity.HasIndex(document => new { document.SeriesId, document.SortOrder });
             entity.HasIndex(document => new { document.SeriesId, document.FileName }).IsUnique();
             entity.HasOne(document => document.Series)
                 .WithMany(series => series.BibleDocuments)

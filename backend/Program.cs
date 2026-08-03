@@ -66,6 +66,13 @@ using (var scope = app.Services.CreateScope())
         );
         """);
     await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.app_settings (
+            key VARCHAR(120) PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.platform_settings (
             key VARCHAR(120) PRIMARY KEY,
             value TEXT NOT NULL,
@@ -82,7 +89,10 @@ using (var scope = app.Services.CreateScope())
         );
         """);
     await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS stories_user_id_idx ON lore.stories (user_id);
+        CREATE INDEX IF NOT EXISTS stories_user_id_updated_at_idx ON lore.stories (user_id, updated_at DESC);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        DROP INDEX IF EXISTS lore.stories_user_id_idx;
         """);
     await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.story_documents (
@@ -99,7 +109,10 @@ using (var scope = app.Services.CreateScope())
         );
         """);
     await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS story_documents_story_id_idx ON lore.story_documents (story_id);
+        CREATE INDEX IF NOT EXISTS story_documents_story_id_sort_order_idx ON lore.story_documents (story_id, sort_order);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        DROP INDEX IF EXISTS lore.story_documents_story_id_idx;
         """);
     await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.series (
@@ -111,7 +124,10 @@ using (var scope = app.Services.CreateScope())
         );
         """);
     await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS series_user_id_idx ON lore.series (user_id);
+        CREATE INDEX IF NOT EXISTS series_user_id_updated_at_idx ON lore.series (user_id, updated_at DESC);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        DROP INDEX IF EXISTS lore.series_user_id_idx;
         """);
     await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.series_bible_documents (
@@ -127,7 +143,10 @@ using (var scope = app.Services.CreateScope())
         );
         """);
     await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS series_bible_documents_series_id_idx ON lore.series_bible_documents (series_id);
+        CREATE INDEX IF NOT EXISTS series_bible_documents_series_id_sort_order_idx ON lore.series_bible_documents (series_id, sort_order);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        DROP INDEX IF EXISTS lore.series_bible_documents_series_id_idx;
         """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
