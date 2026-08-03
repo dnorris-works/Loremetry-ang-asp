@@ -101,6 +101,34 @@ using (var scope = app.Services.CreateScope())
     await db.Database.ExecuteSqlRawAsync("""
         CREATE INDEX IF NOT EXISTS story_documents_story_id_idx ON lore.story_documents (story_id);
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.series (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            user_id BIGINT NOT NULL REFERENCES lore.users(id) ON DELETE CASCADE,
+            name VARCHAR(200) NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS series_user_id_idx ON lore.series (user_id);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.series_bible_documents (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            series_id BIGINT NOT NULL REFERENCES lore.series(id) ON DELETE CASCADE,
+            file_name VARCHAR(500) NOT NULL,
+            mime_type VARCHAR(127) NOT NULL,
+            text_content TEXT,
+            binary_content BYTEA,
+            sort_order INT NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            CONSTRAINT series_bible_documents_series_filename_unique UNIQUE (series_id, file_name)
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS series_bible_documents_series_id_idx ON lore.series_bible_documents (series_id);
+        """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
 
@@ -127,6 +155,7 @@ app.MapAdminEndpoints();
 app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
 app.MapStoryEndpoints();
+app.MapSeriesEndpoints();
 app.MapAuthEndpoints();
 
 app.Run();

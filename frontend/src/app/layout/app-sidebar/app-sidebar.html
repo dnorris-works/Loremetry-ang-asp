@@ -19,6 +19,9 @@
         <li>
           <div class="app-sidebar__section-item">
             <span class="app-sidebar__section-name">{{ item.name }}</span>
+            @if (item.bibleCount > 0) {
+              <span class="app-sidebar__section-meta">{{ item.bibleCount }} bible</span>
+            }
           </div>
         </li>
       }

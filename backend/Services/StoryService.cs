@@ -7,8 +7,6 @@ namespace backend.Services;
 
 public static class StoryService
 {
-    private static readonly HashSet<string> AllowedExtensions = [".md", ".txt", ".docx"];
-
     public static async Task<IReadOnlyList<StorySummaryDto>> ListForUserAsync(
         long userId,
         AppDbContext db,
@@ -76,8 +74,8 @@ public static class StoryService
         };
 
         var documents = new List<StoryDocument>();
-        documents.AddRange(MapDocuments(request.Manuscripts, StoryDocumentKinds.Manuscript, now));
-        documents.AddRange(MapDocuments(request.Bibles, StoryDocumentKinds.Bible, now));
+        documents.AddRange(MapManuscriptDocuments(request.Manuscripts, now));
+        documents.AddRange(MapBibleDocuments(request.Bibles ?? [], now));
 
         foreach (var (document, index) in documents.Select((document, index) => (document, index)))
         {
@@ -108,124 +106,47 @@ public static class StoryService
             return "At least one manuscript file is required.";
         }
 
-        var manuscriptError = ValidateDocuments(request.Manuscripts, StoryDocumentKinds.Manuscript, requireMarkdownContent: true);
+        var manuscriptError = DocumentInputHelper.ValidateManuscriptDocuments(request.Manuscripts);
         if (manuscriptError is { } manuscriptMessage)
         {
             return manuscriptMessage;
         }
 
-        var bibleError = ValidateDocuments(request.Bibles ?? [], StoryDocumentKinds.Bible, requireMarkdownContent: false);
-        if (bibleError is { } bibleMessage)
-        {
-            return bibleMessage;
-        }
-
-        return null;
+        return DocumentInputHelper.ValidateBibleDocuments(request.Bibles ?? []);
     }
 
-    private static string? ValidateDocuments(
+    private static IEnumerable<StoryDocument> MapManuscriptDocuments(
         IReadOnlyList<StoryDocumentInputDto> documents,
-        string kind,
-        bool requireMarkdownContent)
-    {
-        var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        for (var index = 0; index < documents.Count; index++)
-        {
-            var document = documents[index];
-            var fileName = document.FileName?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrWhiteSpace(fileName))
-            {
-                return $"{kind} file #{index + 1} is missing a file name.";
-            }
-
-            if (fileName.Length > 500)
-            {
-                return $"File name '{fileName}' is too long.";
-            }
-
-            if (!seenNames.Add(fileName))
-            {
-                return $"Duplicate {kind} file name '{fileName}'.";
-            }
-
-            if (!HasAllowedExtension(fileName))
-            {
-                return $"File '{fileName}' must use .md, .txt, or .docx.";
-            }
-
-            if (string.IsNullOrWhiteSpace(document.MimeType))
-            {
-                return $"File '{fileName}' is missing a MIME type.";
-            }
-
-            var extension = Path.GetExtension(fileName).ToLowerInvariant();
-            var hasText = !string.IsNullOrWhiteSpace(document.TextContent);
-            var hasBinary = TryDecodeBase64(document.BinaryContentBase64, out _);
-
-            if (kind == StoryDocumentKinds.Manuscript && extension == ".md" && !hasText)
-            {
-                return $"Markdown manuscript '{fileName}' must include text content.";
-            }
-
-            if (kind == StoryDocumentKinds.Bible)
-            {
-                if (extension is ".md" or ".txt" && !hasText)
-                {
-                    return $"Bible file '{fileName}' must include text content.";
-                }
-
-                if (extension == ".docx" && !hasBinary)
-                {
-                    return $"Bible file '{fileName}' must include binary content.";
-                }
-            }
-
-            if (requireMarkdownContent && extension == ".md" && !hasText)
-            {
-                return $"Markdown file '{fileName}' must include text content.";
-            }
-        }
-
-        return null;
-    }
-
-    private static IEnumerable<StoryDocument> MapDocuments(
-        IReadOnlyList<StoryDocumentInputDto> documents,
-        string kind,
         DateTimeOffset createdAt)
     {
         foreach (var document in documents)
         {
-            var fileName = document.FileName.Trim();
-            var extension = Path.GetExtension(fileName).ToLowerInvariant();
-            string? textContent = null;
-            byte[]? binaryContent = null;
-
-            if (kind == StoryDocumentKinds.Manuscript && extension == ".md")
-            {
-                textContent = document.TextContent!.Trim();
-            }
-            else if (kind == StoryDocumentKinds.Bible)
-            {
-                if (extension is ".md" or ".txt")
-                {
-                    textContent = document.TextContent!.Trim();
-                }
-                else if (extension == ".docx")
-                {
-                    TryDecodeBase64(document.BinaryContentBase64, out binaryContent);
-                }
-            }
-
+            var mapped = DocumentInputHelper.MapManuscriptDocument(document);
             yield return new StoryDocument
             {
-                Kind = kind,
-                FileName = fileName,
-                MimeType = document.MimeType.Trim(),
-                TextContent = textContent,
-                BinaryContent = binaryContent,
+                Kind = StoryDocumentKinds.Manuscript,
+                FileName = mapped.FileName,
+                MimeType = mapped.MimeType,
+                TextContent = mapped.TextContent,
+                BinaryContent = mapped.BinaryContent,
+                CreatedAt = createdAt,
+            };
+        }
+    }
+
+    private static IEnumerable<StoryDocument> MapBibleDocuments(
+        IReadOnlyList<StoryDocumentInputDto> documents,
+        DateTimeOffset createdAt)
+    {
+        foreach (var mapped in DocumentInputHelper.MapBibleDocuments(documents))
+        {
+            yield return new StoryDocument
+            {
+                Kind = StoryDocumentKinds.Bible,
+                FileName = mapped.FileName,
+                MimeType = mapped.MimeType,
+                TextContent = mapped.TextContent,
+                BinaryContent = mapped.BinaryContent,
                 CreatedAt = createdAt,
             };
         }
@@ -257,27 +178,4 @@ public static class StoryService
                 .ToList(),
             story.CreatedAt,
             story.UpdatedAt);
-
-    private static bool HasAllowedExtension(string fileName) =>
-        AllowedExtensions.Contains(Path.GetExtension(fileName).ToLowerInvariant());
-
-    private static bool TryDecodeBase64(string? value, out byte[]? bytes)
-    {
-        bytes = null;
-
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-
-        try
-        {
-            bytes = Convert.FromBase64String(value.Trim());
-            return bytes.Length > 0;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
 }

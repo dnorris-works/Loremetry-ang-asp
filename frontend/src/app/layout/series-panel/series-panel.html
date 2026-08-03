@@ -2,7 +2,7 @@
   <header class="series-panel__header">
     <div>
       <h2 id="series-panel-title" class="series-panel__title">New series</h2>
-      <p class="series-panel__subtitle">Add a series to group related stories.</p>
+      <p class="series-panel__subtitle">Add a series and attach its bible files.</p>
     </div>
 
     <button type="button" class="series-panel__close" aria-label="Close series panel" (click)="close()">
@@ -28,11 +28,24 @@
       />
     </label>
 
+    <app-story-file-picker
+      label="Bible files"
+      description="Choose one or more bible files (.md, .txt, or .docx), or add from recent files."
+      listTitle="Bible files"
+      pickerTypeLabel="Bible files"
+      [options]="recentBibleFiles()"
+      [value]="bibleFiles()"
+      (valueChange)="onBibleFilesChange($event)"
+      (browseError)="onBrowseError($event)"
+    />
+
     <div class="series-panel__actions">
       <button type="button" class="series-panel__button series-panel__button--ghost" (click)="close()">
         Cancel
       </button>
-      <button type="submit" class="series-panel__button">Save series</button>
+      <button type="submit" class="series-panel__button" [disabled]="isSaving()">
+        {{ isSaving() ? 'Saving…' : 'Save series' }}
+      </button>
     </div>
   </form>
 </section>
