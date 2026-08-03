@@ -40,6 +40,16 @@
   font-size: 0.875rem;
 }
 
+.settings-panel__error {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, oklch(55% 0.2 25) 35%, var(--color-border));
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, oklch(55% 0.2 25) 8%, var(--color-surface));
+  color: color-mix(in srgb, oklch(55% 0.2 25) 80%, var(--color-text));
+  font-size: 0.875rem;
+}
+
 .settings-panel__close {
   display: grid;
   place-items: center;

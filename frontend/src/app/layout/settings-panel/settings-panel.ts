@@ -1,5 +1,6 @@
 import { Component, inject } from '@angular/core';
 
+import { AppSettingsService } from '../../core/settings/app-settings.service';
 import { SettingsService } from '../../core/settings/settings.service';
 import { ThemeService } from '../../core/themes/theme.service';
 import { ThemeId } from '../../core/themes/theme.models';
@@ -11,6 +12,7 @@ import { ThemeId } from '../../core/themes/theme.models';
 })
 export class SettingsPanel {
   private readonly settingsService = inject(SettingsService);
+  protected readonly appSettings = inject(AppSettingsService);
   protected readonly themeService = inject(ThemeService);
 
   protected readonly isOpen = this.settingsService.isOpen;

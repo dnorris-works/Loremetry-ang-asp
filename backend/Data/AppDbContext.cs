@@ -11,6 +11,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<CollectionEntry> CollectionEntries => Set<CollectionEntry>();
 
+    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Collection>(entity =>
@@ -47,6 +49,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(collection => collection.Entries)
                 .HasForeignKey(entry => entry.CollectionId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AppSetting>(entity =>
+        {
+            entity.ToTable("app_settings", "lore");
+            entity.HasKey(setting => setting.Key);
+            entity.Property(setting => setting.Key).HasColumnName("key").HasMaxLength(120);
+            entity.Property(setting => setting.Value).HasColumnName("value").IsRequired();
+            entity.Property(setting => setting.UpdatedAt).HasColumnName("updated_at");
         });
     }
 }

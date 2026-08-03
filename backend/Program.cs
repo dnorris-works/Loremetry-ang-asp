@@ -26,12 +26,28 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
     await db.Database.ExecuteSqlRawAsync("CREATE SCHEMA IF NOT EXISTS lore;");
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.app_settings (
+            key VARCHAR(120) PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        INSERT INTO lore.app_settings (key, value, updated_at)
+        VALUES ('theme', 'light', NOW())
+        ON CONFLICT (key) DO NOTHING;
+        """);
+
+    if (app.Environment.IsDevelopment())
+    {
+        await db.Database.EnsureCreatedAsync();
+    }
 }
 
 app.UseHttpsRedirection();
@@ -52,5 +68,6 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken cancellationT
 .WithName("GetDatabaseHealth");
 
 app.MapAdminEndpoints();
+app.MapSettingsEndpoints();
 
 app.Run();

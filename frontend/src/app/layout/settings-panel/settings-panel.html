@@ -30,10 +30,20 @@
         </button>
       </header>
 
+      @if (appSettings.loadError()) {
+        <p class="settings-panel__error" role="alert">
+          {{ appSettings.loadError() }} Theme changes may not persist until this is resolved.
+        </p>
+      }
+
+      @if (appSettings.saveError()) {
+        <p class="settings-panel__error" role="alert">{{ appSettings.saveError() }}</p>
+      }
+
       <section class="settings-panel__section" aria-labelledby="theme-section-title">
         <h3 id="theme-section-title" class="settings-panel__section-title">Theme</h3>
         <p class="settings-panel__section-description">
-          Choose a color theme. Changes apply immediately and reset when you reload.
+          Choose a color theme. Your selection is saved to the database.
         </p>
 
         <div class="settings-panel__theme-grid" role="radiogroup" aria-labelledby="theme-section-title">
