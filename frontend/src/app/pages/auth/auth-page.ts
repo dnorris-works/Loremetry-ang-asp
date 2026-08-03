@@ -1,15 +1,14 @@
-import { Component, effect, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
   ClerkLoadedDirective,
   ClerkLoadingDirective,
-  ClerkService,
   ClerkSignInComponent,
   ClerkSignedInDirective,
   ClerkSignedOutDirective,
 } from 'ngx-clerk';
 
-import { AuthService, sleep } from '../../core/auth/auth.service';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-auth-clerk-sign-in',
@@ -25,25 +24,6 @@ import { AuthService, sleep } from '../../core/auth/auth.service';
 })
 export class AuthClerkSignIn {
   protected readonly auth = inject(AuthService);
-  private readonly clerk = inject(ClerkService, { optional: true });
-
-  constructor() {
-    effect(() => {
-      if (this.clerk?.isSignedIn() && !this.auth.breakGlass()) {
-        void this.retrySessionAfterSignIn();
-      }
-    });
-  }
-
-  private async retrySessionAfterSignIn(): Promise<void> {
-    for (let attempt = 0; attempt < 10; attempt += 1) {
-      if (await this.auth.refreshMe()) {
-        return;
-      }
-
-      await sleep(350);
-    }
-  }
 }
 
 @Component({
@@ -88,14 +68,9 @@ export class AuthOperatorForm {
 })
 export class AuthPage {
   protected readonly auth = inject(AuthService);
-  private readonly clerk = inject(ClerkService, { optional: true });
+  protected readonly showOperatorForm = signal(false);
 
-  protected showOperator(): boolean {
-    if (!this.auth.clerkEnabled()) {
-      return true;
-    }
-
-    const clerkSignedIn = this.clerk?.isSignedIn() ?? false;
-    return !clerkSignedIn || Boolean(this.auth.sessionError());
+  protected openOperatorForm(): void {
+    this.showOperatorForm.set(true);
   }
 }

@@ -11,7 +11,7 @@ export class ThemeService {
   private readonly prefersDark = signal(this.readSystemPrefersDark());
 
   readonly themes = APP_THEMES;
-  readonly selectedThemeId = signal<ThemeId>('light');
+  readonly selectedThemeId = signal<ThemeId>('system');
 
   constructor() {
     const mediaQuery = this.document.defaultView?.matchMedia(
@@ -31,7 +31,7 @@ export class ThemeService {
       if (storedTheme && this.isThemeId(storedTheme)) {
         this.selectedThemeId.set(storedTheme);
       } else {
-        this.selectedThemeId.set('light');
+        this.selectedThemeId.set('system');
       }
     });
 

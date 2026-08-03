@@ -8,16 +8,19 @@
 
     @if (auth.clerkEnabled()) {
       <app-auth-clerk-sign-in />
-      @if (showOperator()) {
+
+      @if (showOperatorForm() || auth.sessionError()) {
         <hr class="auth-page__divider" />
+        <app-auth-operator-form />
+      } @else {
+        <p class="auth-page__operator-toggle">
+          <button type="button" class="auth-page__operator-link" (click)="openOperatorForm()">
+            Operator access
+          </button>
+        </p>
       }
     } @else {
-      <p class="auth-page__lead">
-        Sign in with operator access, or configure Clerk via environment variables.
-      </p>
-    }
-
-    @if (showOperator()) {
+      <p class="auth-page__lead">Sign in with operator access.</p>
       <app-auth-operator-form />
     }
   </div>

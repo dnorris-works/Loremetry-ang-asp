@@ -24,7 +24,7 @@ public static class SettingsEndpoints
     private static readonly IReadOnlyDictionary<string, string> DefaultValues =
         new Dictionary<string, string>
         {
-            [AppSettingKeys.Theme] = "light",
+            [AppSettingKeys.Theme] = "system",
         };
 
     public static IEndpointRouteBuilder MapSettingsEndpoints(this IEndpointRouteBuilder app)
