@@ -1,3 +1,41 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
+
+:root {
+  --color-bg: oklch(97% 0.005 260);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-muted: oklch(95% 0.008 260);
+  --color-border: oklch(88% 0.01 260);
+  --color-text: oklch(22% 0.02 260);
+  --color-text-muted: oklch(48% 0.02 260);
+  --color-primary: oklch(52% 0.19 264);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--color-bg);
+  color: var(--color-text);
+}

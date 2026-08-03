@@ -1,0 +1,63 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.app-shell--resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.app-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.app-shell__sidebar {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  border-right: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.app-shell__resize-handle {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.app-shell__resize-handle::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.app-shell__resize-handle:hover::after,
+.app-shell__resize-handle:focus-visible::after,
+.app-shell--resizing .app-shell__resize-handle::after {
+  background: var(--color-primary);
+}
+
+.app-shell__resize-handle:focus-visible {
+  outline: none;
+}
+
+.app-shell__main {
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 1.5rem;
+}

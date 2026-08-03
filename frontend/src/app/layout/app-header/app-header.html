@@ -1,0 +1,22 @@
+<header class="app-header">
+  <div class="app-header__brand">
+    <a routerLink="/" class="app-header__logo">{{ appName() }}</a>
+  </div>
+
+  <nav class="app-header__nav" aria-label="Main navigation">
+    <ul class="app-header__nav-list">
+      @for (item of navItems(); track item.route) {
+        <li>
+          <a
+            class="app-header__nav-link"
+            [routerLink]="item.route"
+            routerLinkActive="app-header__nav-link--active"
+            [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+          >
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+</header>

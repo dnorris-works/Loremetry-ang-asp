@@ -1,0 +1,28 @@
+<div class="app-shell" [class.app-shell--resizing]="isResizing()">
+  <app-header />
+
+  <div class="app-shell__body">
+    <div class="app-shell__sidebar" [style]="sidebarStyle()">
+      <app-sidebar />
+
+      <div
+        class="app-shell__resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        aria-label="Resize sidebar"
+        aria-valuemin="200"
+        aria-valuemax="480"
+        [attr.aria-valuenow]="sidebarWidth()"
+        tabindex="0"
+        (pointerdown)="onResizePointerDown($event)"
+        (keydown)="onResizeKeyDown($event)"
+      ></div>
+    </div>
+
+    <main class="app-shell__main" id="main-content">
+      <router-outlet />
+    </main>
+  </div>
+
+  <app-footer />
+</div>

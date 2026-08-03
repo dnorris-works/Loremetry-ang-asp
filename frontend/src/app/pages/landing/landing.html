@@ -1,0 +1,30 @@
+<section class="landing" aria-labelledby="landing-title">
+  <header class="landing__header">
+    <h1 id="landing-title" class="landing__title">Welcome to Loremetry</h1>
+    <p class="landing__subtitle">
+      Your workspace for building modern web applications with Angular and ASP.NET.
+    </p>
+  </header>
+
+  <div class="landing__cards">
+    @for (card of [
+      {
+        title: 'Get Started',
+        description: 'Explore the sidebar navigation and resize the panel by dragging its edge or using arrow keys.',
+      },
+      {
+        title: 'Frontend',
+        description: 'Angular 22 with standalone components, signals, and Tailwind CSS.',
+      },
+      {
+        title: 'Backend',
+        description: 'ASP.NET Core API running alongside the Angular dev server.',
+      },
+    ]; track card.title) {
+      <article class="landing__card">
+        <h2 class="landing__card-title">{{ card.title }}</h2>
+        <p class="landing__card-description">{{ card.description }}</p>
+      </article>
+    }
+  </div>
+</section>
