@@ -3,6 +3,7 @@ namespace backend.Dtos;
 public record StorySummaryDto(
     long Id,
     string Name,
+    long? SeriesId,
     int ManuscriptCount,
     int CharacterCount,
     int LocationCount,
@@ -42,3 +43,5 @@ public record UpdateStoryRequest(
     IReadOnlyList<StoryDocumentInputDto> Manuscripts,
     IReadOnlyList<StoryDocumentInputDto> Characters,
     IReadOnlyList<StoryDocumentInputDto> Locations);
+
+public record AssignStorySeriesRequest(long? SeriesId);

@@ -1,0 +1,37 @@
+<dialog #dialog class="add-story-to-series-dialog" (click)="onBackdropClick($event)">
+  <form method="dialog" class="add-story-to-series-dialog__panel" (submit)="$event.preventDefault()">
+    <header class="add-story-to-series-dialog__header">
+      <h2 class="add-story-to-series-dialog__title theme-heading">Add to which series?</h2>
+      <p class="add-story-to-series-dialog__story-name">{{ story().name }}</p>
+    </header>
+
+    @if (errorMessage()) {
+      <p class="add-story-to-series-dialog__error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    @if (series().length === 0) {
+      <p class="add-story-to-series-dialog__empty">No series yet. Create a series first.</p>
+    } @else {
+      <ul class="add-story-to-series-dialog__list">
+        @for (item of series(); track item.id) {
+          <li>
+            <button
+              type="button"
+              class="add-story-to-series-dialog__option"
+              [disabled]="isSaving()"
+              (click)="selectSeries(item.id)"
+            >
+              {{ item.name }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    <footer class="add-story-to-series-dialog__actions">
+      <button type="button" class="add-story-to-series-dialog__cancel" [disabled]="isSaving()" (click)="cancel()">
+        Cancel
+      </button>
+    </footer>
+  </form>
+</dialog>

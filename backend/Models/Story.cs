@@ -6,6 +6,8 @@ public class Story
 
     public long UserId { get; set; }
 
+    public long? SeriesId { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public DateTimeOffset CreatedAt { get; set; }
@@ -13,6 +15,8 @@ public class Story
     public DateTimeOffset UpdatedAt { get; set; }
 
     public User User { get; set; } = null!;
+
+    public LoreSeries? Series { get; set; }
 
     public ICollection<LoreStoryDocument> Documents { get; set; } = [];
 }

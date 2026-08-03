@@ -131,6 +131,21 @@ export class StoriesService {
     }
   }
 
+  async assignToSeries(storyId: number, seriesId: number): Promise<Story | null> {
+    this.saveError.set(null);
+
+    try {
+      const story = await firstValueFrom(this.storiesApi.assignStoryToSeries(storyId, seriesId));
+      this.stories.update((stories) =>
+        stories.map((item) => (item.id === story.id ? story : item)),
+      );
+      return story;
+    } catch (error) {
+      this.saveError.set(this.readErrorMessage(error, 'Failed to add story to series.'));
+      return null;
+    }
+  }
+
   rememberManuscriptFiles(files: StoryDocumentInput[]): void {
     this.rememberFiles(files, this.recentManuscriptFiles);
   }

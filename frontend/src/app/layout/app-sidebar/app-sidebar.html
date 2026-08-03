@@ -93,7 +93,7 @@
         } @else {
           <ul class="app-sidebar__section-list">
             @for (story of stories(); track story.id) {
-              <li>
+              <li class="app-sidebar__story-row">
                 <button
                   type="button"
                   class="app-sidebar__section-item"
@@ -115,7 +115,20 @@
                         {{ story.locationCount }} location{{ story.locationCount === 1 ? '' : 's' }}
                       }
                     }
+                    @if (seriesName(story.seriesId); as name) {
+                      · {{ name }}
+                    }
                   </span>
+                </button>
+
+                <button
+                  type="button"
+                  class="app-sidebar__story-action"
+                  title="Add to series"
+                  [attr.aria-label]="'Add ' + story.name + ' to series'"
+                  (click)="openAddToSeriesModal(story, $event)"
+                >
+                  +
                 </button>
               </li>
             }
@@ -125,3 +138,11 @@
     }
   </section>
 </aside>
+
+@if (addToSeriesStory(); as story) {
+  <app-add-story-to-series-dialog
+    [story]="story"
+    [series]="series()"
+    (closed)="closeAddToSeriesModal()"
+  />
+}

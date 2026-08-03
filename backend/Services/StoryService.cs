@@ -20,6 +20,7 @@ public static class StoryService
             {
                 story.Id,
                 story.Name,
+                story.SeriesId,
                 story.CreatedAt,
                 story.UpdatedAt,
                 ManuscriptCount = story.Documents.Count(document => document.Kind == StoryDocumentKinds.Manuscript),
@@ -33,6 +34,7 @@ public static class StoryService
             ..stories.Select(story => new StorySummaryDto(
                 story.Id,
                 story.Name,
+                story.SeriesId,
                 story.ManuscriptCount,
                 story.CharacterCount,
                 story.LocationCount,
@@ -137,6 +139,45 @@ public static class StoryService
             story.Documents.Add(document);
         }
 
+        await db.SaveChangesAsync(cancellationToken);
+
+        return ToSummaryDto(story);
+    }
+
+    public static async Task<StorySummaryDto?> AssignToSeriesAsync(
+        long userId,
+        long storyId,
+        AssignStorySeriesRequest request,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var story = await db.Stories
+            .Include(item => item.Documents)
+            .FirstOrDefaultAsync(item => item.Id == storyId && item.UserId == userId, cancellationToken);
+
+        if (story is null)
+        {
+            return null;
+        }
+
+        if (request.SeriesId is { } seriesId)
+        {
+            var seriesExists = await db.Series
+                .AnyAsync(item => item.Id == seriesId && item.UserId == userId, cancellationToken);
+
+            if (!seriesExists)
+            {
+                throw new InvalidOperationException($"Series '{seriesId}' was not found.");
+            }
+
+            story.SeriesId = seriesId;
+        }
+        else
+        {
+            story.SeriesId = null;
+        }
+
+        story.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
 
         return ToSummaryDto(story);
@@ -252,6 +293,7 @@ public static class StoryService
         new(
             story.Id,
             story.Name,
+            story.SeriesId,
             story.Documents.Count(document => document.Kind == StoryDocumentKinds.Manuscript),
             story.Documents.Count(document => document.Kind == StoryDocumentKinds.Character),
             story.Documents.Count(document => document.Kind == StoryDocumentKinds.Location),

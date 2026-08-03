@@ -76,15 +76,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(story => story.Id);
             entity.Property(story => story.Id).HasColumnName("id").ValueGeneratedOnAdd();
             entity.Property(story => story.UserId).HasColumnName("user_id");
+            entity.Property(story => story.SeriesId).HasColumnName("series_id");
             entity.Property(story => story.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
             entity.Property(story => story.CreatedAt).HasColumnName("created_at");
             entity.Property(story => story.UpdatedAt).HasColumnName("updated_at");
             entity.HasIndex(story => new { story.UserId, story.UpdatedAt })
                 .IsDescending(false, true);
+            entity.HasIndex(story => story.SeriesId);
             entity.HasOne(story => story.User)
                 .WithMany()
                 .HasForeignKey(story => story.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasOne(story => story.Series)
+                .WithMany(series => series.Stories)
+                .HasForeignKey(story => story.SeriesId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<LoreStoryDocument>(entity =>

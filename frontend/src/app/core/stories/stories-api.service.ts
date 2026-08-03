@@ -25,4 +25,8 @@ export class StoriesApiService {
   updateStory(id: number, request: UpdateStoryRequest): Observable<Story> {
     return this.http.put<Story>(`${this.baseUrl}/${id}`, request);
   }
+
+  assignStoryToSeries(storyId: number, seriesId: number): Observable<Story> {
+    return this.http.patch<Story>(`${this.baseUrl}/${storyId}/series`, { seriesId });
+  }
 }

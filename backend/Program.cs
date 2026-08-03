@@ -141,6 +141,12 @@ using (var scope = app.Services.CreateScope())
         DROP INDEX IF EXISTS lore.series_user_id_idx;
         """);
     await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.stories ADD COLUMN IF NOT EXISTS series_id BIGINT REFERENCES lore.series(id) ON DELETE SET NULL;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS stories_series_id_idx ON lore.stories (series_id);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.series_bible_documents (
             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
             series_id BIGINT NOT NULL REFERENCES lore.series(id) ON DELETE CASCADE,

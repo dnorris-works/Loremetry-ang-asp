@@ -14,5 +14,7 @@ public class LoreSeries
 
     public User User { get; set; } = null!;
 
+    public ICollection<Story> Stories { get; set; } = [];
+
     public ICollection<SeriesBibleDocument> BibleDocuments { get; set; } = [];
 }

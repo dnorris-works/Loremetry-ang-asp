@@ -1,10 +1,13 @@
 import { Component, inject, signal } from '@angular/core';
 
+import { AddStoryToSeriesDialog } from '../add-story-to-series-dialog/add-story-to-series-dialog';
 import { SeriesService } from '../../core/series/series.service';
+import { Story } from '../../core/stories/story.models';
 import { StoriesService } from '../../core/stories/stories.service';
 
 @Component({
   selector: 'app-sidebar',
+  imports: [AddStoryToSeriesDialog],
   templateUrl: './app-sidebar.html',
   styleUrl: './app-sidebar.css',
 })
@@ -16,6 +19,7 @@ export class AppSidebar {
   protected readonly stories = this.storiesService.stories;
   protected readonly isSeriesOpen = signal(false);
   protected readonly isStoriesOpen = signal(false);
+  protected readonly addToSeriesStory = signal<Story | null>(null);
 
   protected toggleSeries(): void {
     this.isSeriesOpen.update((open) => !open);
@@ -47,11 +51,28 @@ export class AppSidebar {
     void this.storiesService.openEditPanel(id);
   }
 
+  protected openAddToSeriesModal(story: Story, event: Event): void {
+    event.stopPropagation();
+    this.addToSeriesStory.set(story);
+  }
+
+  protected closeAddToSeriesModal(): void {
+    this.addToSeriesStory.set(null);
+  }
+
   protected isSeriesSelected(id: number): boolean {
     return this.seriesService.isPanelOpen() && this.seriesService.editingId() === id;
   }
 
   protected isStorySelected(id: number): boolean {
     return this.storiesService.isPanelOpen() && this.storiesService.editingId() === id;
+  }
+
+  protected seriesName(seriesId: number | null | undefined): string | null {
+    if (!seriesId) {
+      return null;
+    }
+
+    return this.series().find((item) => item.id === seriesId)?.name ?? null;
   }
 }

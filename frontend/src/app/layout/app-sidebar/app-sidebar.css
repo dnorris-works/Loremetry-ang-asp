@@ -101,6 +101,46 @@
   list-style: none;
 }
 
+.app-sidebar__story-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+
+.app-sidebar__story-row .app-sidebar__section-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.app-sidebar__story-action {
+  display: grid;
+  flex-shrink: 0;
+  align-self: center;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-inline-end: 0.125rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.25rem;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.app-sidebar__story-action:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-muted));
+  color: var(--color-text);
+}
+
+.app-sidebar__story-action:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .app-sidebar__section-item {
   display: flex;
   flex-direction: column;
