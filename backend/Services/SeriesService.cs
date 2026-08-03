@@ -19,7 +19,8 @@ public static class SeriesService
             .Select(series => new SeriesSummaryDto(
                 series.Id,
                 series.Name,
-                series.BibleDocuments.Count,
+                series.BibleDocuments.Count(document => document.Category == BibleDocumentCategories.Character),
+                series.BibleDocuments.Count(document => document.Category == BibleDocumentCategories.Location),
                 series.CreatedAt,
                 series.UpdatedAt))
             .ToListAsync(cancellationToken);
@@ -60,21 +61,68 @@ public static class SeriesService
             UpdatedAt = now,
         };
 
-        var mappedDocuments = DocumentInputHelper.MapBibleDocuments(request.Bibles ?? []);
-        foreach (var (document, index) in mappedDocuments.Select((document, index) => (document, index)))
+        var sortOrder = 0;
+        foreach (var document in MapCategoryDocuments(request.Characters ?? [], BibleDocumentCategories.Character, now))
         {
-            series.BibleDocuments.Add(new SeriesBibleDocument
-            {
-                FileName = document.FileName,
-                MimeType = document.MimeType,
-                TextContent = document.TextContent,
-                BinaryContent = document.BinaryContent,
-                SortOrder = index,
-                CreatedAt = now,
-            });
+            document.SortOrder = sortOrder++;
+            series.BibleDocuments.Add(document);
+        }
+
+        foreach (var document in MapCategoryDocuments(request.Locations ?? [], BibleDocumentCategories.Location, now))
+        {
+            document.SortOrder = sortOrder++;
+            series.BibleDocuments.Add(document);
         }
 
         db.Series.Add(series);
+        await db.SaveChangesAsync(cancellationToken);
+
+        return ToSummaryDto(series);
+    }
+
+    public static async Task<SeriesSummaryDto?> UpdateAsync(
+        long userId,
+        long seriesId,
+        UpdateSeriesRequest request,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var validationError = ValidateUpdateRequest(request);
+        if (validationError is { } message)
+        {
+            throw new InvalidOperationException(message);
+        }
+
+        var series = await db.Series
+            .Include(item => item.BibleDocuments)
+            .FirstOrDefaultAsync(item => item.Id == seriesId && item.UserId == userId, cancellationToken);
+
+        if (series is null)
+        {
+            return null;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        series.Name = request.Name.Trim();
+        series.UpdatedAt = now;
+        db.SeriesBibleDocuments.RemoveRange(series.BibleDocuments);
+        series.BibleDocuments.Clear();
+
+        var sortOrder = 0;
+        foreach (var document in MapCategoryDocuments(request.Characters ?? [], BibleDocumentCategories.Character, now))
+        {
+            document.SeriesId = series.Id;
+            document.SortOrder = sortOrder++;
+            series.BibleDocuments.Add(document);
+        }
+
+        foreach (var document in MapCategoryDocuments(request.Locations ?? [], BibleDocumentCategories.Location, now))
+        {
+            document.SeriesId = series.Id;
+            document.SortOrder = sortOrder++;
+            series.BibleDocuments.Add(document);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         return ToSummaryDto(series);
@@ -92,14 +140,65 @@ public static class SeriesService
             return "Series name must be 200 characters or fewer.";
         }
 
-        return DocumentInputHelper.ValidateBibleDocuments(request.Bibles ?? []);
+        var characterError = DocumentInputHelper.ValidateReferenceDocuments(
+            request.Characters ?? [],
+            "Character");
+        if (characterError is { } characterMessage)
+        {
+            return characterMessage;
+        }
+
+        return DocumentInputHelper.ValidateReferenceDocuments(request.Locations ?? [], "Location");
+    }
+
+    private static string? ValidateUpdateRequest(UpdateSeriesRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return "Series name is required.";
+        }
+
+        if (request.Name.Trim().Length > 200)
+        {
+            return "Series name must be 200 characters or fewer.";
+        }
+
+        var characterError = DocumentInputHelper.ValidateReferenceDocuments(
+            request.Characters ?? [],
+            "Character");
+        if (characterError is { } characterMessage)
+        {
+            return characterMessage;
+        }
+
+        return DocumentInputHelper.ValidateReferenceDocuments(request.Locations ?? [], "Location");
+    }
+
+    private static IEnumerable<SeriesBibleDocument> MapCategoryDocuments(
+        IReadOnlyList<StoryDocumentInputDto> documents,
+        string category,
+        DateTimeOffset createdAt)
+    {
+        foreach (var mapped in DocumentInputHelper.MapReferenceDocuments(documents))
+        {
+            yield return new SeriesBibleDocument
+            {
+                Category = category,
+                FileName = mapped.FileName,
+                MimeType = mapped.MimeType,
+                TextContent = mapped.TextContent,
+                BinaryContent = mapped.BinaryContent,
+                CreatedAt = createdAt,
+            };
+        }
     }
 
     private static SeriesSummaryDto ToSummaryDto(LoreSeries series) =>
         new(
             series.Id,
             series.Name,
-            series.BibleDocuments.Count,
+            series.BibleDocuments.Count(document => document.Category == BibleDocumentCategories.Character),
+            series.BibleDocuments.Count(document => document.Category == BibleDocumentCategories.Location),
             series.CreatedAt,
             series.UpdatedAt);
 
@@ -112,12 +211,16 @@ public static class SeriesService
                     .OrderBy(document => document.SortOrder)
                     .Select(document => new SeriesBibleDocumentDto(
                         document.Id,
+                        document.Category,
                         document.FileName,
                         document.MimeType,
-                        !string.IsNullOrEmpty(document.TextContent),
-                        document.BinaryContent is { Length: > 0 },
+                        document.TextContent,
+                        ToBase64(document.BinaryContent),
                         document.SortOrder)),
             ],
             series.CreatedAt,
             series.UpdatedAt);
+
+    private static string? ToBase64(byte[]? content) =>
+        content is { Length: > 0 } ? Convert.ToBase64String(content) : null;
 }

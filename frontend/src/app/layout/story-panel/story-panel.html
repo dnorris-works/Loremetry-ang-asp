@@ -1,8 +1,16 @@
 <section class="story-panel" aria-labelledby="story-panel-title">
   <header class="story-panel__header">
     <div>
-      <h2 id="story-panel-title" class="story-panel__title">New story</h2>
-      <p class="story-panel__subtitle">Add a story and link its manuscript and bible files.</p>
+      <h2 id="story-panel-title" class="story-panel__title">
+        {{ isEditing() ? 'Edit story' : 'New story' }}
+      </h2>
+      <p class="story-panel__subtitle">
+        @if (isEditing()) {
+          Update the story name and linked manuscript, character, and location files.
+        } @else {
+          Add a story and link its manuscript, character, and location files.
+        }
+      </p>
     </div>
 
     <button type="button" class="story-panel__close" aria-label="Close story panel" (click)="close()">
@@ -14,6 +22,9 @@
     <p class="story-panel__error" role="alert">{{ errorMessage() }}</p>
   }
 
+  @if (isPanelLoading()) {
+    <p class="story-panel__loading">Loading story…</p>
+  } @else {
   <form class="story-panel__form" (submit)="$event.preventDefault(); save()">
     <label class="story-panel__field">
       <span class="story-panel__field-label">Story name</span>
@@ -40,13 +51,24 @@
     />
 
     <app-story-file-picker
-      label="Bible files"
-      description="Choose one or more bible files (.md, .txt, or .docx), or add from recent files."
-      listTitle="Bible files"
-      pickerTypeLabel="Bible files"
-      [options]="recentBibleFiles()"
-      [value]="bibleFiles()"
-      (valueChange)="onBibleFilesChange($event)"
+      label="Characters"
+      description="Choose character bible files (.md, .txt, or .docx), or add from recent files."
+      listTitle="Character files"
+      pickerTypeLabel="Character files"
+      [options]="recentCharacterFiles()"
+      [value]="characterFiles()"
+      (valueChange)="onCharacterFilesChange($event)"
+      (browseError)="onBrowseError($event)"
+    />
+
+    <app-story-file-picker
+      label="Locations"
+      description="Choose location bible files (.md, .txt, or .docx), or add from recent files."
+      listTitle="Location files"
+      pickerTypeLabel="Location files"
+      [options]="recentLocationFiles()"
+      [value]="locationFiles()"
+      (valueChange)="onLocationFilesChange($event)"
       (browseError)="onBrowseError($event)"
     />
 
@@ -54,9 +76,10 @@
       <button type="button" class="story-panel__button story-panel__button--ghost" (click)="close()">
         Cancel
       </button>
-      <button type="submit" class="story-panel__button" [disabled]="isSaving()">
-        {{ isSaving() ? 'Saving…' : 'Save story' }}
+      <button type="submit" class="story-panel__button" [disabled]="isSaving() || isPanelLoading()">
+        {{ isSaving() ? 'Saving…' : (isEditing() ? 'Save changes' : 'Save story') }}
       </button>
     </div>
   </form>
+  }
 </section>

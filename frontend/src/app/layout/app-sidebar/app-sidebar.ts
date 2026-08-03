@@ -27,13 +27,31 @@ export class AppSidebar {
 
   protected openAddSeriesPanel(event: Event): void {
     event.stopPropagation();
-    this.storiesService.closeAddPanel();
+    this.storiesService.closePanel();
     this.seriesService.openAddPanel();
   }
 
   protected openAddStoryPanel(event: Event): void {
     event.stopPropagation();
-    this.seriesService.closeAddPanel();
+    this.seriesService.closePanel();
     this.storiesService.openAddPanel();
+  }
+
+  protected openEditSeries(id: number): void {
+    this.storiesService.closePanel();
+    void this.seriesService.openEditPanel(id);
+  }
+
+  protected openEditStory(id: number): void {
+    this.seriesService.closePanel();
+    void this.storiesService.openEditPanel(id);
+  }
+
+  protected isSeriesSelected(id: number): boolean {
+    return this.seriesService.isPanelOpen() && this.seriesService.editingId() === id;
+  }
+
+  protected isStorySelected(id: number): boolean {
+    return this.storiesService.isPanelOpen() && this.storiesService.editingId() === id;
   }
 }

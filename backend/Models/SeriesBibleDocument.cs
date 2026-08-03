@@ -6,6 +6,8 @@ public class SeriesBibleDocument
 
     public long SeriesId { get; set; }
 
+    public string Category { get; set; } = BibleDocumentCategories.Character;
+
     public string FileName { get; set; } = string.Empty;
 
     public string MimeType { get; set; } = string.Empty;

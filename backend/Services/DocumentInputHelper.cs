@@ -6,17 +6,19 @@ public static class DocumentInputHelper
 {
     private static readonly HashSet<string> AllowedExtensions = [".md", ".txt", ".docx"];
 
-    public static string? ValidateBibleDocuments(IReadOnlyList<StoryDocumentInputDto> documents) =>
-        ValidateDocuments(documents, "bible");
+    public static string? ValidateReferenceDocuments(
+        IReadOnlyList<StoryDocumentInputDto> documents,
+        string label) =>
+        ValidateDocuments(documents, label, isReferenceDocument: true);
 
     public static string? ValidateManuscriptDocuments(IReadOnlyList<StoryDocumentInputDto> documents) =>
         ValidateDocuments(documents, "manuscript", requireMarkdownContent: true);
 
-    public static IReadOnlyList<MappedDocumentContent> MapBibleDocuments(
+    public static IReadOnlyList<MappedDocumentContent> MapReferenceDocuments(
         IReadOnlyList<StoryDocumentInputDto> documents) =>
-        [..documents.Select(MapBibleDocument)];
+        [..documents.Select(MapReferenceDocument)];
 
-    public static MappedDocumentContent MapBibleDocument(StoryDocumentInputDto document)
+    public static MappedDocumentContent MapReferenceDocument(StoryDocumentInputDto document)
     {
         var fileName = document.FileName.Trim();
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
@@ -55,7 +57,8 @@ public static class DocumentInputHelper
     private static string? ValidateDocuments(
         IReadOnlyList<StoryDocumentInputDto> documents,
         string kind,
-        bool requireMarkdownContent = false)
+        bool requireMarkdownContent = false,
+        bool isReferenceDocument = false)
     {
         HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
 
@@ -98,16 +101,16 @@ public static class DocumentInputHelper
                 return $"Markdown manuscript '{fileName}' must include text content.";
             }
 
-            if (kind == "bible")
+            if (isReferenceDocument)
             {
                 if (extension is ".md" or ".txt" && !hasText)
                 {
-                    return $"Bible file '{fileName}' must include text content.";
+                    return $"{kind} file '{fileName}' must include text content.";
                 }
 
                 if (extension == ".docx" && !hasBinary)
                 {
-                    return $"Bible file '{fileName}' must include binary content.";
+                    return $"{kind} file '{fileName}' must include binary content.";
                 }
             }
 

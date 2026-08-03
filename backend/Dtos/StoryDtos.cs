@@ -4,7 +4,8 @@ public record StorySummaryDto(
     long Id,
     string Name,
     int ManuscriptCount,
-    int BibleCount,
+    int CharacterCount,
+    int LocationCount,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
@@ -13,8 +14,8 @@ public record StoryDocumentDto(
     string Kind,
     string FileName,
     string MimeType,
-    bool HasTextContent,
-    bool HasBinaryContent,
+    string? TextContent,
+    string? BinaryContentBase64,
     int SortOrder);
 
 public record StoryDetailDto(
@@ -33,4 +34,11 @@ public record StoryDocumentInputDto(
 public record CreateStoryRequest(
     string Name,
     IReadOnlyList<StoryDocumentInputDto> Manuscripts,
-    IReadOnlyList<StoryDocumentInputDto> Bibles);
+    IReadOnlyList<StoryDocumentInputDto> Characters,
+    IReadOnlyList<StoryDocumentInputDto> Locations);
+
+public record UpdateStoryRequest(
+    string Name,
+    IReadOnlyList<StoryDocumentInputDto> Manuscripts,
+    IReadOnlyList<StoryDocumentInputDto> Characters,
+    IReadOnlyList<StoryDocumentInputDto> Locations);

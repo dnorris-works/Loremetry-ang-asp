@@ -25,6 +25,7 @@ body {
     Helvetica,
     Arial,
     sans-serif;
+  font-size: 0.875rem;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--color-bg);

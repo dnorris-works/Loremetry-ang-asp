@@ -32,12 +32,27 @@
           <ul class="app-sidebar__section-list">
             @for (item of series(); track item.id) {
               <li>
-                <div class="app-sidebar__section-item">
+                <button
+                  type="button"
+                  class="app-sidebar__section-item"
+                  [class.app-sidebar__section-item--active]="isSeriesSelected(item.id)"
+                  (click)="openEditSeries(item.id)"
+                >
                   <span class="app-sidebar__section-name">{{ item.name }}</span>
-                  @if (item.bibleCount > 0) {
-                    <span class="app-sidebar__section-meta">{{ item.bibleCount }} bible</span>
+                  @if (item.characterCount > 0 || item.locationCount > 0) {
+                    <span class="app-sidebar__section-meta">
+                      @if (item.characterCount > 0) {
+                        {{ item.characterCount }} character{{ item.characterCount === 1 ? '' : 's' }}
+                      }
+                      @if (item.characterCount > 0 && item.locationCount > 0) {
+                        ·
+                      }
+                      @if (item.locationCount > 0) {
+                        {{ item.locationCount }} location{{ item.locationCount === 1 ? '' : 's' }}
+                      }
+                    </span>
                   }
-                </div>
+                </button>
               </li>
             }
           </ul>
@@ -79,15 +94,29 @@
           <ul class="app-sidebar__section-list">
             @for (story of stories(); track story.id) {
               <li>
-                <div class="app-sidebar__section-item">
+                <button
+                  type="button"
+                  class="app-sidebar__section-item"
+                  [class.app-sidebar__section-item--active]="isStorySelected(story.id)"
+                  (click)="openEditStory(story.id)"
+                >
                   <span class="app-sidebar__section-name">{{ story.name }}</span>
                   <span class="app-sidebar__section-meta">
-                    {{ story.manuscriptCount }} manuscript
-                    @if (story.bibleCount > 0) {
-                      · {{ story.bibleCount }} bible
+                    {{ story.manuscriptCount }} manuscript{{ story.manuscriptCount === 1 ? '' : 's' }}
+                    @if (story.characterCount > 0 || story.locationCount > 0) {
+                      ·
+                      @if (story.characterCount > 0) {
+                        {{ story.characterCount }} character{{ story.characterCount === 1 ? '' : 's' }}
+                      }
+                      @if (story.characterCount > 0 && story.locationCount > 0) {
+                        ·
+                      }
+                      @if (story.locationCount > 0) {
+                        {{ story.locationCount }} location{{ story.locationCount === 1 ? '' : 's' }}
+                      }
                     }
                   </span>
-                </div>
+                </button>
               </li>
             }
           </ul>

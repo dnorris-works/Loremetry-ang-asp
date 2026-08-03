@@ -1,8 +1,16 @@
 <section class="series-panel" aria-labelledby="series-panel-title">
   <header class="series-panel__header">
     <div>
-      <h2 id="series-panel-title" class="series-panel__title">New series</h2>
-      <p class="series-panel__subtitle">Add a series and attach its bible files.</p>
+      <h2 id="series-panel-title" class="series-panel__title">
+        {{ isEditing() ? 'Edit series' : 'New series' }}
+      </h2>
+      <p class="series-panel__subtitle">
+        @if (isEditing()) {
+          Update the series name and linked character and location bible files.
+        } @else {
+          Add a series and attach character and location bible files.
+        }
+      </p>
     </div>
 
     <button type="button" class="series-panel__close" aria-label="Close series panel" (click)="close()">
@@ -14,6 +22,9 @@
     <p class="series-panel__error" role="alert">{{ errorMessage() }}</p>
   }
 
+  @if (isPanelLoading()) {
+    <p class="series-panel__loading">Loading series…</p>
+  } @else {
   <form class="series-panel__form" (submit)="$event.preventDefault(); save()">
     <label class="series-panel__field">
       <span class="series-panel__field-label">Series name</span>
@@ -29,13 +40,24 @@
     </label>
 
     <app-story-file-picker
-      label="Bible files"
-      description="Choose one or more bible files (.md, .txt, or .docx), or add from recent files."
-      listTitle="Bible files"
-      pickerTypeLabel="Bible files"
-      [options]="recentBibleFiles()"
-      [value]="bibleFiles()"
-      (valueChange)="onBibleFilesChange($event)"
+      label="Characters"
+      description="Choose character bible files (.md, .txt, or .docx), or add from recent files."
+      listTitle="Character files"
+      pickerTypeLabel="Character files"
+      [options]="recentCharacterFiles()"
+      [value]="characterFiles()"
+      (valueChange)="onCharacterFilesChange($event)"
+      (browseError)="onBrowseError($event)"
+    />
+
+    <app-story-file-picker
+      label="Locations"
+      description="Choose location bible files (.md, .txt, or .docx), or add from recent files."
+      listTitle="Location files"
+      pickerTypeLabel="Location files"
+      [options]="recentLocationFiles()"
+      [value]="locationFiles()"
+      (valueChange)="onLocationFilesChange($event)"
       (browseError)="onBrowseError($event)"
     />
 
@@ -43,9 +65,10 @@
       <button type="button" class="series-panel__button series-panel__button--ghost" (click)="close()">
         Cancel
       </button>
-      <button type="submit" class="series-panel__button" [disabled]="isSaving()">
-        {{ isSaving() ? 'Saving…' : 'Save series' }}
+      <button type="submit" class="series-panel__button" [disabled]="isSaving() || isPanelLoading()">
+        {{ isSaving() ? 'Saving…' : (isEditing() ? 'Save changes' : 'Save series') }}
       </button>
     </div>
   </form>
+  }
 </section>

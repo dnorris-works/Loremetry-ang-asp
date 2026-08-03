@@ -1,4 +1,4 @@
-import { Injectable, effect, inject, signal } from '@angular/core';
+import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
@@ -6,7 +6,7 @@ import { AuthService } from '../auth/auth.service';
 import { StoryDocumentInput } from '../stories/story.models';
 import { storyDocumentKey } from '../stories/story-file.utils';
 import { SeriesApiService } from './series-api.service';
-import { CreateSeriesRequest, Series } from './series.models';
+import { CreateSeriesRequest, Series, SeriesDetail } from './series.models';
 
 @Injectable({ providedIn: 'root' })
 export class SeriesService {
@@ -14,12 +14,19 @@ export class SeriesService {
   private readonly auth = inject(AuthService);
 
   readonly series = signal<Series[]>([]);
-  readonly isAddPanelOpen = signal(false);
+  readonly isPanelOpen = signal(false);
+  readonly editingId = signal<number | null>(null);
+  readonly editingDetail = signal<SeriesDetail | null>(null);
+  readonly isPanelLoading = signal(false);
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
   readonly loadError = signal<string | null>(null);
   readonly saveError = signal<string | null>(null);
-  readonly recentBibleFiles = signal<StoryDocumentInput[]>([]);
+  readonly panelLoadError = signal<string | null>(null);
+  readonly recentCharacterFiles = signal<StoryDocumentInput[]>([]);
+  readonly recentLocationFiles = signal<StoryDocumentInput[]>([]);
+
+  readonly isEditing = computed(() => this.editingId() !== null);
 
   constructor() {
     effect(() => {
@@ -33,13 +40,37 @@ export class SeriesService {
   }
 
   openAddPanel(): void {
-    this.isAddPanelOpen.set(true);
+    this.editingId.set(null);
+    this.editingDetail.set(null);
+    this.isPanelOpen.set(true);
     this.saveError.set(null);
+    this.panelLoadError.set(null);
   }
 
-  closeAddPanel(): void {
-    this.isAddPanelOpen.set(false);
+  async openEditPanel(id: number): Promise<void> {
+    this.editingId.set(id);
+    this.isPanelOpen.set(true);
     this.saveError.set(null);
+    this.panelLoadError.set(null);
+    this.isPanelLoading.set(true);
+
+    try {
+      const detail = await firstValueFrom(this.seriesApi.getSeries(id));
+      this.editingDetail.set(detail);
+    } catch (error) {
+      this.panelLoadError.set(this.readErrorMessage(error, 'Failed to load series.'));
+      this.editingDetail.set(null);
+    } finally {
+      this.isPanelLoading.set(false);
+    }
+  }
+
+  closePanel(): void {
+    this.isPanelOpen.set(false);
+    this.editingId.set(null);
+    this.editingDetail.set(null);
+    this.saveError.set(null);
+    this.panelLoadError.set(null);
   }
 
   async addSeries(request: CreateSeriesRequest): Promise<Series | null> {
@@ -50,13 +81,15 @@ export class SeriesService {
       const item = await firstValueFrom(
         this.seriesApi.createSeries({
           name: request.name.trim(),
-          bibles: request.bibles,
+          characters: request.characters,
+          locations: request.locations,
         }),
       );
 
       this.series.update((series) => [item, ...series]);
-      this.rememberBibleFiles(request.bibles);
-      this.closeAddPanel();
+      this.rememberCharacterFiles(request.characters);
+      this.rememberLocationFiles(request.locations);
+      this.closePanel();
       return item;
     } catch (error) {
       this.saveError.set(this.readErrorMessage(error, 'Failed to save series.'));
@@ -66,10 +99,49 @@ export class SeriesService {
     }
   }
 
-  rememberBibleFiles(files: StoryDocumentInput[]): void {
+  async updateSeries(id: number, request: CreateSeriesRequest): Promise<Series | null> {
+    this.isSaving.set(true);
+    this.saveError.set(null);
+
+    try {
+      const item = await firstValueFrom(
+        this.seriesApi.updateSeries(id, {
+          name: request.name.trim(),
+          characters: request.characters,
+          locations: request.locations,
+        }),
+      );
+
+      this.series.update((series) =>
+        series.map((entry) => (entry.id === item.id ? item : entry)),
+      );
+      this.rememberCharacterFiles(request.characters);
+      this.rememberLocationFiles(request.locations);
+      this.closePanel();
+      return item;
+    } catch (error) {
+      this.saveError.set(this.readErrorMessage(error, 'Failed to update series.'));
+      return null;
+    } finally {
+      this.isSaving.set(false);
+    }
+  }
+
+  rememberCharacterFiles(files: StoryDocumentInput[]): void {
+    this.rememberFiles(files, this.recentCharacterFiles);
+  }
+
+  rememberLocationFiles(files: StoryDocumentInput[]): void {
+    this.rememberFiles(files, this.recentLocationFiles);
+  }
+
+  private rememberFiles(
+    files: StoryDocumentInput[],
+    target: ReturnType<typeof signal<StoryDocumentInput[]>>,
+  ): void {
     for (const file of files) {
       const key = storyDocumentKey(file);
-      this.recentBibleFiles.update((existing) => [
+      target.update((existing) => [
         file,
         ...existing.filter((item) => storyDocumentKey(item) !== key),
       ]);
@@ -99,12 +171,17 @@ export class SeriesService {
 
   private reset(): void {
     this.series.set([]);
-    this.isAddPanelOpen.set(false);
+    this.isPanelOpen.set(false);
+    this.editingId.set(null);
+    this.editingDetail.set(null);
+    this.isPanelLoading.set(false);
     this.isLoading.set(false);
     this.isSaving.set(false);
     this.loadError.set(null);
     this.saveError.set(null);
-    this.recentBibleFiles.set([]);
+    this.panelLoadError.set(null);
+    this.recentCharacterFiles.set([]);
+    this.recentLocationFiles.set([]);
   }
 
   private readErrorMessage(error: unknown, fallback: string): string {

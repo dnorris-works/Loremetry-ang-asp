@@ -9,9 +9,9 @@ import { AppSidebar } from '../app-sidebar/app-sidebar';
 import { SeriesPanel } from '../series-panel/series-panel';
 import { StoryPanel } from '../story-panel/story-panel';
 
-const MIN_SIDEBAR_WIDTH = 200;
-const MAX_SIDEBAR_WIDTH = 480;
-const DEFAULT_SIDEBAR_WIDTH = 280;
+const MIN_SIDEBAR_WIDTH = 180;
+const MAX_SIDEBAR_WIDTH = 420;
+const DEFAULT_SIDEBAR_WIDTH = 220;
 
 @Component({
   selector: 'app-shell',
@@ -23,8 +23,8 @@ export class AppShell {
   private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
 
-  protected readonly isSeriesPanelOpen = this.seriesService.isAddPanelOpen;
-  protected readonly isStoryPanelOpen = this.storiesService.isAddPanelOpen;
+  protected readonly isSeriesPanelOpen = this.seriesService.isPanelOpen;
+  protected readonly isStoryPanelOpen = this.storiesService.isPanelOpen;
   protected readonly sidebarWidth = signal(DEFAULT_SIDEBAR_WIDTH);
   protected readonly isResizing = signal(false);
 

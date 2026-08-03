@@ -131,6 +131,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasKey(document => document.Id);
             entity.Property(document => document.Id).HasColumnName("id").ValueGeneratedOnAdd();
             entity.Property(document => document.SeriesId).HasColumnName("series_id");
+            entity.Property(document => document.Category).HasColumnName("category").HasMaxLength(20).IsRequired();
             entity.Property(document => document.FileName).HasColumnName("file_name").HasMaxLength(500).IsRequired();
             entity.Property(document => document.MimeType).HasColumnName("mime_type").HasMaxLength(127).IsRequired();
             entity.Property(document => document.TextContent).HasColumnName("text_content");
@@ -138,7 +139,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(document => document.SortOrder).HasColumnName("sort_order");
             entity.Property(document => document.CreatedAt).HasColumnName("created_at");
             entity.HasIndex(document => new { document.SeriesId, document.SortOrder });
-            entity.HasIndex(document => new { document.SeriesId, document.FileName }).IsUnique();
+            entity.HasIndex(document => new { document.SeriesId, document.Category, document.FileName }).IsUnique();
             entity.HasOne(document => document.Series)
                 .WithMany(series => series.BibleDocuments)
                 .HasForeignKey(document => document.SeriesId)

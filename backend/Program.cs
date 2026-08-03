@@ -98,7 +98,7 @@ using (var scope = app.Services.CreateScope())
         CREATE TABLE IF NOT EXISTS lore.story_documents (
             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
             story_id BIGINT NOT NULL REFERENCES lore.stories(id) ON DELETE CASCADE,
-            kind VARCHAR(20) NOT NULL CHECK (kind IN ('manuscript', 'bible')),
+            kind VARCHAR(20) NOT NULL CHECK (kind IN ('manuscript', 'character', 'location')),
             file_name VARCHAR(500) NOT NULL,
             mime_type VARCHAR(127) NOT NULL,
             text_content TEXT,
@@ -107,6 +107,17 @@ using (var scope = app.Services.CreateScope())
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             CONSTRAINT story_documents_story_kind_filename_unique UNIQUE (story_id, kind, file_name)
         );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        UPDATE lore.story_documents SET kind = 'character' WHERE kind = 'bible';
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.story_documents DROP CONSTRAINT IF EXISTS story_documents_kind_check;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.story_documents
+            ADD CONSTRAINT story_documents_kind_check
+            CHECK (kind IN ('manuscript', 'character', 'location'));
         """);
     await db.Database.ExecuteSqlRawAsync("""
         CREATE INDEX IF NOT EXISTS story_documents_story_id_sort_order_idx ON lore.story_documents (story_id, sort_order);
@@ -133,14 +144,41 @@ using (var scope = app.Services.CreateScope())
         CREATE TABLE IF NOT EXISTS lore.series_bible_documents (
             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
             series_id BIGINT NOT NULL REFERENCES lore.series(id) ON DELETE CASCADE,
+            category VARCHAR(20) NOT NULL DEFAULT 'character' CHECK (category IN ('character', 'location')),
             file_name VARCHAR(500) NOT NULL,
             mime_type VARCHAR(127) NOT NULL,
             text_content TEXT,
             binary_content BYTEA,
             sort_order INT NOT NULL DEFAULT 0,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            CONSTRAINT series_bible_documents_series_filename_unique UNIQUE (series_id, file_name)
+            CONSTRAINT series_bible_documents_series_category_filename_unique UNIQUE (series_id, category, file_name)
         );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.series_bible_documents ADD COLUMN IF NOT EXISTS category VARCHAR(20) NOT NULL DEFAULT 'character';
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        UPDATE lore.series_bible_documents SET category = 'character' WHERE category IS NULL OR category = '';
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.series_bible_documents DROP CONSTRAINT IF EXISTS series_bible_documents_category_check;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.series_bible_documents
+            ADD CONSTRAINT series_bible_documents_category_check
+            CHECK (category IN ('character', 'location'));
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.series_bible_documents DROP CONSTRAINT IF EXISTS series_bible_documents_series_filename_unique;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.series_bible_documents
+            DROP CONSTRAINT IF EXISTS series_bible_documents_series_category_filename_unique;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        ALTER TABLE lore.series_bible_documents
+            ADD CONSTRAINT series_bible_documents_series_category_filename_unique
+            UNIQUE (series_id, category, file_name);
         """);
     await db.Database.ExecuteSqlRawAsync("""
         CREATE INDEX IF NOT EXISTS series_bible_documents_series_id_sort_order_idx ON lore.series_bible_documents (series_id, sort_order);

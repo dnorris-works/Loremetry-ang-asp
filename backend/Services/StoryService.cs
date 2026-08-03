@@ -23,7 +23,8 @@ public static class StoryService
                 story.CreatedAt,
                 story.UpdatedAt,
                 ManuscriptCount = story.Documents.Count(document => document.Kind == StoryDocumentKinds.Manuscript),
-                BibleCount = story.Documents.Count(document => document.Kind == StoryDocumentKinds.Bible),
+                CharacterCount = story.Documents.Count(document => document.Kind == StoryDocumentKinds.Character),
+                LocationCount = story.Documents.Count(document => document.Kind == StoryDocumentKinds.Location),
             })
             .ToListAsync(cancellationToken);
 
@@ -33,7 +34,8 @@ public static class StoryService
                 story.Id,
                 story.Name,
                 story.ManuscriptCount,
-                story.BibleCount,
+                story.CharacterCount,
+                story.LocationCount,
                 story.CreatedAt,
                 story.UpdatedAt)),
         ];
@@ -77,7 +79,8 @@ public static class StoryService
         List<LoreStoryDocument> documents =
         [
             ..MapManuscriptDocuments(request.Manuscripts, now),
-            ..MapBibleDocuments(request.Bibles ?? [], now),
+            ..MapReferenceDocuments(request.Characters ?? [], StoryDocumentKinds.Character, now),
+            ..MapReferenceDocuments(request.Locations ?? [], StoryDocumentKinds.Location, now),
         ];
 
         foreach (var (document, index) in documents.Select((document, index) => (document, index)))
@@ -87,6 +90,53 @@ public static class StoryService
         }
 
         db.Stories.Add(story);
+        await db.SaveChangesAsync(cancellationToken);
+
+        return ToSummaryDto(story);
+    }
+
+    public static async Task<StorySummaryDto?> UpdateAsync(
+        long userId,
+        long storyId,
+        UpdateStoryRequest request,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var validationError = ValidateUpdateRequest(request);
+        if (validationError is { } message)
+        {
+            throw new InvalidOperationException(message);
+        }
+
+        var story = await db.Stories
+            .Include(item => item.Documents)
+            .FirstOrDefaultAsync(item => item.Id == storyId && item.UserId == userId, cancellationToken);
+
+        if (story is null)
+        {
+            return null;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        story.Name = request.Name.Trim();
+        story.UpdatedAt = now;
+        db.StoryDocuments.RemoveRange(story.Documents);
+        story.Documents.Clear();
+
+        List<LoreStoryDocument> documents =
+        [
+            ..MapManuscriptDocuments(request.Manuscripts, now),
+            ..MapReferenceDocuments(request.Characters ?? [], StoryDocumentKinds.Character, now),
+            ..MapReferenceDocuments(request.Locations ?? [], StoryDocumentKinds.Location, now),
+        ];
+
+        foreach (var (document, index) in documents.Select((document, index) => (document, index)))
+        {
+            document.StoryId = story.Id;
+            document.SortOrder = index;
+            story.Documents.Add(document);
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         return ToSummaryDto(story);
@@ -115,7 +165,49 @@ public static class StoryService
             return manuscriptMessage;
         }
 
-        return DocumentInputHelper.ValidateBibleDocuments(request.Bibles ?? []);
+        var characterError = DocumentInputHelper.ValidateReferenceDocuments(
+            request.Characters ?? [],
+            "Character");
+        if (characterError is { } characterMessage)
+        {
+            return characterMessage;
+        }
+
+        return DocumentInputHelper.ValidateReferenceDocuments(request.Locations ?? [], "Location");
+    }
+
+    private static string? ValidateUpdateRequest(UpdateStoryRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Name))
+        {
+            return "Story name is required.";
+        }
+
+        if (request.Name.Trim().Length > 200)
+        {
+            return "Story name must be 200 characters or fewer.";
+        }
+
+        if (request.Manuscripts is null || request.Manuscripts.Count == 0)
+        {
+            return "At least one manuscript file is required.";
+        }
+
+        var manuscriptError = DocumentInputHelper.ValidateManuscriptDocuments(request.Manuscripts);
+        if (manuscriptError is { } manuscriptMessage)
+        {
+            return manuscriptMessage;
+        }
+
+        var characterError = DocumentInputHelper.ValidateReferenceDocuments(
+            request.Characters ?? [],
+            "Character");
+        if (characterError is { } characterMessage)
+        {
+            return characterMessage;
+        }
+
+        return DocumentInputHelper.ValidateReferenceDocuments(request.Locations ?? [], "Location");
     }
 
     private static IEnumerable<LoreStoryDocument> MapManuscriptDocuments(
@@ -137,15 +229,16 @@ public static class StoryService
         }
     }
 
-    private static IEnumerable<LoreStoryDocument> MapBibleDocuments(
+    private static IEnumerable<LoreStoryDocument> MapReferenceDocuments(
         IReadOnlyList<StoryDocumentInputDto> documents,
+        string kind,
         DateTimeOffset createdAt)
     {
-        foreach (var mapped in DocumentInputHelper.MapBibleDocuments(documents))
+        foreach (var mapped in DocumentInputHelper.MapReferenceDocuments(documents))
         {
             yield return new LoreStoryDocument
             {
-                Kind = StoryDocumentKinds.Bible,
+                Kind = kind,
                 FileName = mapped.FileName,
                 MimeType = mapped.MimeType,
                 TextContent = mapped.TextContent,
@@ -160,7 +253,8 @@ public static class StoryService
             story.Id,
             story.Name,
             story.Documents.Count(document => document.Kind == StoryDocumentKinds.Manuscript),
-            story.Documents.Count(document => document.Kind == StoryDocumentKinds.Bible),
+            story.Documents.Count(document => document.Kind == StoryDocumentKinds.Character),
+            story.Documents.Count(document => document.Kind == StoryDocumentKinds.Location),
             story.CreatedAt,
             story.UpdatedAt);
 
@@ -176,10 +270,13 @@ public static class StoryService
                         document.Kind,
                         document.FileName,
                         document.MimeType,
-                        !string.IsNullOrEmpty(document.TextContent),
-                        document.BinaryContent is { Length: > 0 },
+                        document.TextContent,
+                        ToBase64(document.BinaryContent),
                         document.SortOrder)),
             ],
             story.CreatedAt,
             story.UpdatedAt);
+
+    private static string? ToBase64(byte[]? content) =>
+        content is { Length: > 0 } ? Convert.ToBase64String(content) : null;
 }

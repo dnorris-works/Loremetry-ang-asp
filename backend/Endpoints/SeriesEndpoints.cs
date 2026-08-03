@@ -14,6 +14,7 @@ public static class SeriesEndpoints
         series.MapGet("/", ListSeries);
         series.MapGet("/{id:long}", GetSeries);
         series.MapPost("/", CreateSeries);
+        series.MapPut("/{id:long}", UpdateSeries);
 
         return app;
     }
@@ -70,6 +71,39 @@ public static class SeriesEndpoints
         {
             var item = await SeriesService.CreateAsync(authResult.User!.DbUserId, request, db, cancellationToken);
             return Results.Created($"/api/series/{item.Id}", item);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.BadRequest(new { message = exception.Message });
+        }
+    }
+
+    private static async Task<IResult> UpdateSeries(
+        long id,
+        UpdateSeriesRequest request,
+        HttpRequest httpRequest,
+        AuthService authService,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var authResult = await AuthEndpointHelpers.TryResolveUserAsync(httpRequest, authService, cancellationToken);
+        if (authResult.Error is { } error)
+        {
+            return error;
+        }
+
+        try
+        {
+            var item = await SeriesService.UpdateAsync(
+                authResult.User!.DbUserId,
+                id,
+                request,
+                db,
+                cancellationToken);
+
+            return item is null
+                ? Results.NotFound(new { message = $"Series '{id}' was not found." })
+                : Results.Ok(item);
         }
         catch (InvalidOperationException exception)
         {

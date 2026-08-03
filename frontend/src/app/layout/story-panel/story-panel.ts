@@ -1,6 +1,7 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 
 import { StoryFilePicker } from '../../core/stories/story-file-picker/story-file-picker';
+import { populateStoryForm } from '../../core/stories/story-form.utils';
 import { StoryDocumentInput } from '../../core/stories/story.models';
 import { StoriesService } from '../../core/stories/stories.service';
 
@@ -15,16 +16,47 @@ export class StoryPanel {
 
   protected readonly storyName = signal('');
   protected readonly manuscriptFiles = signal<StoryDocumentInput[]>([]);
-  protected readonly bibleFiles = signal<StoryDocumentInput[]>([]);
+  protected readonly characterFiles = signal<StoryDocumentInput[]>([]);
+  protected readonly locationFiles = signal<StoryDocumentInput[]>([]);
   protected readonly errorMessage = signal<string | null>(null);
 
+  protected readonly isEditing = this.storiesService.isEditing;
+  protected readonly isPanelLoading = this.storiesService.isPanelLoading;
   protected readonly recentManuscriptFiles = this.storiesService.recentManuscriptFiles;
-  protected readonly recentBibleFiles = this.storiesService.recentBibleFiles;
+  protected readonly recentCharacterFiles = this.storiesService.recentCharacterFiles;
+  protected readonly recentLocationFiles = this.storiesService.recentLocationFiles;
   protected readonly isSaving = this.storiesService.isSaving;
+
+  constructor() {
+    effect(() => {
+      const detail = this.storiesService.editingDetail();
+
+      if (detail) {
+        const form = populateStoryForm(detail);
+        this.storyName.set(form.name);
+        this.manuscriptFiles.set(form.manuscripts);
+        this.characterFiles.set(form.characters);
+        this.locationFiles.set(form.locations);
+        this.errorMessage.set(null);
+        return;
+      }
+
+      if (!this.storiesService.isEditing()) {
+        this.resetForm();
+      }
+    });
+
+    effect(() => {
+      const loadError = this.storiesService.panelLoadError();
+      if (loadError) {
+        this.errorMessage.set(loadError);
+      }
+    });
+  }
 
   protected close(): void {
     this.resetForm();
-    this.storiesService.closeAddPanel();
+    this.storiesService.closePanel();
   }
 
   protected async save(): Promise<void> {
@@ -32,7 +64,8 @@ export class StoryPanel {
 
     const name = this.storyName().trim();
     const manuscripts = this.manuscriptFiles();
-    const bibles = this.bibleFiles();
+    const characters = this.characterFiles();
+    const locations = this.locationFiles();
 
     if (!name) {
       this.errorMessage.set('Story name is required.');
@@ -44,11 +77,11 @@ export class StoryPanel {
       return;
     }
 
-    const story = await this.storiesService.addStory({
-      name,
-      manuscripts,
-      bibles,
-    });
+    const request = { name, manuscripts, characters, locations };
+    const editingId = this.storiesService.editingId();
+    const story = editingId
+      ? await this.storiesService.updateStory(editingId, request)
+      : await this.storiesService.addStory(request);
 
     if (story) {
       this.resetForm();
@@ -67,9 +100,14 @@ export class StoryPanel {
     this.storiesService.rememberManuscriptFiles(files);
   }
 
-  protected onBibleFilesChange(files: StoryDocumentInput[]): void {
-    this.bibleFiles.set(files);
-    this.storiesService.rememberBibleFiles(files);
+  protected onCharacterFilesChange(files: StoryDocumentInput[]): void {
+    this.characterFiles.set(files);
+    this.storiesService.rememberCharacterFiles(files);
+  }
+
+  protected onLocationFilesChange(files: StoryDocumentInput[]): void {
+    this.locationFiles.set(files);
+    this.storiesService.rememberLocationFiles(files);
   }
 
   protected onBrowseError(message: string): void {
@@ -79,7 +117,8 @@ export class StoryPanel {
   private resetForm(): void {
     this.storyName.set('');
     this.manuscriptFiles.set([]);
-    this.bibleFiles.set([]);
+    this.characterFiles.set([]);
+    this.locationFiles.set([]);
     this.errorMessage.set(null);
   }
 }
