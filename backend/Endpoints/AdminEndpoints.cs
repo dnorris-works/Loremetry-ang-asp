@@ -1,5 +1,6 @@
 using System.Data;
 using System.Text.RegularExpressions;
+using backend.Auth;
 using backend.Data;
 using backend.Dtos;
 using Microsoft.EntityFrameworkCore;
@@ -10,7 +11,7 @@ public static class AdminEndpoints
 {
     public static IEndpointRouteBuilder MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
-        var admin = app.MapGroup("/api/admin");
+        var admin = app.MapGroup("/api/admin").RequireOperator();
 
         admin.MapGet("/schema/schemas", GetSchemas);
         admin.MapGet("/schema/{schemaName}/objects", GetSchemaObjects);

@@ -3,6 +3,15 @@ export interface AuthConfig {
   publishableKey: string;
 }
 
+export interface AuthUser {
+  id: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  isAdmin: boolean;
+  breakGlass: boolean;
+}
+
 export interface AuthSession {
   authenticated: boolean;
   id?: number;
@@ -12,13 +21,4 @@ export interface AuthSession {
   isAdmin?: boolean;
   breakGlass?: boolean;
   reason?: string;
-}
-
-export interface MeResponse {
-  id: number;
-  email: string;
-  firstName: string;
-  lastName: string;
-  isAdmin: boolean;
-  breakGlass: boolean;
 }

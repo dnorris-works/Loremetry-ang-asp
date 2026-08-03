@@ -1,6 +1,7 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { AuthService } from '../../core/auth/auth.service';
 import { StoriesService } from '../../core/stories/stories.service';
 
 export interface SidebarItem {
@@ -16,13 +17,22 @@ export interface SidebarItem {
   styleUrl: './app-sidebar.css',
 })
 export class AppSidebar {
+  private readonly auth = inject(AuthService);
   private readonly storiesService = inject(StoriesService);
 
-  readonly items = input<SidebarItem[]>([
-    { label: 'Dashboard', route: '/', icon: '◉' },
-    { label: 'Admin', route: '/admin', icon: '⛭' },
-    { label: 'Settings', route: '/settings', icon: '⚙' },
-  ]);
+  readonly items = input<SidebarItem[] | null>(null);
+
+  protected readonly navItems = computed(() => {
+    if (this.items()) {
+      return this.items()!;
+    }
+
+    return [
+      { label: 'Dashboard', route: '/', icon: '◉' },
+      ...(this.auth.isAdmin() ? [{ label: 'Admin', route: '/admin', icon: '⛭' }] : []),
+      { label: 'Settings', route: '/settings', icon: '⚙' },
+    ];
+  });
 
   protected readonly stories = this.storiesService.stories;
 

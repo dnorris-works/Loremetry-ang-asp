@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { adminGuard } from './core/auth/admin.guard';
+
 export const routes: Routes = [
   {
     path: '',
@@ -18,6 +20,7 @@ export const routes: Routes = [
       },
       {
         path: 'admin',
+        canActivate: [adminGuard],
         loadComponent: () =>
           import('./pages/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),
         children: [

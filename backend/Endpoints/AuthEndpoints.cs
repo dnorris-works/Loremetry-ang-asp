@@ -12,7 +12,6 @@ public static class AuthEndpoints
 
         auth.MapGet("/config", GetAuthConfig);
         auth.MapGet("/session", GetAuthSession);
-        auth.MapGet("/me", GetMe);
 
         return app;
     }
@@ -43,25 +42,4 @@ public static class AuthEndpoints
         }
     }
 
-    private static async Task<IResult> GetMe(
-        HttpRequest request,
-        AuthService authService,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var user = await authService.ResolveAsync(request.Headers, cancellationToken);
-            return Results.Ok(new MeDto(
-                user.DbUserId,
-                user.Email,
-                user.FirstName,
-                user.LastName,
-                user.IsAdmin,
-                user.BreakGlass));
-        }
-        catch (AuthException)
-        {
-            return Results.Unauthorized();
-        }
-    }
 }

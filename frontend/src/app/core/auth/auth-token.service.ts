@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable } from '@angular/core';
 
 const BYPASS_STORAGE_KEY = 'loremetry_admin_bypass';
 

@@ -59,18 +59,6 @@ public sealed class AuthService
         return ToAuthUser(user, breakGlass: false);
     }
 
-    public async Task<AuthUser?> TryResolveAsync(IHeaderDictionary headers, CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await ResolveAsync(headers, cancellationToken);
-        }
-        catch (AuthException)
-        {
-            return null;
-        }
-    }
-
     private async Task<User> EnsureBootstrapUserAsync(CancellationToken cancellationToken)
     {
         var existing = await _db.Users

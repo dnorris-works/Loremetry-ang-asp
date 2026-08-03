@@ -11,11 +11,3 @@ public record AuthSessionDto(
     bool? IsAdmin = null,
     bool? BreakGlass = null,
     string? Reason = null);
-
-public record MeDto(
-    long Id,
-    string Email,
-    string FirstName,
-    string LastName,
-    bool IsAdmin,
-    bool BreakGlass);

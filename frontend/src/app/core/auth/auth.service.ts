@@ -2,7 +2,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthApiService } from './auth-api.service';
-import { AuthSession, MeResponse } from './auth.models';
+import { AuthSession, AuthUser } from './auth.models';
 import { AuthTokenService } from './auth-token.service';
 import { AUTH_BOOT_CONFIG } from './auth.tokens';
 
@@ -15,15 +15,13 @@ export class AuthService {
   private clerkSignOut: (() => Promise<void>) | null = null;
 
   readonly clerkEnabled = signal(this.bootConfig.clerkEnabled);
-  readonly publishableKey = signal(this.bootConfig.publishableKey);
-  readonly me = signal<MeResponse | null>(null);
+  readonly me = signal<AuthUser | null>(null);
   readonly enteredApp = signal(false);
   readonly restoringSession = signal(false);
   readonly sessionError = signal('');
 
   readonly breakGlass = computed(() => this.me()?.breakGlass === true);
   readonly isAdmin = computed(() => this.me()?.isAdmin === true);
-  readonly isSignedIn = computed(() => this.enteredApp());
 
   constructor() {
     this.authTokenService.registerAuthRequiredHandler(() => {

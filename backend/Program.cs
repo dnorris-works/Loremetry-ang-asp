@@ -97,7 +97,6 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken cancellationT
 app.MapAdminEndpoints();
 app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
-app.MapUserEndpoints();
 app.MapAuthEndpoints();
 
 app.Run();
