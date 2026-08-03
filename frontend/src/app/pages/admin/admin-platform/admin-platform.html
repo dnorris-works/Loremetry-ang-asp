@@ -1,0 +1,179 @@
+<section class="admin-platform">
+  <header class="admin-platform__header">
+    <div>
+      <h2 class="admin-platform__title">Platform credentials</h2>
+      <p class="admin-platform__description">
+        Provider keys are seeded from <code>.env</code> on first run, then stored in the database.
+        Changes here override environment defaults until redeployed.
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="admin-button admin-button--ghost"
+      [disabled]="isLoading()"
+      (click)="loadSettings()"
+    >
+      {{ isLoading() ? 'Loading…' : 'Reload' }}
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <p class="admin-error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (saveMessage()) {
+    <p class="admin-platform__success" role="status">{{ saveMessage() }}</p>
+  }
+
+  @if (serviceStatuses().length > 0) {
+    <div class="admin-card admin-platform__status">
+      <h3 class="admin-card__title">Configured services</h3>
+      <ul class="admin-platform__status-list">
+        @for (service of serviceStatuses(); track service.label) {
+          <li class="admin-platform__status-item">
+            <span>{{ service.label }}</span>
+            <span [class.admin-platform__status-ok]="service.configured" [class.admin-platform__status-missing]="!service.configured">
+              {{ service.configured ? 'Configured' : 'Not configured' }}
+            </span>
+          </li>
+        }
+        <li class="admin-platform__status-item">
+          <span>Default provider</span>
+          <span class="admin-platform__status-ok">{{ defaultProvider() }}</span>
+        </li>
+      </ul>
+    </div>
+  }
+
+  @if (testResults().length > 0) {
+    <div class="admin-card admin-platform__tests">
+      <h3 class="admin-card__title">Connection test results</h3>
+      <ul class="admin-platform__test-list">
+        @for (result of testResults(); track result.service) {
+          <li class="admin-platform__test-item">
+            <div class="admin-platform__test-header">
+              <span>{{ result.label }}</span>
+              <span
+                [class.admin-platform__test-ok]="result.success"
+                [class.admin-platform__test-fail]="!result.success && result.configured"
+                [class.admin-platform__test-skipped]="!result.configured"
+              >
+                @if (!result.configured) {
+                  Not configured
+                } @else if (result.success) {
+                  Connected
+                } @else {
+                  Failed
+                }
+              </span>
+            </div>
+            @if (result.error) {
+              <p class="admin-platform__test-error" role="alert">{{ result.error }}</p>
+            }
+          </li>
+        }
+      </ul>
+    </div>
+  }
+
+  <form class="admin-card admin-platform__form" (submit)="saveSettings($event)">
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">Anthropic API key</span>
+      <input
+        class="admin-platform__input"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="anthropicApiKey()"
+        (ngModelChange)="anthropicApiKey.set($event)"
+        name="anthropicApiKey"
+      />
+    </label>
+
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">TokenMix API key</span>
+      <input
+        class="admin-platform__input"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="tokenmixApiKey()"
+        (ngModelChange)="tokenmixApiKey.set($event)"
+        name="tokenmixApiKey"
+      />
+    </label>
+
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">Canopy API key</span>
+      <input
+        class="admin-platform__input"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="canopyApiKey()"
+        (ngModelChange)="canopyApiKey.set($event)"
+        name="canopyApiKey"
+      />
+    </label>
+
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">DataForSEO login</span>
+      <input
+        class="admin-platform__input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="dataForSeoLogin()"
+        (ngModelChange)="dataForSeoLogin.set($event)"
+        name="dataForSeoLogin"
+      />
+    </label>
+
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">DataForSEO password</span>
+      <input
+        class="admin-platform__input"
+        type="password"
+        autocomplete="off"
+        spellcheck="false"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="dataForSeoPassword()"
+        (ngModelChange)="dataForSeoPassword.set($event)"
+        name="dataForSeoPassword"
+      />
+    </label>
+
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">Default provider</span>
+      <select
+        class="admin-platform__input"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="defaultProvider()"
+        (ngModelChange)="defaultProvider.set($event)"
+        name="defaultProvider"
+      >
+        <option value="tokenmix">TokenMix</option>
+        <option value="anthropic">Anthropic</option>
+      </select>
+    </label>
+
+    <div class="admin-platform__actions">
+      <button
+        type="button"
+        class="admin-button admin-button--ghost"
+        [disabled]="isLoading() || isSaving() || isTesting()"
+        (click)="testConnections()"
+      >
+        {{ isTesting() ? 'Testing…' : 'Test all AI & API' }}
+      </button>
+      <button type="submit" class="admin-button" [disabled]="isLoading() || isSaving() || isTesting()">
+        {{ isSaving() ? 'Saving…' : 'Save platform settings' }}
+      </button>
+    </div>
+  </form>
+</section>

@@ -2,6 +2,7 @@ using backend.Auth;
 using backend.Configuration;
 using backend.Data;
 using backend.Endpoints;
+using backend.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +25,8 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<PlatformConnectionTests>();
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "postgres");
 
@@ -62,6 +65,14 @@ using (var scope = app.Services.CreateScope())
             PRIMARY KEY (user_id, key)
         );
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.platform_settings (
+            key VARCHAR(120) PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """);
+    await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
 
 app.UseHttpsRedirection();
@@ -84,6 +95,7 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken cancellationT
 .WithName("GetDatabaseHealth");
 
 app.MapAdminEndpoints();
+app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
 app.MapUserEndpoints();
 app.MapAuthEndpoints();

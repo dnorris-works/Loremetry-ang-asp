@@ -20,3 +20,39 @@ export interface SqlQueryResult {
   rowsAffected: number | null;
   message: string | null;
 }
+
+export interface PlatformSettings {
+  anthropicApiKey: string;
+  tokenmixApiKey: string;
+  canopyApiKey: string;
+  dataForSeoLogin: string;
+  dataForSeoPassword: string;
+  defaultProvider: string;
+  anthropicConfigured: boolean;
+  tokenmixConfigured: boolean;
+  canopyConfigured: boolean;
+  dataForSeoConfigured: boolean;
+}
+
+export interface UpdatePlatformSettingsRequest {
+  anthropicApiKey: string;
+  tokenmixApiKey: string;
+  canopyApiKey: string;
+  dataForSeoLogin: string;
+  dataForSeoPassword: string;
+  defaultProvider: string;
+}
+
+export type TestPlatformSettingsRequest = UpdatePlatformSettingsRequest;
+
+export interface PlatformServiceTestResult {
+  service: string;
+  label: string;
+  configured: boolean;
+  success: boolean;
+  error: string | null;
+}
+
+export interface PlatformConnectionTestResult {
+  results: PlatformServiceTestResult[];
+}

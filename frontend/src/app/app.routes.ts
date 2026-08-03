@@ -21,7 +21,12 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),
         children: [
-          { path: '', pathMatch: 'full', redirectTo: 'schema' },
+          { path: '', pathMatch: 'full', redirectTo: 'platform' },
+          {
+            path: 'platform',
+            loadComponent: () =>
+              import('./pages/admin/admin-platform/admin-platform').then((m) => m.AdminPlatform),
+          },
           {
             path: 'schema',
             loadComponent: () =>

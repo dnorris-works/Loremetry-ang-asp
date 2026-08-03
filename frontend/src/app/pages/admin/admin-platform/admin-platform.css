@@ -1,0 +1,160 @@
+@import '../admin-shared.css';
+
+.admin-platform {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-platform__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.admin-platform__title {
+  margin: 0 0 0.375rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.admin-platform__description {
+  margin: 0;
+  max-width: 42rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.admin-platform__description code {
+  color: var(--color-text);
+  font-size: 0.8125rem;
+}
+
+.admin-platform__success {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.admin-platform__status-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-platform__status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.admin-platform__status-item:last-child {
+  border-bottom: none;
+}
+
+.admin-platform__status-ok {
+  color: color-mix(in srgb, oklch(52% 0.16 150) 85%, var(--color-text));
+  font-weight: 500;
+}
+
+.admin-platform__status-missing {
+  color: var(--color-text-muted);
+}
+
+.admin-platform__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-platform__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.admin-platform__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.admin-platform__input {
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.admin-platform__input::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.admin-platform__input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.admin-platform__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+}
+
+.admin-platform__test-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-platform__test-item {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-platform__test-item:last-child {
+  border-bottom: none;
+}
+
+.admin-platform__test-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.admin-platform__test-ok {
+  color: color-mix(in srgb, oklch(52% 0.16 150) 85%, var(--color-text));
+}
+
+.admin-platform__test-fail {
+  color: var(--color-danger, #dc2626);
+}
+
+.admin-platform__test-skipped {
+  color: var(--color-text-muted);
+}
+
+.admin-platform__test-error {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}

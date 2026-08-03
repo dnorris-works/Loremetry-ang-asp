@@ -3,7 +3,16 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { ColumnInfo, SchemaInfo, SchemaObject, SqlQueryResult } from './admin.models';
+import {
+  ColumnInfo,
+  PlatformConnectionTestResult,
+  PlatformSettings,
+  SchemaInfo,
+  SchemaObject,
+  SqlQueryResult,
+  TestPlatformSettingsRequest,
+  UpdatePlatformSettingsRequest,
+} from './admin.models';
 
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
@@ -37,5 +46,17 @@ export class AdminApiService {
 
   executeSql(sql: string): Observable<SqlQueryResult> {
     return this.http.post<SqlQueryResult>(`${this.baseUrl}/sql`, { sql });
+  }
+
+  getPlatformSettings(): Observable<PlatformSettings> {
+    return this.http.get<PlatformSettings>(`${this.baseUrl}/platform-settings`);
+  }
+
+  updatePlatformSettings(settings: UpdatePlatformSettingsRequest): Observable<PlatformSettings> {
+    return this.http.put<PlatformSettings>(`${this.baseUrl}/platform-settings`, settings);
+  }
+
+  testPlatformSettings(settings: TestPlatformSettingsRequest): Observable<PlatformConnectionTestResult> {
+    return this.http.post<PlatformConnectionTestResult>(`${this.baseUrl}/platform-settings/test`, settings);
   }
 }

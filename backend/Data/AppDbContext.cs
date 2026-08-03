@@ -7,6 +7,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<UserSetting> UserSettings => Set<UserSetting>();
 
+    public DbSet<PlatformSetting> PlatformSettings => Set<PlatformSetting>();
+
     public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -23,6 +25,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany()
                 .HasForeignKey(setting => setting.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PlatformSetting>(entity =>
+        {
+            entity.ToTable("platform_settings", "lore");
+            entity.HasKey(setting => setting.SettingKey);
+            entity.Property(setting => setting.SettingKey).HasColumnName("key").HasMaxLength(120);
+            entity.Property(setting => setting.Value).HasColumnName("value").IsRequired();
+            entity.Property(setting => setting.UpdatedAt).HasColumnName("updated_at");
         });
 
         modelBuilder.Entity<User>(entity =>
