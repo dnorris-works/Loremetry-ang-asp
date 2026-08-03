@@ -4,6 +4,7 @@ import { RouterOutlet } from '@angular/router';
 import { AppFooter } from '../app-footer/app-footer';
 import { AppHeader } from '../app-header/app-header';
 import { AppSidebar } from '../app-sidebar/app-sidebar';
+import { SettingsPanel } from '../settings-panel/settings-panel';
 
 const MIN_SIDEBAR_WIDTH = 200;
 const MAX_SIDEBAR_WIDTH = 480;
@@ -11,7 +12,7 @@ const DEFAULT_SIDEBAR_WIDTH = 280;
 
 @Component({
   selector: 'app-shell',
-  imports: [AppHeader, AppSidebar, AppFooter, RouterOutlet],
+  imports: [AppHeader, AppSidebar, AppFooter, SettingsPanel, RouterOutlet],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
 })

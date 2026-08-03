@@ -1,0 +1,74 @@
+@if (isOpen()) {
+  <div
+    class="settings-panel__backdrop"
+    role="presentation"
+    (click)="onBackdropClick()"
+    (keydown)="onKeydown($event)"
+  >
+    <aside
+      class="settings-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settings-panel-title"
+      tabindex="-1"
+      (click)="onPanelClick($event)"
+      (keydown)="onKeydown($event)"
+    >
+      <header class="settings-panel__header">
+        <div>
+          <h2 id="settings-panel-title" class="settings-panel__title">Settings</h2>
+          <p class="settings-panel__subtitle">Customize your workspace appearance.</p>
+        </div>
+
+        <button
+          type="button"
+          class="settings-panel__close"
+          aria-label="Close settings"
+          (click)="close()"
+        >
+          &times;
+        </button>
+      </header>
+
+      <section class="settings-panel__section" aria-labelledby="theme-section-title">
+        <h3 id="theme-section-title" class="settings-panel__section-title">Theme</h3>
+        <p class="settings-panel__section-description">
+          Choose a color theme. Changes apply immediately and reset when you reload.
+        </p>
+
+        <div class="settings-panel__theme-grid" role="radiogroup" aria-labelledby="theme-section-title">
+          @for (theme of themeService.themes; track theme.id) {
+            <button
+              type="button"
+              class="settings-panel__theme-option"
+              [class.settings-panel__theme-option--selected]="isSelected(theme.id)"
+              role="radio"
+              [attr.aria-checked]="isSelected(theme.id)"
+              (click)="selectTheme(theme.id)"
+            >
+              <span class="settings-panel__swatch" aria-hidden="true">
+                <span
+                  class="settings-panel__swatch-bg"
+                  [style.background]="theme.swatch.background"
+                ></span>
+                <span
+                  class="settings-panel__swatch-surface"
+                  [style.background]="theme.swatch.surface"
+                ></span>
+                <span
+                  class="settings-panel__swatch-primary"
+                  [style.background]="theme.swatch.primary"
+                ></span>
+              </span>
+
+              <span class="settings-panel__theme-copy">
+                <span class="settings-panel__theme-name">{{ theme.name }}</span>
+                <span class="settings-panel__theme-description">{{ theme.description }}</span>
+              </span>
+            </button>
+          }
+        </div>
+      </section>
+    </aside>
+  </div>
+}

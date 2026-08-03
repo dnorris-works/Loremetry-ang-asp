@@ -1,16 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
 @import 'tailwindcss';
-
-:root {
-  --color-bg: oklch(97% 0.005 260);
-  --color-surface: oklch(100% 0 0);
-  --color-surface-muted: oklch(95% 0.008 260);
-  --color-border: oklch(88% 0.01 260);
-  --color-text: oklch(22% 0.02 260);
-  --color-text-muted: oklch(48% 0.02 260);
-  --color-primary: oklch(52% 0.19 264);
-}
+@import './app/core/themes/themes.css';
 
 *,
 *::before,
