@@ -2,6 +2,39 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "postgres: up",
+      "type": "shell",
+      "command": "docker compose up -d",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "postgres: wait",
+      "type": "shell",
+      "command": "until docker compose exec -T postgres pg_isready -U loremetry -d loremetry > /dev/null 2>&1; do echo 'Waiting for Postgres...'; sleep 1; done",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "postgres: up-and-wait",
+      "dependsOn": ["postgres: up", "postgres: wait"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "postgres: down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "build-backend",
       "command": "dotnet",
       "type": "process",

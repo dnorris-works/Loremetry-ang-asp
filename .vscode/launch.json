@@ -34,6 +34,12 @@
       "name": "Full Stack (BE + FE)",
       "configurations": ["Backend (.NET)", "Frontend (Angular)"],
       "stopAll": true
+    },
+    {
+      "name": "Full Stack + Postgres",
+      "configurations": ["Backend (.NET)", "Frontend (Angular)"],
+      "preLaunchTask": "postgres: up-and-wait",
+      "stopAll": true
     }
   ]
 }
