@@ -1,4 +1,4 @@
-@import '../admin-collections/admin-collections.css';
+@import './admin-shared.css';
 
 .admin-console {
   display: flex;

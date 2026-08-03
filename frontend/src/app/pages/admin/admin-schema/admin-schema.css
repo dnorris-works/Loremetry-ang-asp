@@ -1,4 +1,4 @@
-@import '../admin-collections/admin-collections.css';
+@import './admin-shared.css';
 
 .admin-schema {
   display: flex;
@@ -68,6 +68,12 @@
 .admin-schema__object-row--selectable:hover,
 .admin-schema__object-row--active {
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-muted));
+}
+
+.admin-schema__meta {
+  margin: 0 0 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
 }
 
 @media (max-width: 960px) {

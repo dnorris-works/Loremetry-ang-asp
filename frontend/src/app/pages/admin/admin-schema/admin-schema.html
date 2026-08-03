@@ -1,6 +1,6 @@
 <section class="admin-schema">
   @if (errorMessage()) {
-    <p class="admin-collections__error" role="alert">{{ errorMessage() }}</p>
+    <p class="admin-error" role="alert">{{ errorMessage() }}</p>
   }
 
   <div class="admin-schema__grid">
@@ -92,6 +92,51 @@
                   <td>{{ column.isNullable ? 'Yes' : 'No' }}</td>
                   <td>{{ column.defaultValue ?? '—' }}</td>
                 </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+
+    <article class="admin-card">
+      <h2 class="admin-card__title">
+        Data: {{ selectedSchema() }}.{{ selectedObject()!.name }}
+      </h2>
+
+      @if (!rows()) {
+        <p class="admin-card__muted">Loading data...</p>
+      } @else if (rows()!.columns.length === 0) {
+        <p class="admin-card__muted">No data available.</p>
+      } @else {
+        <p class="admin-schema__meta">
+          Showing {{ rows()!.rows.length }} row{{ rows()!.rows.length === 1 ? '' : 's' }} (max 100)
+        </p>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                @for (column of rows()!.columns; track column) {
+                  <th scope="col">{{ column }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @if (rows()!.rows.length === 0) {
+                <tr>
+                  <td class="admin-card__muted" [attr.colspan]="rows()!.columns.length">
+                    No rows found.
+                  </td>
+                </tr>
+              } @else {
+                @for (row of rows()!.rows; track $index) {
+                  <tr>
+                    @for (cell of row; track $index) {
+                      <td><code>{{ formatCell(cell) }}</code></td>
+                    }
+                  </tr>
+                }
               }
             </tbody>
           </table>

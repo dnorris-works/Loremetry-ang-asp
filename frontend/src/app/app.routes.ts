@@ -16,21 +16,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/admin/admin-layout/admin-layout').then((m) => m.AdminLayout),
         children: [
-          { path: '', pathMatch: 'full', redirectTo: 'collections' },
-          {
-            path: 'collections',
-            loadComponent: () =>
-              import('./pages/admin/admin-collections/admin-collections').then(
-                (m) => m.AdminCollections,
-              ),
-          },
-          {
-            path: 'collections/:id',
-            loadComponent: () =>
-              import('./pages/admin/admin-collection-detail/admin-collection-detail').then(
-                (m) => m.AdminCollectionDetail,
-              ),
-          },
+          { path: '', pathMatch: 'full', redirectTo: 'schema' },
           {
             path: 'schema',
             loadComponent: () =>

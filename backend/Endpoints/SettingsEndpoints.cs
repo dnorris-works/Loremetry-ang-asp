@@ -53,34 +53,31 @@ public static class SettingsEndpoints
         }
 
         var validationError = ValidateSettingValue(key, request.Value);
-        if (validationError is not null)
+        if (validationError is { } errorMessage)
         {
-            return Results.BadRequest(new { message = validationError });
+            return Results.BadRequest(new { message = errorMessage });
         }
 
         var setting = await db.AppSettings.FirstOrDefaultAsync(item => item.SettingKey == key, cancellationToken);
-        if (setting is null)
+        if (setting is not { } existingSetting)
         {
             return Results.NotFound(new { message = $"Setting '{key}' was not found." });
         }
 
-        setting.Value = request.Value.Trim();
-        setting.UpdatedAt = DateTimeOffset.UtcNow;
+        existingSetting.Value = request.Value.Trim();
+        existingSetting.UpdatedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new AppSettingDto(setting.SettingKey, setting.Value, setting.UpdatedAt));
+        return Results.Ok(new AppSettingDto(existingSetting.SettingKey, existingSetting.Value, existingSetting.UpdatedAt));
     }
 
-    private static string? ValidateSettingValue(string key, string value)
-    {
-        if (key == AppSettingKeys.Theme && !ThemeValues.Contains(value))
+    private static string? ValidateSettingValue(string key, string value) =>
+        key switch
         {
-            return $"Theme '{value}' is not supported.";
-        }
-
-        return null;
-    }
+            AppSettingKeys.Theme when !ThemeValues.Contains(value) => $"Theme '{value}' is not supported.",
+            _ => null,
+        };
 }
 
 public static class AppSettingKeys

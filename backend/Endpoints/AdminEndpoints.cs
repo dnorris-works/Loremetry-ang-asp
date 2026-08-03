@@ -1,290 +1,24 @@
-using System.Text.Json;
+using System.Data;
 using System.Text.RegularExpressions;
 using backend.Data;
 using backend.Dtos;
-using backend.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace backend.Endpoints;
 
 public static class AdminEndpoints
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = false,
-    };
-
     public static IEndpointRouteBuilder MapAdminEndpoints(this IEndpointRouteBuilder app)
     {
         var admin = app.MapGroup("/api/admin");
 
-        admin.MapGet("/collections", GetCollections);
-        admin.MapGet("/collections/{id:guid}", GetCollection);
-        admin.MapPost("/collections", CreateCollection);
-        admin.MapDelete("/collections/{id:guid}", DeleteCollection);
-
-        admin.MapPost("/collections/{collectionId:guid}/fields", CreateField);
-        admin.MapDelete("/fields/{id:guid}", DeleteField);
-
-        admin.MapGet("/collections/{collectionId:guid}/entries", GetEntries);
-        admin.MapPost("/collections/{collectionId:guid}/entries", CreateEntry);
-        admin.MapPut("/entries/{id:guid}", UpdateEntry);
-        admin.MapDelete("/entries/{id:guid}", DeleteEntry);
-
         admin.MapGet("/schema/schemas", GetSchemas);
         admin.MapGet("/schema/{schemaName}/objects", GetSchemaObjects);
         admin.MapGet("/schema/{schemaName}/objects/{objectName}/columns", GetColumns);
-
+        admin.MapGet("/schema/{schemaName}/objects/{objectName}/data", GetObjectData);
         admin.MapPost("/sql", ExecuteSql);
 
         return app;
-    }
-
-    private static async Task<IResult> GetCollections(AppDbContext db, CancellationToken cancellationToken)
-    {
-        var collections = await db.Collections
-            .AsNoTracking()
-            .OrderBy(collection => collection.Name)
-            .Select(collection => new CollectionSummaryDto(
-                collection.Id,
-                collection.Name,
-                collection.Slug,
-                collection.Description,
-                collection.Fields.Count,
-                collection.Entries.Count,
-                collection.UpdatedAt))
-            .ToListAsync(cancellationToken);
-
-        return Results.Ok(collections);
-    }
-
-    private static async Task<IResult> GetCollection(Guid id, AppDbContext db, CancellationToken cancellationToken)
-    {
-        var collection = await db.Collections
-            .AsNoTracking()
-            .Include(item => item.Fields.OrderBy(field => field.DisplayOrder))
-            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
-
-        return collection is null ? Results.NotFound() : Results.Ok(ToDetailDto(collection));
-    }
-
-    private static async Task<IResult> CreateCollection(
-        CreateCollectionRequest request,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        if (string.IsNullOrWhiteSpace(request.Name) || string.IsNullOrWhiteSpace(request.Slug))
-        {
-            return Results.BadRequest(new { message = "Name and slug are required." });
-        }
-
-        var slug = NormalizeSlug(request.Slug);
-        if (await db.Collections.AnyAsync(collection => collection.Slug == slug, cancellationToken))
-        {
-            return Results.Conflict(new { message = "A collection with this slug already exists." });
-        }
-
-        var now = DateTimeOffset.UtcNow;
-        var collection = new Collection
-        {
-            Id = Guid.NewGuid(),
-            Name = request.Name.Trim(),
-            Slug = slug,
-            Description = request.Description?.Trim(),
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
-
-        db.Collections.Add(collection);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/api/admin/collections/{collection.Id}", ToDetailDto(collection));
-    }
-
-    private static async Task<IResult> DeleteCollection(
-        Guid id,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        var collection = await db.Collections.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
-        if (collection is null)
-        {
-            return Results.NotFound();
-        }
-
-        db.Collections.Remove(collection);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.NoContent();
-    }
-
-    private static async Task<IResult> CreateField(
-        Guid collectionId,
-        CreateCollectionFieldRequest request,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        var collection = await db.Collections.FirstOrDefaultAsync(item => item.Id == collectionId, cancellationToken);
-        if (collection is null)
-        {
-            return Results.NotFound();
-        }
-
-        var fieldKey = NormalizeFieldKey(request.FieldKey);
-        if (await db.CollectionFields.AnyAsync(
-                field => field.CollectionId == collectionId && field.FieldKey == fieldKey,
-                cancellationToken))
-        {
-            return Results.Conflict(new { message = "A field with this key already exists." });
-        }
-
-        var field = new CollectionField
-        {
-            Id = Guid.NewGuid(),
-            CollectionId = collectionId,
-            Name = request.Name.Trim(),
-            FieldKey = fieldKey,
-            FieldType = request.FieldType,
-            IsRequired = request.IsRequired,
-            DisplayOrder = request.DisplayOrder,
-        };
-
-        db.CollectionFields.Add(field);
-        collection.UpdatedAt = DateTimeOffset.UtcNow;
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/api/admin/fields/{field.Id}", ToFieldDto(field));
-    }
-
-    private static async Task<IResult> DeleteField(
-        Guid id,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        var field = await db.CollectionFields
-            .Include(item => item.Collection)
-            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
-
-        if (field is null)
-        {
-            return Results.NotFound();
-        }
-
-        field.Collection.UpdatedAt = DateTimeOffset.UtcNow;
-        db.CollectionFields.Remove(field);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.NoContent();
-    }
-
-    private static async Task<IResult> GetEntries(
-        Guid collectionId,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        if (!await db.Collections.AnyAsync(collection => collection.Id == collectionId, cancellationToken))
-        {
-            return Results.NotFound();
-        }
-
-        var entries = await db.CollectionEntries
-            .AsNoTracking()
-            .Where(entry => entry.CollectionId == collectionId)
-            .OrderByDescending(entry => entry.UpdatedAt)
-            .ToListAsync(cancellationToken);
-
-        return Results.Ok(entries.Select(ToEntryDto));
-    }
-
-    private static async Task<IResult> CreateEntry(
-        Guid collectionId,
-        CreateCollectionEntryRequest request,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        var collection = await db.Collections
-            .Include(item => item.Fields)
-            .FirstOrDefaultAsync(item => item.Id == collectionId, cancellationToken);
-
-        if (collection is null)
-        {
-            return Results.NotFound();
-        }
-
-        var validationError = ValidateEntryValues(collection.Fields, request.Values);
-        if (validationError is not null)
-        {
-            return Results.BadRequest(new { message = validationError });
-        }
-
-        var now = DateTimeOffset.UtcNow;
-        var entry = new CollectionEntry
-        {
-            Id = Guid.NewGuid(),
-            CollectionId = collectionId,
-            ValuesJson = JsonSerializer.Serialize(request.Values, JsonOptions),
-            CreatedAt = now,
-            UpdatedAt = now,
-        };
-
-        db.CollectionEntries.Add(entry);
-        collection.UpdatedAt = now;
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.Created($"/api/admin/entries/{entry.Id}", ToEntryDto(entry));
-    }
-
-    private static async Task<IResult> UpdateEntry(
-        Guid id,
-        UpdateCollectionEntryRequest request,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        var entry = await db.CollectionEntries
-            .Include(item => item.Collection)
-            .ThenInclude(collection => collection.Fields)
-            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
-
-        if (entry is null)
-        {
-            return Results.NotFound();
-        }
-
-        var validationError = ValidateEntryValues(entry.Collection.Fields, request.Values);
-        if (validationError is not null)
-        {
-            return Results.BadRequest(new { message = validationError });
-        }
-
-        entry.ValuesJson = JsonSerializer.Serialize(request.Values, JsonOptions);
-        entry.UpdatedAt = DateTimeOffset.UtcNow;
-        entry.Collection.UpdatedAt = entry.UpdatedAt;
-
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.Ok(ToEntryDto(entry));
-    }
-
-    private static async Task<IResult> DeleteEntry(
-        Guid id,
-        AppDbContext db,
-        CancellationToken cancellationToken)
-    {
-        var entry = await db.CollectionEntries
-            .Include(item => item.Collection)
-            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
-
-        if (entry is null)
-        {
-            return Results.NotFound();
-        }
-
-        entry.Collection.UpdatedAt = DateTimeOffset.UtcNow;
-        db.CollectionEntries.Remove(entry);
-        await db.SaveChangesAsync(cancellationToken);
-
-        return Results.NoContent();
     }
 
     private static async Task<IResult> GetSchemas(AppDbContext db, CancellationToken cancellationToken)
@@ -406,6 +140,67 @@ public static class AdminEndpoints
         return Results.Ok(columns);
     }
 
+    private static async Task<IResult> GetObjectData(
+        string schemaName,
+        string objectName,
+        int? limit,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        if (!IsValidIdentifier(schemaName) || !IsValidIdentifier(objectName))
+        {
+            return Results.BadRequest(new { message = "Invalid schema or object name." });
+        }
+
+        const string verifySql = """
+            SELECT table_type
+            FROM information_schema.tables
+            WHERE table_schema = @schemaName AND table_name = @objectName
+            LIMIT 1;
+            """;
+
+        await using var connection = db.Database.GetDbConnection();
+        await OpenConnectionIfNeededAsync(connection, cancellationToken);
+
+        await using var verifyCommand = connection.CreateCommand();
+        verifyCommand.CommandText = verifySql;
+
+        var schemaParameter = verifyCommand.CreateParameter();
+        schemaParameter.ParameterName = "schemaName";
+        schemaParameter.Value = schemaName;
+        verifyCommand.Parameters.Add(schemaParameter);
+
+        var objectParameter = verifyCommand.CreateParameter();
+        objectParameter.ParameterName = "objectName";
+        objectParameter.Value = objectName;
+        verifyCommand.Parameters.Add(objectParameter);
+
+        if (await verifyCommand.ExecuteScalarAsync(cancellationToken) is not string objectType)
+        {
+            return Results.NotFound(new { message = $"Object '{schemaName}.{objectName}' was not found." });
+        }
+
+        if (objectType is not ("BASE TABLE" or "VIEW"))
+        {
+            return Results.BadRequest(new { message = $"Object '{schemaName}.{objectName}' does not contain row data." });
+        }
+
+        var rowLimit = Math.Clamp(limit ?? 100, 1, 500);
+
+        await using var dataCommand = connection.CreateCommand();
+        dataCommand.CommandText = $"""SELECT * FROM "{schemaName}"."{objectName}" LIMIT {rowLimit}""";
+
+        try
+        {
+            await using var reader = await dataCommand.ExecuteReaderAsync(cancellationToken);
+            return Results.Ok(await ReadQueryResultAsync(reader, cancellationToken));
+        }
+        catch (Exception exception)
+        {
+            return Results.BadRequest(new { message = exception.Message });
+        }
+    }
+
     private static async Task<IResult> ExecuteSql(
         ExecuteSqlRequest request,
         AppDbContext db,
@@ -417,10 +212,7 @@ public static class AdminEndpoints
         }
 
         await using var connection = db.Database.GetDbConnection();
-        if (connection.State != System.Data.ConnectionState.Open)
-        {
-            await connection.OpenAsync(cancellationToken);
-        }
+        await OpenConnectionIfNeededAsync(connection, cancellationToken);
 
         await using var command = connection.CreateCommand();
         command.CommandText = request.Sql.Trim();
@@ -431,25 +223,7 @@ public static class AdminEndpoints
 
             if (reader.FieldCount > 0)
             {
-                var columns = Enumerable.Range(0, reader.FieldCount)
-                    .Select(reader.GetName)
-                    .ToList();
-                var rows = new List<IReadOnlyList<object?>>();
-
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    var row = new object?[reader.FieldCount];
-                    for (var index = 0; index < reader.FieldCount; index++)
-                    {
-                        row[index] = await reader.IsDBNullAsync(index, cancellationToken)
-                            ? null
-                            : reader.GetValue(index);
-                    }
-
-                    rows.Add(row);
-                }
-
-                return Results.Ok(new SqlQueryResultDto(columns, rows, null, null));
+                return Results.Ok(await ReadQueryResultAsync(reader, cancellationToken));
             }
 
             var rowsAffected = reader.RecordsAffected;
@@ -461,11 +235,19 @@ public static class AdminEndpoints
                 }
             }
 
-            var message = rowsAffected >= 0
-                ? $"Command completed. Rows affected: {rowsAffected}."
-                : "Command completed successfully.";
+            var message = rowsAffected switch
+            {
+                >= 0 => $"Command completed. Rows affected: {rowsAffected}.",
+                _ => "Command completed successfully.",
+            };
 
-            return Results.Ok(new SqlQueryResultDto([], [], rowsAffected >= 0 ? rowsAffected : null, message));
+            int? reportedRowsAffected = rowsAffected switch
+            {
+                >= 0 => rowsAffected,
+                _ => null,
+            };
+
+            return Results.Ok(new SqlQueryResultDto([], [], reportedRowsAffected, message));
         }
         catch (Exception exception)
         {
@@ -473,54 +255,42 @@ public static class AdminEndpoints
         }
     }
 
-    private static CollectionDetailDto ToDetailDto(Collection collection) =>
-        new(
-            collection.Id,
-            collection.Name,
-            collection.Slug,
-            collection.Description,
-            collection.CreatedAt,
-            collection.UpdatedAt,
-            collection.Fields.OrderBy(field => field.DisplayOrder).Select(ToFieldDto).ToList());
+    private static readonly Regex IdentifierRegex = new(@"^[a-zA-Z_][a-zA-Z0-9_]*$", RegexOptions.Compiled);
 
-    private static CollectionFieldDto ToFieldDto(CollectionField field) =>
-        new(field.Id, field.Name, field.FieldKey, field.FieldType, field.IsRequired, field.DisplayOrder);
+    private static bool IsValidIdentifier(string value) => IdentifierRegex.IsMatch(value);
 
-    private static CollectionEntryDto ToEntryDto(CollectionEntry entry) =>
-        new(
-            entry.Id,
-            entry.CollectionId,
-            JsonSerializer.Deserialize<Dictionary<string, object?>>(entry.ValuesJson, JsonOptions) ?? [],
-            entry.CreatedAt,
-            entry.UpdatedAt);
-
-    private static string? ValidateEntryValues(
-        IEnumerable<CollectionField> fields,
-        Dictionary<string, object?> values)
+    private static async Task OpenConnectionIfNeededAsync(
+        System.Data.Common.DbConnection connection,
+        CancellationToken cancellationToken)
     {
-        foreach (var field in fields)
+        if (connection.State is not ConnectionState.Open)
         {
-            values.TryGetValue(field.FieldKey, out var value);
-
-            if (field.IsRequired && IsEmptyValue(value))
-            {
-                return $"Field '{field.Name}' is required.";
-            }
+            await connection.OpenAsync(cancellationToken);
         }
-
-        return null;
     }
 
-    private static bool IsEmptyValue(object? value) =>
-        value is null ||
-        (value is string text && string.IsNullOrWhiteSpace(text));
+    private static async Task<SqlQueryResultDto> ReadQueryResultAsync(
+        System.Data.Common.DbDataReader reader,
+        CancellationToken cancellationToken)
+    {
+        var columns = Enumerable.Range(0, reader.FieldCount)
+            .Select(reader.GetName)
+            .ToList();
+        var rows = new List<IReadOnlyList<object?>>();
 
-    private static readonly Regex SlugRegex = new(@"[^a-z0-9]+", RegexOptions.Compiled);
-    private static readonly Regex FieldKeyRegex = new(@"[^a-z0-9]+", RegexOptions.Compiled);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var row = new object?[reader.FieldCount];
+            for (var index = 0; index < reader.FieldCount; index++)
+            {
+                row[index] = await reader.IsDBNullAsync(index, cancellationToken)
+                    ? null
+                    : reader.GetValue(index);
+            }
 
-    private static string NormalizeSlug(string slug) =>
-        SlugRegex.Replace(slug.Trim().ToLowerInvariant(), "-").Trim('-');
+            rows.Add(row);
+        }
 
-    private static string NormalizeFieldKey(string fieldKey) =>
-        FieldKeyRegex.Replace(fieldKey.Trim().ToLowerInvariant(), "_").Trim('_');
+        return new SqlQueryResultDto(columns, rows, null, null);
+    }
 }
