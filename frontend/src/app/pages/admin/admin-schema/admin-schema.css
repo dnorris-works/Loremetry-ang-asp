@@ -1,4 +1,4 @@
-@import './admin-shared.css';
+@import '../admin-shared.css';
 
 .admin-schema {
   display: flex;
