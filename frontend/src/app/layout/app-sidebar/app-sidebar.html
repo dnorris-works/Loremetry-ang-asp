@@ -31,7 +31,7 @@
         } @else {
           <ul class="app-sidebar__section-list">
             @for (item of series(); track item.id) {
-              <li>
+              <li class="app-sidebar__series-group">
                 <button
                   type="button"
                   class="app-sidebar__section-item"
@@ -39,20 +39,56 @@
                   (click)="openEditSeries(item.id)"
                 >
                   <span class="app-sidebar__section-name">{{ item.name }}</span>
-                  @if (item.characterCount > 0 || item.locationCount > 0) {
-                    <span class="app-sidebar__section-meta">
-                      @if (item.characterCount > 0) {
-                        {{ item.characterCount }} character{{ item.characterCount === 1 ? '' : 's' }}
-                      }
-                      @if (item.characterCount > 0 && item.locationCount > 0) {
-                        ·
-                      }
-                      @if (item.locationCount > 0) {
-                        {{ item.locationCount }} location{{ item.locationCount === 1 ? '' : 's' }}
-                      }
-                    </span>
-                  }
+                  <span class="app-sidebar__section-meta">
+                    @if (storiesForSeries(item.id).length > 0) {
+                      {{ storiesForSeries(item.id).length }} stor{{ storiesForSeries(item.id).length === 1 ? 'y' : 'ies' }}
+                    }
+                    @if (storiesForSeries(item.id).length > 0 && (item.characterCount > 0 || item.locationCount > 0)) {
+                      ·
+                    }
+                    @if (item.characterCount > 0) {
+                      {{ item.characterCount }} character{{ item.characterCount === 1 ? '' : 's' }}
+                    }
+                    @if (item.characterCount > 0 && item.locationCount > 0) {
+                      ·
+                    }
+                    @if (item.locationCount > 0) {
+                      {{ item.locationCount }} location{{ item.locationCount === 1 ? '' : 's' }}
+                    }
+                  </span>
                 </button>
+
+                @if (storiesForSeries(item.id).length > 0) {
+                  <ul class="app-sidebar__series-stories">
+                    @for (story of storiesForSeries(item.id); track story.id) {
+                      <li>
+                        <button
+                          type="button"
+                          class="app-sidebar__section-item app-sidebar__section-item--nested"
+                          [class.app-sidebar__section-item--active]="isStorySelected(story.id)"
+                          (click)="openEditStory(story.id)"
+                        >
+                          <span class="app-sidebar__section-name">{{ story.name }}</span>
+                          <span class="app-sidebar__section-meta">
+                            {{ story.manuscriptCount }} manuscript{{ story.manuscriptCount === 1 ? '' : 's' }}
+                            @if (story.characterCount > 0 || story.locationCount > 0) {
+                              ·
+                              @if (story.characterCount > 0) {
+                                {{ story.characterCount }} character{{ story.characterCount === 1 ? '' : 's' }}
+                              }
+                              @if (story.characterCount > 0 && story.locationCount > 0) {
+                                ·
+                              }
+                              @if (story.locationCount > 0) {
+                                {{ story.locationCount }} location{{ story.locationCount === 1 ? '' : 's' }}
+                              }
+                            }
+                          </span>
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                }
               </li>
             }
           </ul>
@@ -90,9 +126,11 @@
       <div id="sidebar-stories-panel" class="app-sidebar__section-panel" aria-labelledby="sidebar-stories-label">
         @if (stories().length === 0) {
           <p class="app-sidebar__section-empty">No stories yet.</p>
+        } @else if (unassignedStories().length === 0) {
+          <p class="app-sidebar__section-empty">All stories are in a series.</p>
         } @else {
           <ul class="app-sidebar__section-list">
-            @for (story of stories(); track story.id) {
+            @for (story of unassignedStories(); track story.id) {
               <li class="app-sidebar__story-row">
                 <button
                   type="button"
@@ -114,9 +152,6 @@
                       @if (story.locationCount > 0) {
                         {{ story.locationCount }} location{{ story.locationCount === 1 ? '' : 's' }}
                       }
-                    }
-                    @if (seriesName(story.seriesId); as name) {
-                      · {{ name }}
                     }
                   </span>
                 </button>

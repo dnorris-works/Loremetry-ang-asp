@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 
 import { AddStoryToSeriesDialog } from '../add-story-to-series-dialog/add-story-to-series-dialog';
 import { SeriesService } from '../../core/series/series.service';
@@ -17,6 +17,9 @@ export class AppSidebar {
 
   protected readonly series = this.seriesService.series;
   protected readonly stories = this.storiesService.stories;
+  protected readonly unassignedStories = computed(() =>
+    this.stories().filter((story) => !story.seriesId),
+  );
   protected readonly isSeriesOpen = signal(false);
   protected readonly isStoriesOpen = signal(false);
   protected readonly addToSeriesStory = signal<Story | null>(null);
@@ -68,11 +71,7 @@ export class AppSidebar {
     return this.storiesService.isPanelOpen() && this.storiesService.editingId() === id;
   }
 
-  protected seriesName(seriesId: number | null | undefined): string | null {
-    if (!seriesId) {
-      return null;
-    }
-
-    return this.series().find((item) => item.id === seriesId)?.name ?? null;
+  protected storiesForSeries(seriesId: number): Story[] {
+    return this.stories().filter((story) => story.seriesId === seriesId);
   }
 }
