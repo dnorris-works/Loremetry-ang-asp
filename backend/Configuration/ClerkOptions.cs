@@ -16,12 +16,15 @@ public sealed class ClerkOptions
     {
         var issuer = (Environment.GetEnvironmentVariable("clerk_jwt_issuer") ?? string.Empty).Trim().TrimEnd('/');
         var bootstrapEmail = (Environment.GetEnvironmentVariable("bootstrap_admin_email") ?? string.Empty).Trim();
+        var operatorKey = (Environment.GetEnvironmentVariable("OPERATOR_KEY")
+            ?? Environment.GetEnvironmentVariable("admin_bypass_token")
+            ?? string.Empty).Trim();
 
         return new ClerkOptions
         {
             PublishableKey = (Environment.GetEnvironmentVariable("clerk_publishable_key") ?? string.Empty).Trim(),
             JwtIssuer = issuer,
-            AdminBypassToken = (Environment.GetEnvironmentVariable("admin_bypass_token") ?? string.Empty).Trim(),
+            AdminBypassToken = operatorKey,
             BootstrapAdminEmail = string.IsNullOrWhiteSpace(bootstrapEmail) ? "admin@local" : bootstrapEmail,
         };
     }
