@@ -14,18 +14,27 @@ public sealed class ClerkOptions
 
     public static ClerkOptions FromEnvironment()
     {
-        var issuer = (Environment.GetEnvironmentVariable("clerk_jwt_issuer") ?? string.Empty).Trim().TrimEnd('/');
-        var bootstrapEmail = (Environment.GetEnvironmentVariable("bootstrap_admin_email") ?? string.Empty).Trim();
-        var operatorKey = (Environment.GetEnvironmentVariable("OPERATOR_KEY")
-            ?? Environment.GetEnvironmentVariable("admin_bypass_token")
-            ?? string.Empty).Trim();
+        var issuer = ReadEnv("CLERK_JWT_ISSUER", "clerk_jwt_issuer").TrimEnd('/');
+        var bootstrapEmail = ReadEnv("BOOTSTRAP_ADMIN_EMAIL", "bootstrap_admin_email");
+        var operatorKey = ReadEnv("OPERATOR_KEY", "admin_bypass_token");
 
         return new ClerkOptions
         {
-            PublishableKey = (Environment.GetEnvironmentVariable("clerk_publishable_key") ?? string.Empty).Trim(),
+            PublishableKey = ReadEnv("CLERK_PUBLISHABLE_KEY", "clerk_publishable_key"),
             JwtIssuer = issuer,
             AdminBypassToken = operatorKey,
             BootstrapAdminEmail = string.IsNullOrWhiteSpace(bootstrapEmail) ? "admin@local" : bootstrapEmail,
         };
+    }
+
+    private static string ReadEnv(string primaryKey, string? legacyKey = null)
+    {
+        var value = Environment.GetEnvironmentVariable(primaryKey);
+        if (string.IsNullOrWhiteSpace(value) && legacyKey is not null)
+        {
+            value = Environment.GetEnvironmentVariable(legacyKey);
+        }
+
+        return (value ?? string.Empty).Trim();
     }
 }

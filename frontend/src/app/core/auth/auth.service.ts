@@ -116,7 +116,7 @@ export class AuthService {
 
       this.sessionError.set(
         data.reason?.trim() ||
-          'Sign-in could not be verified. Check clerk_jwt_issuer and clerk_publishable_key.',
+          'Sign-in could not be verified. Check CLERK_JWT_ISSUER and CLERK_PUBLISHABLE_KEY in .env or deployment settings.',
       );
       this.me.set(null);
       this.enteredApp.set(false);

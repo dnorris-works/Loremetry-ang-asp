@@ -1,19 +1,20 @@
 .auth-clerk__lead {
   text-align: center;
-  color: var(--text-muted, #64748b);
+  color: var(--color-text-muted);
   margin: 0 0 16px;
   font-size: 0.95rem;
+  line-height: 1.5;
 }
 
 .auth-clerk__muted {
   text-align: center;
-  color: var(--text-muted, #64748b);
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 
 .auth-clerk__error {
   text-align: center;
-  color: var(--danger, #dc2626);
+  color: var(--color-danger, #dc2626);
   font-size: 0.85rem;
   margin: 12px 0 0;
   line-height: 1.45;

@@ -1,10 +1,21 @@
+:root {
+  --color-bg: oklch(97% 0.005 260);
+  --color-surface: oklch(100% 0 0);
+  --color-surface-muted: oklch(95% 0.008 260);
+  --color-border: oklch(78% 0.02 260);
+  --color-text: oklch(22% 0.02 260);
+  --color-text-muted: oklch(40% 0.02 260);
+  --color-primary: oklch(52% 0.19 264);
+  --color-danger: oklch(52% 0.22 25);
+}
+
 [data-theme='light'] {
   --color-bg: oklch(97% 0.005 260);
   --color-surface: oklch(100% 0 0);
   --color-surface-muted: oklch(95% 0.008 260);
-  --color-border: oklch(88% 0.01 260);
+  --color-border: oklch(78% 0.02 260);
   --color-text: oklch(22% 0.02 260);
-  --color-text-muted: oklch(48% 0.02 260);
+  --color-text-muted: oklch(40% 0.02 260);
   --color-primary: oklch(52% 0.19 264);
 }
 
@@ -76,4 +87,5 @@
   --color-text: oklch(0% 0 0);
   --color-text-muted: oklch(30% 0 0);
   --color-primary: oklch(45% 0.25 264);
+  --color-danger: oklch(45% 0.22 25);
 }

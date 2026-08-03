@@ -48,7 +48,7 @@ public sealed class AuthService
         if (!_options.IsEnabled)
         {
             throw new AuthException(
-                "Clerk is not configured. Sign in is unavailable until clerk_jwt_issuer is set.");
+                "Clerk is not configured. Sign in is unavailable until CLERK_JWT_ISSUER is set.");
         }
 
         var bearerToken = GetBearerToken(headers)
