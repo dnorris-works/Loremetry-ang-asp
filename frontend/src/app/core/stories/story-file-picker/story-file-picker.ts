@@ -1,4 +1,13 @@
-import { Component, ElementRef, computed, input, output, signal, viewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  computed,
+  effect,
+  input,
+  output,
+  signal,
+  viewChild,
+} from '@angular/core';
 
 import {
   STORY_FILE_ACCEPT,
@@ -20,6 +29,8 @@ export class StoryFilePicker {
   );
   readonly listTitle = input('Selected files');
   readonly pickerTypeLabel = input('Files');
+  readonly collapsible = input(false);
+  readonly defaultExpanded = input(false);
   readonly options = input<StoryDocumentInput[]>([]);
   readonly value = input<StoryDocumentInput[]>([]);
   readonly valueChange = output<StoryDocumentInput[]>();
@@ -27,15 +38,53 @@ export class StoryFilePicker {
 
   protected readonly accept = STORY_FILE_ACCEPT;
   protected readonly isRecentOpen = signal(false);
-  protected readonly isListCollapsed = signal(false);
+  protected readonly isExpanded = signal(false);
   protected readonly isReading = signal(false);
+  protected readonly selectedKeys = signal<Set<string>>(new Set());
   protected readonly listboxId = `story-file-listbox-${crypto.randomUUID()}`;
 
-  protected readonly listSummary = computed(
-    () => `${this.listTitle()} (${this.value().length})`,
-  );
+  protected readonly allSelected = computed(() => {
+    const files = this.value();
+    if (files.length === 0) {
+      return false;
+    }
+
+    const selected = this.selectedKeys();
+    return files.every((file) => selected.has(storyDocumentKey(file)));
+  });
+
+  protected readonly selectedCount = computed(() => this.selectedKeys().size);
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+  private readonly selectAllCheckbox = viewChild<ElementRef<HTMLInputElement>>('selectAllCheckbox');
+
+  constructor() {
+    this.isExpanded.set(this.defaultExpanded());
+
+    effect(() => {
+      const files = this.value();
+      const validKeys = new Set(files.map((file) => storyDocumentKey(file)));
+
+      this.selectedKeys.update((keys) => {
+        const next = new Set([...keys].filter((key) => validKeys.has(key)));
+        return next.size === keys.size ? keys : next;
+      });
+    });
+
+    effect(() => {
+      const checkbox = this.selectAllCheckbox()?.nativeElement;
+      if (!checkbox) {
+        return;
+      }
+
+      const files = this.value();
+      const selected = this.selectedKeys();
+      const selectedInList = files.filter((file) => selected.has(storyDocumentKey(file))).length;
+
+      checkbox.indeterminate = selectedInList > 0 && selectedInList < files.length;
+      checkbox.checked = files.length > 0 && selectedInList === files.length;
+    });
+  }
 
   protected toggleRecentList(): void {
     if (this.filteredOptions().length === 0) {
@@ -45,8 +94,12 @@ export class StoryFilePicker {
     this.isRecentOpen.update((open) => !open);
   }
 
-  protected toggleFileList(): void {
-    this.isListCollapsed.update((collapsed) => !collapsed);
+  protected toggleExpanded(): void {
+    this.isExpanded.update((expanded) => !expanded);
+  }
+
+  protected showBody(): boolean {
+    return !this.collapsible() || this.isExpanded();
   }
 
   protected async browse(): Promise<void> {
@@ -104,18 +157,71 @@ export class StoryFilePicker {
   protected selectOption(option: StoryDocumentInput): void {
     this.valueChange.emit(this.mergeFiles(this.value(), [option]));
     this.isRecentOpen.set(false);
-    this.isListCollapsed.set(false);
+  }
+
+  protected isSelected(file: StoryDocumentInput): boolean {
+    return this.selectedKeys().has(storyDocumentKey(file));
+  }
+
+  protected toggleFileSelection(file: StoryDocumentInput): void {
+    const key = storyDocumentKey(file);
+    this.selectedKeys.update((keys) => {
+      const next = new Set(keys);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }
+
+  protected toggleSelectAll(): void {
+    const files = this.value();
+
+    if (this.allSelected()) {
+      this.selectedKeys.set(new Set());
+      return;
+    }
+
+    this.selectedKeys.set(new Set(files.map((file) => storyDocumentKey(file))));
+  }
+
+  protected removeSelected(): void {
+    const selected = this.selectedKeys();
+    this.valueChange.emit(
+      this.value().filter((file) => !selected.has(storyDocumentKey(file))),
+    );
+    this.selectedKeys.set(new Set());
   }
 
   protected removeFile(fileName: string): void {
-    this.valueChange.emit(
-      this.value().filter((file) => file.fileName !== fileName),
-    );
+    const key = fileName.toLowerCase();
+    this.selectedKeys.update((keys) => {
+      const next = new Set(keys);
+      next.delete(key);
+      return next;
+    });
+    this.valueChange.emit(this.value().filter((file) => file.fileName !== fileName));
   }
 
   protected filteredOptions(): StoryDocumentInput[] {
     const selected = new Set(this.value().map((file) => storyDocumentKey(file)));
     return this.options().filter((option) => !selected.has(storyDocumentKey(option)));
+  }
+
+  protected fileTypeLabel(fileName: string): string {
+    const extension = fileName.slice(fileName.lastIndexOf('.')).toLowerCase();
+    switch (extension) {
+      case '.md':
+        return 'Markdown';
+      case '.txt':
+        return 'Text';
+      case '.docx':
+        return 'Word';
+      default:
+        return extension.replace('.', '').toUpperCase() || 'File';
+    }
   }
 
   private async emitSelectedFiles(files: File[]): Promise<void> {
@@ -141,7 +247,9 @@ export class StoryFilePicker {
       const documents = await Promise.all(allowedFiles.map((file) => readStoryFile(file)));
       this.valueChange.emit(this.mergeFiles(this.value(), documents));
       this.isRecentOpen.set(false);
-      this.isListCollapsed.set(false);
+      if (this.collapsible()) {
+        this.isExpanded.set(true);
+      }
     } catch (error) {
       this.browseError.emit(
         error instanceof Error ? error.message : 'Failed to read the selected files.',

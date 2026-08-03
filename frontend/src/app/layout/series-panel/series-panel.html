@@ -1,7 +1,7 @@
 <section class="series-panel" aria-labelledby="series-panel-title">
   <header class="series-panel__header">
     <div>
-      <h2 id="series-panel-title" class="series-panel__title">
+      <h2 id="series-panel-title" class="series-panel__title theme-heading">
         {{ isEditing() ? 'Edit series' : 'New series' }}
       </h2>
       <p class="series-panel__subtitle">
@@ -44,6 +44,7 @@
       description="Choose character bible files (.md, .txt, or .docx), or add from recent files."
       listTitle="Character files"
       pickerTypeLabel="Character files"
+      [collapsible]="true"
       [options]="recentCharacterFiles()"
       [value]="characterFiles()"
       (valueChange)="onCharacterFilesChange($event)"
@@ -55,6 +56,7 @@
       description="Choose location bible files (.md, .txt, or .docx), or add from recent files."
       listTitle="Location files"
       pickerTypeLabel="Location files"
+      [collapsible]="true"
       [options]="recentLocationFiles()"
       [value]="locationFiles()"
       (valueChange)="onLocationFilesChange($event)"

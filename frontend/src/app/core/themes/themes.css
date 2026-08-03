@@ -7,6 +7,17 @@
   --color-text-muted: oklch(40% 0.02 260);
   --color-primary: oklch(52% 0.19 264);
   --color-danger: oklch(52% 0.22 25);
+  --color-header: color-mix(in oklch, var(--color-surface-muted) 72%, var(--color-primary) 28%);
+  --color-heading: color-mix(in oklch, var(--color-primary) 78%, var(--color-text) 22%);
+}
+
+.theme-heading {
+  color: var(--color-heading);
+  font-weight: 600;
+}
+
+.theme-surface-header {
+  background: var(--color-header);
 }
 
 [data-theme='light'] {

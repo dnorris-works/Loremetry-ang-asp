@@ -1,7 +1,7 @@
 <section class="story-panel" aria-labelledby="story-panel-title">
   <header class="story-panel__header">
     <div>
-      <h2 id="story-panel-title" class="story-panel__title">
+      <h2 id="story-panel-title" class="story-panel__title theme-heading">
         {{ isEditing() ? 'Edit story' : 'New story' }}
       </h2>
       <p class="story-panel__subtitle">
@@ -44,6 +44,7 @@
       description="Choose one or more manuscript files (.md, .txt, or .docx), or add from recent files."
       listTitle="Manuscript files"
       pickerTypeLabel="Manuscript files"
+      [collapsible]="true"
       [options]="recentManuscriptFiles()"
       [value]="manuscriptFiles()"
       (valueChange)="onManuscriptFilesChange($event)"
@@ -55,6 +56,7 @@
       description="Choose character bible files (.md, .txt, or .docx), or add from recent files."
       listTitle="Character files"
       pickerTypeLabel="Character files"
+      [collapsible]="true"
       [options]="recentCharacterFiles()"
       [value]="characterFiles()"
       (valueChange)="onCharacterFilesChange($event)"
@@ -66,6 +68,7 @@
       description="Choose location bible files (.md, .txt, or .docx), or add from recent files."
       listTitle="Location files"
       pickerTypeLabel="Location files"
+      [collapsible]="true"
       [options]="recentLocationFiles()"
       [value]="locationFiles()"
       (valueChange)="onLocationFilesChange($event)"

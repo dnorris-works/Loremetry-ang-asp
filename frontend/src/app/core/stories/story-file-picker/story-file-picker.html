@@ -1,98 +1,161 @@
-<div class="story-file-picker">
-  <label class="story-file-picker__label" [attr.for]="listboxId + '-browse'">
-    {{ label() }}
-  </label>
-
-  <p class="story-file-picker__description">{{ description() }}</p>
-
-  <div class="story-file-picker__control">
+<div
+  class="story-file-picker"
+  [class.story-file-picker--collapsible]="collapsible()"
+  [class.story-file-picker--collapsed]="collapsible() && !isExpanded()"
+>
+  @if (collapsible()) {
     <button
-      [id]="listboxId + '-browse'"
       type="button"
-      class="story-file-picker__browse"
-      [disabled]="isReading()"
-      (click)="browse()"
+      class="story-file-picker__header"
+      [attr.aria-expanded]="isExpanded()"
+      [attr.aria-controls]="listboxId + '-body'"
+      (click)="toggleExpanded()"
     >
-      {{ isReading() ? 'Reading files…' : 'Browse files' }}
-    </button>
-
-    @if (filteredOptions().length > 0) {
-      <button
-        type="button"
-        class="story-file-picker__recent"
-        aria-label="Add from recent files"
-        [attr.aria-expanded]="isRecentOpen()"
-        [attr.aria-controls]="listboxId"
-        (click)="toggleRecentList()"
-      >
-        Recent
-      </button>
-    }
-  </div>
-
-  @if (isRecentOpen() && filteredOptions().length > 0) {
-    <ul
-      [id]="listboxId"
-      class="story-file-picker__listbox"
-      role="listbox"
-      [attr.aria-label]="'Recent ' + pickerTypeLabel()"
-      aria-multiselectable="false"
-    >
-      @for (option of filteredOptions(); track option.fileName) {
-        <li>
-          <button
-            type="button"
-            class="story-file-picker__option"
-            role="option"
-            (mousedown)="$event.preventDefault()"
-            (click)="selectOption(option)"
-          >
-            {{ option.fileName }}
-          </button>
-        </li>
+      <span class="story-file-picker__header-label theme-heading">{{ label() }}</span>
+      @if (value().length > 0) {
+        <span class="story-file-picker__header-count">{{ value().length }}</span>
       }
-    </ul>
+      <span class="story-file-picker__header-chevron" aria-hidden="true">
+        {{ isExpanded() ? '▾' : '▸' }}
+      </span>
+    </button>
+  } @else {
+    <label class="story-file-picker__label theme-heading" [attr.for]="listboxId + '-browse'">
+      {{ label() }}
+    </label>
   }
 
-  @if (value().length > 0) {
-    <section class="story-file-picker__collapse">
-      <button
-        type="button"
-        class="story-file-picker__collapse-toggle"
-        [attr.aria-expanded]="!isListCollapsed()"
-        [attr.aria-controls]="listboxId + '-selected'"
-        (click)="toggleFileList()"
-      >
-        <span>{{ listSummary() }}</span>
-        <span class="story-file-picker__collapse-icon" aria-hidden="true">
-          {{ isListCollapsed() ? '▸' : '▾' }}
-        </span>
-      </button>
+  @if (showBody()) {
+    <div [id]="listboxId + '-body'" class="story-file-picker__body">
+      <p class="story-file-picker__description">{{ description() }}</p>
 
-      @if (!isListCollapsed()) {
-        <ul
-          [id]="listboxId + '-selected'"
-          class="story-file-picker__selected"
-          [attr.aria-label]="listTitle()"
+      <div class="story-file-picker__control">
+        <button
+          [id]="listboxId + '-browse'"
+          type="button"
+          class="story-file-picker__browse"
+          [disabled]="isReading()"
+          (click)="browse()"
         >
-          @for (file of value(); track file.fileName) {
-            <li class="story-file-picker__selected-item">
-              <code>{{ file.fileName }}</code>
+          {{ isReading() ? 'Reading files…' : 'Browse files' }}
+        </button>
+
+        @if (filteredOptions().length > 0) {
+          <button
+            type="button"
+            class="story-file-picker__recent"
+            aria-label="Add from recent files"
+            [attr.aria-expanded]="isRecentOpen()"
+            [attr.aria-controls]="listboxId"
+            (click)="toggleRecentList()"
+          >
+            Recent
+          </button>
+        }
+      </div>
+
+      @if (isRecentOpen() && filteredOptions().length > 0) {
+        <ul
+          [id]="listboxId"
+          class="story-file-picker__listbox"
+          role="listbox"
+          [attr.aria-label]="'Recent ' + pickerTypeLabel()"
+          aria-multiselectable="false"
+        >
+          @for (option of filteredOptions(); track option.fileName) {
+            <li>
               <button
                 type="button"
-                class="story-file-picker__remove"
-                [attr.aria-label]="'Remove ' + file.fileName"
-                (click)="removeFile(file.fileName)"
+                class="story-file-picker__option"
+                role="option"
+                (mousedown)="$event.preventDefault()"
+                (click)="selectOption(option)"
               >
-                &times;
+                {{ option.fileName }}
               </button>
             </li>
           }
         </ul>
       }
-    </section>
-  } @else {
-    <p class="story-file-picker__empty">No {{ pickerTypeLabel().toLowerCase() }} selected.</p>
+
+      @if (value().length > 0) {
+        <div class="story-file-picker__table-wrap">
+          <div class="story-file-picker__table-toolbar">
+            <span class="story-file-picker__table-title">{{ listTitle() }} ({{ value().length }})</span>
+
+            @if (selectedCount() > 0) {
+              <button
+                type="button"
+                class="story-file-picker__delete-selected"
+                (click)="removeSelected()"
+              >
+                Delete selected ({{ selectedCount() }})
+              </button>
+            }
+          </div>
+
+          <table
+            [id]="listboxId + '-selected'"
+            class="story-file-picker__table"
+            [attr.aria-label]="listTitle()"
+          >
+            <thead>
+              <tr>
+                <th class="story-file-picker__col-select" scope="col">
+                  <input
+                    #selectAllCheckbox
+                    type="checkbox"
+                    class="story-file-picker__checkbox"
+                    [attr.aria-label]="'Select all ' + pickerTypeLabel().toLowerCase()"
+                    (change)="toggleSelectAll()"
+                  />
+                </th>
+                <th class="story-file-picker__col-name" scope="col">File</th>
+                <th class="story-file-picker__col-type" scope="col">Type</th>
+                <th class="story-file-picker__col-actions" scope="col">
+                  <span class="story-file-picker__sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (file of value(); track file.fileName) {
+                <tr [class.story-file-picker__row--selected]="isSelected(file)">
+                  <td class="story-file-picker__col-select">
+                    <input
+                      type="checkbox"
+                      class="story-file-picker__checkbox"
+                      [checked]="isSelected(file)"
+                      [attr.aria-label]="'Select ' + file.fileName"
+                      (change)="toggleFileSelection(file)"
+                    />
+                  </td>
+                  <td class="story-file-picker__col-name">
+                    <span class="story-file-picker__file-name" [title]="file.fileName">
+                      {{ file.fileName }}
+                    </span>
+                  </td>
+                  <td class="story-file-picker__col-type">
+                    {{ fileTypeLabel(file.fileName) }}
+                  </td>
+                  <td class="story-file-picker__col-actions">
+                    <button
+                      type="button"
+                      class="story-file-picker__remove"
+                      [attr.aria-label]="'Remove ' + file.fileName"
+                      (click)="removeFile(file.fileName)"
+                    >
+                      &times;
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <p class="story-file-picker__empty">No {{ pickerTypeLabel().toLowerCase() }} selected.</p>
+      }
+    </div>
   }
 
   <input
