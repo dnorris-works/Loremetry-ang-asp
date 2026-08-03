@@ -1,0 +1,72 @@
+<section class="admin-console">
+  @if (errorMessage()) {
+    <p class="admin-collections__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  <article class="admin-card">
+    <div class="admin-card__header">
+      <div>
+        <h2 class="admin-card__title">SQL console</h2>
+        <p class="admin-card__description">
+          Run SQL against the connected PostgreSQL database. Use Ctrl+Enter or Cmd+Enter to execute.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="admin-button"
+        [disabled]="isRunning()"
+        (click)="runSql()"
+      >
+        {{ isRunning() ? 'Running...' : 'Run' }}
+      </button>
+    </div>
+
+    <label class="admin-field admin-field--full">
+      <span class="admin-field__label">SQL</span>
+      <textarea
+        class="admin-console__editor"
+        rows="10"
+        [value]="sql()"
+        (input)="sql.set($any($event.target).value)"
+        (keydown)="onKeydown($event)"
+        spellcheck="false"
+      ></textarea>
+    </label>
+  </article>
+
+  @if (result()) {
+    <article class="admin-card">
+      @if (result()!.message) {
+        <p class="admin-console__message" role="status">{{ result()!.message }}</p>
+      }
+
+      @if (result()!.columns.length > 0) {
+        <div class="admin-console__meta">
+          <span>{{ result()!.rows.length }} row{{ result()!.rows.length === 1 ? '' : 's' }}</span>
+        </div>
+
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                @for (column of result()!.columns; track column) {
+                  <th scope="col">{{ column }}</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of result()!.rows; track $index) {
+                <tr>
+                  @for (cell of row; track $index) {
+                    <td><code>{{ formatCell(cell) }}</code></td>
+                  }
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  }
+</section>

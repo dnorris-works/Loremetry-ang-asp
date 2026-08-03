@@ -1,0 +1,42 @@
+@import '../admin-collections/admin-collections.css';
+
+.admin-console {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.admin-console__editor {
+  width: 100%;
+  min-height: 14rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.admin-console__editor:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+  outline-offset: 2px;
+}
+
+.admin-console__message {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid color-mix(in srgb, oklch(55% 0.15 145) 35%, var(--color-border));
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, oklch(55% 0.15 145) 8%, var(--color-surface));
+  color: color-mix(in srgb, oklch(55% 0.15 145) 80%, var(--color-text));
+  font-size: 0.875rem;
+}
+
+.admin-console__meta {
+  margin-bottom: 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}

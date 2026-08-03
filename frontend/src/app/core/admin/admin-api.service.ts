@@ -13,6 +13,7 @@ import {
   CreateFieldRequest,
   SchemaInfo,
   SchemaObject,
+  SqlQueryResult,
 } from './admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -83,5 +84,9 @@ export class AdminApiService {
     return this.http.get<ColumnInfo[]>(
       `${this.baseUrl}/schema/${schemaName}/objects/${objectName}/columns`,
     );
+  }
+
+  executeSql(sql: string): Observable<SqlQueryResult> {
+    return this.http.post<SqlQueryResult>(`${this.baseUrl}/sql`, { sql });
   }
 }

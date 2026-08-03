@@ -36,6 +36,8 @@ public static class AdminEndpoints
         admin.MapGet("/schema/{schemaName}/objects", GetSchemaObjects);
         admin.MapGet("/schema/{schemaName}/objects/{objectName}/columns", GetColumns);
 
+        admin.MapPost("/sql", ExecuteSql);
+
         return app;
     }
 
@@ -402,6 +404,73 @@ public static class AdminEndpoints
         }
 
         return Results.Ok(columns);
+    }
+
+    private static async Task<IResult> ExecuteSql(
+        ExecuteSqlRequest request,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Sql))
+        {
+            return Results.BadRequest(new { message = "SQL is required." });
+        }
+
+        await using var connection = db.Database.GetDbConnection();
+        if (connection.State != System.Data.ConnectionState.Open)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = request.Sql.Trim();
+
+        try
+        {
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+            if (reader.FieldCount > 0)
+            {
+                var columns = Enumerable.Range(0, reader.FieldCount)
+                    .Select(reader.GetName)
+                    .ToList();
+                var rows = new List<IReadOnlyList<object?>>();
+
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var row = new object?[reader.FieldCount];
+                    for (var index = 0; index < reader.FieldCount; index++)
+                    {
+                        row[index] = await reader.IsDBNullAsync(index, cancellationToken)
+                            ? null
+                            : reader.GetValue(index);
+                    }
+
+                    rows.Add(row);
+                }
+
+                return Results.Ok(new SqlQueryResultDto(columns, rows, null, null));
+            }
+
+            var rowsAffected = reader.RecordsAffected;
+            while (await reader.NextResultAsync(cancellationToken))
+            {
+                if (reader.RecordsAffected > 0)
+                {
+                    rowsAffected = reader.RecordsAffected;
+                }
+            }
+
+            var message = rowsAffected >= 0
+                ? $"Command completed. Rows affected: {rowsAffected}."
+                : "Command completed successfully.";
+
+            return Results.Ok(new SqlQueryResultDto([], [], rowsAffected >= 0 ? rowsAffected : null, message));
+        }
+        catch (Exception exception)
+        {
+            return Results.BadRequest(new { message = exception.Message });
+        }
     }
 
     private static CollectionDetailDto ToDetailDto(Collection collection) =>

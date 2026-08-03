@@ -55,6 +55,13 @@ export interface ColumnInfo {
   defaultValue: string | null;
 }
 
+export interface SqlQueryResult {
+  columns: string[];
+  rows: unknown[][];
+  rowsAffected: number | null;
+  message: string | null;
+}
+
 export interface CreateCollectionRequest {
   name: string;
   slug: string;

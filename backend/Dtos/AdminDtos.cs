@@ -57,3 +57,11 @@ public record ColumnInfoDto(
     string DataType,
     bool IsNullable,
     string? DefaultValue);
+
+public record ExecuteSqlRequest(string Sql);
+
+public record SqlQueryResultDto(
+    IReadOnlyList<string> Columns,
+    IReadOnlyList<IReadOnlyList<object?>> Rows,
+    int? RowsAffected,
+    string? Message);

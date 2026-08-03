@@ -36,6 +36,11 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/admin/admin-schema/admin-schema').then((m) => m.AdminSchema),
           },
+          {
+            path: 'console',
+            loadComponent: () =>
+              import('./pages/admin/admin-console/admin-console').then((m) => m.AdminConsole),
+          },
         ],
       },
     ],
