@@ -72,6 +72,35 @@ using (var scope = app.Services.CreateScope())
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         );
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.stories (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            user_id BIGINT NOT NULL REFERENCES lore.users(id) ON DELETE CASCADE,
+            name VARCHAR(200) NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS stories_user_id_idx ON lore.stories (user_id);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.story_documents (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            story_id BIGINT NOT NULL REFERENCES lore.stories(id) ON DELETE CASCADE,
+            kind VARCHAR(20) NOT NULL CHECK (kind IN ('manuscript', 'bible')),
+            file_name VARCHAR(500) NOT NULL,
+            mime_type VARCHAR(127) NOT NULL,
+            text_content TEXT,
+            binary_content BYTEA,
+            sort_order INT NOT NULL DEFAULT 0,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            CONSTRAINT story_documents_story_kind_filename_unique UNIQUE (story_id, kind, file_name)
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS story_documents_story_id_idx ON lore.story_documents (story_id);
+        """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
 
@@ -97,6 +126,7 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken cancellationT
 app.MapAdminEndpoints();
 app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
+app.MapStoryEndpoints();
 app.MapAuthEndpoints();
 
 app.Run();

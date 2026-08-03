@@ -1,9 +1,35 @@
 <aside class="app-sidebar">
-  <div class="app-sidebar__stories-header">
-    <h2 class="app-sidebar__stories-title" id="sidebar-stories-label">Stories</h2>
+  <div class="app-sidebar__section-header">
+    <h2 class="app-sidebar__section-title" id="sidebar-series-label">Series</h2>
     <button
       type="button"
-      class="app-sidebar__add-story"
+      class="app-sidebar__add-button"
+      aria-label="Add series"
+      (click)="openAddSeriesPanel()"
+    >
+      +
+    </button>
+  </div>
+
+  @if (series().length === 0) {
+    <p class="app-sidebar__section-empty">No series yet.</p>
+  } @else {
+    <ul class="app-sidebar__section-list" aria-labelledby="sidebar-series-label">
+      @for (item of series(); track item.id) {
+        <li>
+          <div class="app-sidebar__section-item">
+            <span class="app-sidebar__section-name">{{ item.name }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
+  <div class="app-sidebar__section-header">
+    <h2 class="app-sidebar__section-title" id="sidebar-stories-label">Stories</h2>
+    <button
+      type="button"
+      class="app-sidebar__add-button"
       aria-label="Add story"
       (click)="openAddStoryPanel()"
     >
@@ -12,17 +38,17 @@
   </div>
 
   @if (stories().length === 0) {
-    <p class="app-sidebar__stories-empty">No stories yet.</p>
+    <p class="app-sidebar__section-empty">No stories yet.</p>
   } @else {
-    <ul class="app-sidebar__stories-list" aria-labelledby="sidebar-stories-label">
+    <ul class="app-sidebar__section-list" aria-labelledby="sidebar-stories-label">
       @for (story of stories(); track story.id) {
         <li>
-          <div class="app-sidebar__story-item">
-            <span class="app-sidebar__story-name">{{ story.name }}</span>
-            <span class="app-sidebar__story-path">
-              {{ story.manuscriptFiles.length }} manuscript
-              @if (story.bibleFiles.length > 0) {
-                · {{ story.bibleFiles.length }} bible
+          <div class="app-sidebar__section-item">
+            <span class="app-sidebar__section-name">{{ story.name }}</span>
+            <span class="app-sidebar__section-meta">
+              {{ story.manuscriptCount }} manuscript
+              @if (story.bibleCount > 0) {
+                · {{ story.bibleCount }} bible
               }
             </span>
           </div>

@@ -10,9 +10,10 @@
       [id]="listboxId + '-browse'"
       type="button"
       class="story-file-picker__browse"
+      [disabled]="isReading()"
       (click)="browse()"
     >
-      Browse files
+      {{ isReading() ? 'Reading files…' : 'Browse files' }}
     </button>
 
     @if (filteredOptions().length > 0) {
@@ -37,7 +38,7 @@
       [attr.aria-label]="'Recent ' + pickerTypeLabel()"
       aria-multiselectable="false"
     >
-      @for (option of filteredOptions(); track option) {
+      @for (option of filteredOptions(); track option.fileName) {
         <li>
           <button
             type="button"
@@ -46,7 +47,7 @@
             (mousedown)="$event.preventDefault()"
             (click)="selectOption(option)"
           >
-            {{ option }}
+            {{ option.fileName }}
           </button>
         </li>
       }
@@ -74,14 +75,14 @@
           class="story-file-picker__selected"
           [attr.aria-label]="listTitle()"
         >
-          @for (file of value(); track file) {
+          @for (file of value(); track file.fileName) {
             <li class="story-file-picker__selected-item">
-              <code>{{ file }}</code>
+              <code>{{ file.fileName }}</code>
               <button
                 type="button"
                 class="story-file-picker__remove"
-                [attr.aria-label]="'Remove ' + file"
-                (click)="removeFile(file)"
+                [attr.aria-label]="'Remove ' + file.fileName"
+                (click)="removeFile(file.fileName)"
               >
                 &times;
               </button>

@@ -11,6 +11,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<User> Users => Set<User>();
 
+    public DbSet<Story> Stories => Set<Story>();
+
+    public DbSet<StoryDocument> StoryDocuments => Set<StoryDocument>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserSetting>(entity =>
@@ -49,6 +53,43 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(user => user.UpdatedAt).HasColumnName("updated_at");
             entity.HasIndex(user => user.Email).IsUnique();
             entity.HasIndex(user => user.ClerkId).IsUnique();
+        });
+
+        modelBuilder.Entity<Story>(entity =>
+        {
+            entity.ToTable("stories", "lore");
+            entity.HasKey(story => story.Id);
+            entity.Property(story => story.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(story => story.UserId).HasColumnName("user_id");
+            entity.Property(story => story.Name).HasColumnName("name").HasMaxLength(200).IsRequired();
+            entity.Property(story => story.CreatedAt).HasColumnName("created_at");
+            entity.Property(story => story.UpdatedAt).HasColumnName("updated_at");
+            entity.HasIndex(story => story.UserId);
+            entity.HasOne(story => story.User)
+                .WithMany()
+                .HasForeignKey(story => story.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<StoryDocument>(entity =>
+        {
+            entity.ToTable("story_documents", "lore");
+            entity.HasKey(document => document.Id);
+            entity.Property(document => document.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(document => document.StoryId).HasColumnName("story_id");
+            entity.Property(document => document.Kind).HasColumnName("kind").HasMaxLength(20).IsRequired();
+            entity.Property(document => document.FileName).HasColumnName("file_name").HasMaxLength(500).IsRequired();
+            entity.Property(document => document.MimeType).HasColumnName("mime_type").HasMaxLength(127).IsRequired();
+            entity.Property(document => document.TextContent).HasColumnName("text_content");
+            entity.Property(document => document.BinaryContent).HasColumnName("binary_content");
+            entity.Property(document => document.SortOrder).HasColumnName("sort_order");
+            entity.Property(document => document.CreatedAt).HasColumnName("created_at");
+            entity.HasIndex(document => document.StoryId);
+            entity.HasIndex(document => new { document.StoryId, document.Kind, document.FileName }).IsUnique();
+            entity.HasOne(document => document.Story)
+                .WithMany(story => story.Documents)
+                .HasForeignKey(document => document.StoryId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

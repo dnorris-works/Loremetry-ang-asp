@@ -1,10 +1,12 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { SeriesService } from '../../core/series/series.service';
 import { StoriesService } from '../../core/stories/stories.service';
 import { AppFooter } from '../app-footer/app-footer';
 import { AppHeader } from '../app-header/app-header';
 import { AppSidebar } from '../app-sidebar/app-sidebar';
+import { SeriesPanel } from '../series-panel/series-panel';
 import { StoryPanel } from '../story-panel/story-panel';
 
 const MIN_SIDEBAR_WIDTH = 200;
@@ -13,13 +15,15 @@ const DEFAULT_SIDEBAR_WIDTH = 280;
 
 @Component({
   selector: 'app-shell',
-  imports: [AppHeader, AppSidebar, StoryPanel, AppFooter, RouterOutlet],
+  imports: [AppHeader, AppSidebar, SeriesPanel, StoryPanel, AppFooter, RouterOutlet],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
 })
 export class AppShell {
+  private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
 
+  protected readonly isSeriesPanelOpen = this.seriesService.isAddPanelOpen;
   protected readonly isStoryPanelOpen = this.storiesService.isAddPanelOpen;
   protected readonly sidebarWidth = signal(DEFAULT_SIDEBAR_WIDTH);
   protected readonly isResizing = signal(false);

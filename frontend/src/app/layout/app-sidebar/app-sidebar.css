@@ -7,7 +7,7 @@
   overflow: auto;
 }
 
-.app-sidebar__stories-header {
+.app-sidebar__section-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -16,13 +16,17 @@
   padding-inline: 0.75rem;
 }
 
-.app-sidebar__stories-title {
+.app-sidebar__section-header + .app-sidebar__section-header {
+  margin-top: 0.25rem;
+}
+
+.app-sidebar__section-title {
   margin: 0;
   font-size: 0.875rem;
   font-weight: 600;
 }
 
-.app-sidebar__add-story {
+.app-sidebar__add-button {
   display: grid;
   place-items: center;
   width: 1.75rem;
@@ -36,30 +40,30 @@
   cursor: pointer;
 }
 
-.app-sidebar__add-story:hover {
+.app-sidebar__add-button:hover {
   border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
   background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-muted));
 }
 
-.app-sidebar__add-story:focus-visible {
+.app-sidebar__add-button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-.app-sidebar__stories-empty {
+.app-sidebar__section-empty {
   margin: 0 0 1rem;
   padding-inline: 0.75rem;
   color: var(--color-text-muted);
   font-size: 0.8125rem;
 }
 
-.app-sidebar__stories-list {
+.app-sidebar__section-list {
   margin: 0 0 1rem;
   padding: 0;
   list-style: none;
 }
 
-.app-sidebar__story-item {
+.app-sidebar__section-item {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
@@ -67,12 +71,12 @@
   border-radius: 0.5rem;
 }
 
-.app-sidebar__story-name {
+.app-sidebar__section-name {
   font-size: 0.875rem;
   font-weight: 500;
 }
 
-.app-sidebar__story-path {
+.app-sidebar__section-meta {
   color: var(--color-text-muted);
   font-size: 0.75rem;
   overflow: hidden;

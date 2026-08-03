@@ -2,6 +2,7 @@ import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
+import { SeriesService } from '../../core/series/series.service';
 import { StoriesService } from '../../core/stories/stories.service';
 
 export interface SidebarItem {
@@ -18,6 +19,7 @@ export interface SidebarItem {
 })
 export class AppSidebar {
   private readonly auth = inject(AuthService);
+  private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
 
   readonly items = input<SidebarItem[] | null>(null);
@@ -34,9 +36,16 @@ export class AppSidebar {
     ];
   });
 
+  protected readonly series = this.seriesService.series;
   protected readonly stories = this.storiesService.stories;
 
+  protected openAddSeriesPanel(): void {
+    this.storiesService.closeAddPanel();
+    this.seriesService.openAddPanel();
+  }
+
   protected openAddStoryPanel(): void {
+    this.seriesService.closeAddPanel();
     this.storiesService.openAddPanel();
   }
 }

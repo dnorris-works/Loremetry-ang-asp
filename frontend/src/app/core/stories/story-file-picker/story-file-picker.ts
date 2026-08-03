@@ -5,6 +5,8 @@ import {
   STORY_FILE_EXTENSIONS,
   STORY_FILE_PICKER_TYPES,
 } from '../story-file.constants';
+import { StoryDocumentInput } from '../story.models';
+import { readStoryFile, storyDocumentKey } from '../story-file.utils';
 
 @Component({
   selector: 'app-story-file-picker',
@@ -18,14 +20,15 @@ export class StoryFilePicker {
   );
   readonly listTitle = input('Selected files');
   readonly pickerTypeLabel = input('Files');
-  readonly options = input<string[]>([]);
-  readonly value = input<string[]>([]);
-  readonly valueChange = output<string[]>();
+  readonly options = input<StoryDocumentInput[]>([]);
+  readonly value = input<StoryDocumentInput[]>([]);
+  readonly valueChange = output<StoryDocumentInput[]>();
   readonly browseError = output<string>();
 
   protected readonly accept = STORY_FILE_ACCEPT;
   protected readonly isRecentOpen = signal(false);
   protected readonly isListCollapsed = signal(false);
+  protected readonly isReading = signal(false);
   protected readonly listboxId = `story-file-listbox-${crypto.randomUUID()}`;
 
   protected readonly listSummary = computed(
@@ -69,7 +72,7 @@ export class StoryFilePicker {
           })),
         });
         const files = await Promise.all(handles.map((handle) => handle.getFile()));
-        this.emitSelectedFiles(files);
+        await this.emitSelectedFiles(files);
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
@@ -86,7 +89,7 @@ export class StoryFilePicker {
     this.fileInput()?.nativeElement.click();
   }
 
-  protected onFileSelected(event: Event): void {
+  protected async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const files = input.files ? Array.from(input.files) : [];
 
@@ -94,29 +97,29 @@ export class StoryFilePicker {
       return;
     }
 
-    this.emitSelectedFiles(files);
+    await this.emitSelectedFiles(files);
     input.value = '';
   }
 
-  protected selectOption(option: string): void {
+  protected selectOption(option: StoryDocumentInput): void {
     this.valueChange.emit(this.mergeFiles(this.value(), [option]));
     this.isRecentOpen.set(false);
     this.isListCollapsed.set(false);
   }
 
   protected removeFile(fileName: string): void {
-    this.valueChange.emit(this.value().filter((file) => file !== fileName));
+    this.valueChange.emit(
+      this.value().filter((file) => file.fileName !== fileName),
+    );
   }
 
-  protected filteredOptions(): string[] {
-    const selected = new Set(this.value());
-    return this.options().filter((option) => !selected.has(option));
+  protected filteredOptions(): StoryDocumentInput[] {
+    const selected = new Set(this.value().map((file) => storyDocumentKey(file)));
+    return this.options().filter((option) => !selected.has(storyDocumentKey(option)));
   }
 
-  private emitSelectedFiles(files: File[]): void {
-    const allowedFiles = files
-      .map((file) => file.name)
-      .filter((fileName) => this.isAllowedFile(fileName));
+  private async emitSelectedFiles(files: File[]): Promise<void> {
+    const allowedFiles = files.filter((file) => this.isAllowedFile(file.name));
     const rejectedCount = files.length - allowedFiles.length;
 
     if (allowedFiles.length === 0) {
@@ -132,13 +135,33 @@ export class StoryFilePicker {
       );
     }
 
-    this.valueChange.emit(this.mergeFiles(this.value(), allowedFiles));
-    this.isRecentOpen.set(false);
-    this.isListCollapsed.set(false);
+    this.isReading.set(true);
+
+    try {
+      const documents = await Promise.all(allowedFiles.map((file) => readStoryFile(file)));
+      this.valueChange.emit(this.mergeFiles(this.value(), documents));
+      this.isRecentOpen.set(false);
+      this.isListCollapsed.set(false);
+    } catch (error) {
+      this.browseError.emit(
+        error instanceof Error ? error.message : 'Failed to read the selected files.',
+      );
+    } finally {
+      this.isReading.set(false);
+    }
   }
 
-  private mergeFiles(current: string[], next: string[]): string[] {
-    return [...new Set([...current, ...next])];
+  private mergeFiles(
+    current: StoryDocumentInput[],
+    next: StoryDocumentInput[],
+  ): StoryDocumentInput[] {
+    const merged = new Map<string, StoryDocumentInput>();
+
+    for (const file of [...current, ...next]) {
+      merged.set(storyDocumentKey(file), file);
+    }
+
+    return [...merged.values()];
   }
 
   private isAllowedFile(fileName: string): boolean {

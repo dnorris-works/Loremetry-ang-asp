@@ -54,7 +54,9 @@
       <button type="button" class="story-panel__button story-panel__button--ghost" (click)="close()">
         Cancel
       </button>
-      <button type="submit" class="story-panel__button">Save story</button>
+      <button type="submit" class="story-panel__button" [disabled]="isSaving()">
+        {{ isSaving() ? 'Saving…' : 'Save story' }}
+      </button>
     </div>
   </form>
 </section>

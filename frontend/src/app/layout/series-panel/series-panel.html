@@ -1,0 +1,38 @@
+<section class="series-panel" aria-labelledby="series-panel-title">
+  <header class="series-panel__header">
+    <div>
+      <h2 id="series-panel-title" class="series-panel__title">New series</h2>
+      <p class="series-panel__subtitle">Add a series to group related stories.</p>
+    </div>
+
+    <button type="button" class="series-panel__close" aria-label="Close series panel" (click)="close()">
+      &times;
+    </button>
+  </header>
+
+  @if (errorMessage()) {
+    <p class="series-panel__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  <form class="series-panel__form" (submit)="$event.preventDefault(); save()">
+    <label class="series-panel__field">
+      <span class="series-panel__field-label">Series name</span>
+      <input
+        class="series-panel__input"
+        type="text"
+        name="seriesName"
+        autocomplete="off"
+        placeholder="Enter a series name"
+        [value]="seriesName()"
+        (input)="onSeriesNameInput($event)"
+      />
+    </label>
+
+    <div class="series-panel__actions">
+      <button type="button" class="series-panel__button series-panel__button--ghost" (click)="close()">
+        Cancel
+      </button>
+      <button type="submit" class="series-panel__button">Save series</button>
+    </div>
+  </form>
+</section>

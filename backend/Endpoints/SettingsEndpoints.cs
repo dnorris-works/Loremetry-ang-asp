@@ -43,7 +43,7 @@ public static class SettingsEndpoints
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        var authResult = await TryResolveUser(request, authService, cancellationToken);
+        var authResult = await AuthEndpointHelpers.TryResolveUserAsync(request, authService, cancellationToken);
         if (authResult.Error is { } error)
         {
             return error;
@@ -78,7 +78,7 @@ public static class SettingsEndpoints
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        var authResult = await TryResolveUser(httpRequest, authService, cancellationToken);
+        var authResult = await AuthEndpointHelpers.TryResolveUserAsync(httpRequest, authService, cancellationToken);
         if (authResult.Error is { } error)
         {
             return error;
@@ -135,22 +135,6 @@ public static class SettingsEndpoints
             AppSettingKeys.Theme when !ThemeValues.Contains(value) => $"Theme '{value}' is not supported.",
             _ => null,
         };
-
-    private static async Task<(AuthUser? User, IResult? Error)> TryResolveUser(
-        HttpRequest request,
-        AuthService authService,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            var user = await authService.ResolveAsync(request.Headers, cancellationToken);
-            return (user, null);
-        }
-        catch (AuthException exception)
-        {
-            return (null, Results.Json(new { message = exception.Message }, statusCode: StatusCodes.Status401Unauthorized));
-        }
-    }
 }
 
 public static class AppSettingKeys
