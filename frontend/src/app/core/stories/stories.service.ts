@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, firstValueFrom, of } from 'rxjs';
 
 import { AuthService } from '../auth/auth.service';
+import { SeriesApiService } from '../series/series-api.service';
 import { StoriesApiService } from './stories-api.service';
 import { CreateStoryRequest, Story, StoryDetail, StoryDocumentInput } from './story.models';
 import { storyDocumentKey } from './story-file.utils';
@@ -10,6 +11,7 @@ import { storyDocumentKey } from './story-file.utils';
 @Injectable({ providedIn: 'root' })
 export class StoriesService {
   private readonly storiesApi = inject(StoriesApiService);
+  private readonly seriesApi = inject(SeriesApiService);
   private readonly auth = inject(AuthService);
 
   readonly stories = signal<Story[]>([]);
@@ -143,6 +145,24 @@ export class StoriesService {
     } catch (error) {
       this.saveError.set(this.readErrorMessage(error, 'Failed to add story to series.'));
       return null;
+    }
+  }
+
+  async setSeriesStoryOrder(seriesId: number, storyIds: number[]): Promise<boolean> {
+    this.saveError.set(null);
+
+    try {
+      const updatedStories = await firstValueFrom(
+        this.seriesApi.reorderSeriesStories(seriesId, storyIds),
+      );
+      const updatedById = new Map(updatedStories.map((story) => [story.id, story]));
+      this.stories.update((stories) =>
+        stories.map((story) => updatedById.get(story.id) ?? story),
+      );
+      return true;
+    } catch (error) {
+      this.saveError.set(this.readErrorMessage(error, 'Failed to reorder stories.'));
+      return false;
     }
   }
 

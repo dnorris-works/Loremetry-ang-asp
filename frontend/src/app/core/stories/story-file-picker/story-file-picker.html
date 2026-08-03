@@ -26,10 +26,29 @@
   }
 
   @if (showBody()) {
-    <div [id]="listboxId + '-body'" class="story-file-picker__body">
+    <div
+      [id]="listboxId + '-body'"
+      class="story-file-picker__body"
+      [class.story-file-picker__body--drag-over]="isDragOver()"
+      (dragenter)="onDragEnter($event)"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+    >
       <p class="story-file-picker__description">{{ description() }}</p>
 
-      <div class="story-file-picker__control">
+      <div class="story-file-picker__drop-zone" [class.story-file-picker__drop-zone--active]="isDragOver()">
+        <p class="story-file-picker__drop-zone-text">
+          @if (isDragOver()) {
+            Drop files to add
+          } @else if (isReading()) {
+            Reading files…
+          } @else {
+            Drag files here
+          }
+        </p>
+
+        <div class="story-file-picker__control">
         <button
           [id]="listboxId + '-browse'"
           type="button"
@@ -52,6 +71,7 @@
             Recent
           </button>
         }
+      </div>
       </div>
 
       @if (isRecentOpen() && filteredOptions().length > 0) {

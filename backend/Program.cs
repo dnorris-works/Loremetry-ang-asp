@@ -144,7 +144,29 @@ using (var scope = app.Services.CreateScope())
         ALTER TABLE lore.stories ADD COLUMN IF NOT EXISTS series_id BIGINT REFERENCES lore.series(id) ON DELETE SET NULL;
         """);
     await db.Database.ExecuteSqlRawAsync("""
-        CREATE INDEX IF NOT EXISTS stories_series_id_idx ON lore.stories (series_id);
+        ALTER TABLE lore.stories ADD COLUMN IF NOT EXISTS series_sort_order INT NOT NULL DEFAULT 0;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        WITH ranked AS (
+            SELECT
+                id,
+                ROW_NUMBER() OVER (
+                    PARTITION BY series_id
+                    ORDER BY updated_at ASC, id ASC
+                ) - 1 AS sort_order
+            FROM lore.stories
+            WHERE series_id IS NOT NULL
+        )
+        UPDATE lore.stories AS story
+        SET series_sort_order = ranked.sort_order
+        FROM ranked
+        WHERE story.id = ranked.id;
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS stories_series_id_sort_order_idx ON lore.stories (series_id, series_sort_order);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        DROP INDEX IF EXISTS lore.stories_series_id_idx;
         """);
     await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.series_bible_documents (

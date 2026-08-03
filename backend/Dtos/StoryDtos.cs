@@ -4,6 +4,7 @@ public record StorySummaryDto(
     long Id,
     string Name,
     long? SeriesId,
+    int SeriesSortOrder,
     int ManuscriptCount,
     int CharacterCount,
     int LocationCount,

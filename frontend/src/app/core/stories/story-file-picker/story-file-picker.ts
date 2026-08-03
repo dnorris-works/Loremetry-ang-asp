@@ -25,7 +25,7 @@ import { readStoryFile, storyDocumentKey } from '../story-file.utils';
 export class StoryFilePicker {
   readonly label = input('Files');
   readonly description = input(
-    'Choose one or more files (.md, .txt, or .docx), or add from recent files.',
+    'Browse, drag and drop, or add from recent files (.md, .txt, or .docx).',
   );
   readonly listTitle = input('Selected files');
   readonly pickerTypeLabel = input('Files');
@@ -40,6 +40,7 @@ export class StoryFilePicker {
   protected readonly isRecentOpen = signal(false);
   protected readonly isExpanded = signal(false);
   protected readonly isReading = signal(false);
+  protected readonly isDragOver = signal(false);
   protected readonly selectedKeys = signal<Set<string>>(new Set());
   protected readonly listboxId = `story-file-listbox-${crypto.randomUUID()}`;
 
@@ -57,6 +58,7 @@ export class StoryFilePicker {
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
   private readonly selectAllCheckbox = viewChild<ElementRef<HTMLInputElement>>('selectAllCheckbox');
+  private dragDepth = 0;
 
   constructor() {
     this.isExpanded.set(this.defaultExpanded());
@@ -100,6 +102,56 @@ export class StoryFilePicker {
 
   protected showBody(): boolean {
     return !this.collapsible() || this.isExpanded();
+  }
+
+  protected onDragEnter(event: DragEvent): void {
+    if (this.isReading() || !this.hasFileTransfer(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    this.dragDepth += 1;
+    this.isDragOver.set(true);
+  }
+
+  protected onDragOver(event: DragEvent): void {
+    if (this.isReading() || !this.hasFileTransfer(event)) {
+      return;
+    }
+
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  protected onDragLeave(event: DragEvent): void {
+    if (this.isReading()) {
+      return;
+    }
+
+    event.preventDefault();
+    this.dragDepth = Math.max(0, this.dragDepth - 1);
+    if (this.dragDepth === 0) {
+      this.isDragOver.set(false);
+    }
+  }
+
+  protected async onDrop(event: DragEvent): Promise<void> {
+    event.preventDefault();
+    this.dragDepth = 0;
+    this.isDragOver.set(false);
+
+    if (this.isReading()) {
+      return;
+    }
+
+    const files = event.dataTransfer?.files ? Array.from(event.dataTransfer.files) : [];
+    if (files.length === 0) {
+      return;
+    }
+
+    await this.emitSelectedFiles(files);
   }
 
   protected async browse(): Promise<void> {
@@ -275,5 +327,10 @@ export class StoryFilePicker {
   private isAllowedFile(fileName: string): boolean {
     const lowerName = fileName.toLowerCase();
     return STORY_FILE_EXTENSIONS.some((extension) => lowerName.endsWith(extension));
+  }
+
+  private hasFileTransfer(event: DragEvent): boolean {
+    const types = event.dataTransfer?.types;
+    return types ? [...types].includes('Files') : false;
   }
 }

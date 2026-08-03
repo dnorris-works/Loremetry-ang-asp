@@ -33,3 +33,5 @@ public record UpdateSeriesRequest(
     string Name,
     IReadOnlyList<StoryDocumentInputDto> Characters,
     IReadOnlyList<StoryDocumentInputDto> Locations);
+
+public record ReorderSeriesStoriesRequest(IReadOnlyList<long> StoryIds);

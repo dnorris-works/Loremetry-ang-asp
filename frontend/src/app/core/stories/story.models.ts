@@ -19,6 +19,7 @@ export interface Story {
   id: number;
   name: string;
   seriesId?: number | null;
+  seriesSortOrder: number;
   manuscriptCount: number;
   characterCount: number;
   locationCount: number;

@@ -26,6 +26,10 @@
 
     @if (isSeriesOpen()) {
       <div id="sidebar-series-panel" class="app-sidebar__section-panel" aria-labelledby="sidebar-series-label">
+        @if (assignError()) {
+          <p class="app-sidebar__section-error" role="alert">{{ assignError() }}</p>
+        }
+
         @if (series().length === 0) {
           <p class="app-sidebar__section-empty">No series yet.</p>
         } @else {
@@ -58,37 +62,49 @@
                   </span>
                 </button>
 
-                @if (storiesForSeries(item.id).length > 0) {
-                  <ul class="app-sidebar__series-stories">
-                    @for (story of storiesForSeries(item.id); track story.id) {
-                      <li>
-                        <button
-                          type="button"
-                          class="app-sidebar__section-item app-sidebar__section-item--nested"
-                          [class.app-sidebar__section-item--active]="isStorySelected(story.id)"
-                          (click)="openEditStory(story.id)"
-                        >
-                          <span class="app-sidebar__section-name">{{ story.name }}</span>
-                          <span class="app-sidebar__section-meta">
-                            {{ story.manuscriptCount }} manuscript{{ story.manuscriptCount === 1 ? '' : 's' }}
-                            @if (story.characterCount > 0 || story.locationCount > 0) {
-                              ·
-                              @if (story.characterCount > 0) {
-                                {{ story.characterCount }} character{{ story.characterCount === 1 ? '' : 's' }}
-                              }
-                              @if (story.characterCount > 0 && story.locationCount > 0) {
-                                ·
-                              }
-                              @if (story.locationCount > 0) {
-                                {{ story.locationCount }} location{{ story.locationCount === 1 ? '' : 's' }}
-                              }
+                <ul
+                  cdkDropList
+                  class="app-sidebar__series-stories"
+                  [class.app-sidebar__series-stories--empty]="storiesForSeries(item.id).length === 0"
+                  [id]="seriesDropListId(item.id)"
+                  [cdkDropListData]="storiesForSeries(item.id)"
+                  [cdkDropListConnectedTo]="['unassigned-stories']"
+                  (cdkDropListDropped)="onSeriesStoriesDropped($event, item.id)"
+                >
+                  @for (story of storiesForSeries(item.id); track story.id) {
+                    <li
+                      cdkDrag
+                      class="app-sidebar__series-story-row"
+                      [cdkDragData]="story"
+                      [cdkDragDisabled]="isAssigning()"
+                    >
+                      <button
+                        type="button"
+                        cdkDragHandle
+                        class="app-sidebar__section-item app-sidebar__section-item--nested app-sidebar__drag-handle"
+                        [class.app-sidebar__section-item--active]="isStorySelected(story.id)"
+                        (click)="openEditStory(story.id)"
+                      >
+                        <span class="app-sidebar__section-name">{{ story.name }}</span>
+                        <span class="app-sidebar__section-meta">
+                          {{ story.manuscriptCount }} manuscript{{ story.manuscriptCount === 1 ? '' : 's' }}
+                          @if (story.characterCount > 0 || story.locationCount > 0) {
+                            ·
+                            @if (story.characterCount > 0) {
+                              {{ story.characterCount }} character{{ story.characterCount === 1 ? '' : 's' }}
                             }
-                          </span>
-                        </button>
-                      </li>
-                    }
-                  </ul>
-                }
+                            @if (story.characterCount > 0 && story.locationCount > 0) {
+                              ·
+                            }
+                            @if (story.locationCount > 0) {
+                              {{ story.locationCount }} location{{ story.locationCount === 1 ? '' : 's' }}
+                            }
+                          }
+                        </span>
+                      </button>
+                    </li>
+                  }
+                </ul>
               </li>
             }
           </ul>
@@ -129,12 +145,30 @@
         } @else if (unassignedStories().length === 0) {
           <p class="app-sidebar__section-empty">All stories are in a series.</p>
         } @else {
-          <ul class="app-sidebar__section-list">
+          @if (assignError()) {
+            <p class="app-sidebar__section-error" role="alert">{{ assignError() }}</p>
+          }
+
+          <ul
+            id="unassigned-stories"
+            cdkDropList
+            class="app-sidebar__section-list"
+            [cdkDropListData]="unassignedStories()"
+            [cdkDropListConnectedTo]="seriesDropListIds()"
+            cdkDropListSortingDisabled
+          >
             @for (story of unassignedStories(); track story.id) {
-              <li class="app-sidebar__story-row">
+              <li
+                cdkDrag
+                class="app-sidebar__story-row"
+                [cdkDragData]="story"
+                [cdkDragDisabled]="isAssigning()"
+                (cdkDragStarted)="onStoryDragStarted()"
+              >
                 <button
                   type="button"
-                  class="app-sidebar__section-item"
+                  cdkDragHandle
+                  class="app-sidebar__section-item app-sidebar__drag-handle"
                   [class.app-sidebar__section-item--active]="isStorySelected(story.id)"
                   (click)="openEditStory(story.id)"
                 >

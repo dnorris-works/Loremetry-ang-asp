@@ -21,6 +21,7 @@ public static class StoryService
                 story.Id,
                 story.Name,
                 story.SeriesId,
+                story.SeriesSortOrder,
                 story.CreatedAt,
                 story.UpdatedAt,
                 ManuscriptCount = story.Documents.Count(document => document.Kind == StoryDocumentKinds.Manuscript),
@@ -35,6 +36,7 @@ public static class StoryService
                 story.Id,
                 story.Name,
                 story.SeriesId,
+                story.SeriesSortOrder,
                 story.ManuscriptCount,
                 story.CharacterCount,
                 story.LocationCount,
@@ -170,17 +172,98 @@ public static class StoryService
                 throw new InvalidOperationException($"Series '{seriesId}' was not found.");
             }
 
+            var maxOrder = await db.Stories
+                .Where(item => item.SeriesId == seriesId && item.UserId == userId)
+                .MaxAsync(item => (int?)item.SeriesSortOrder, cancellationToken) ?? -1;
+
             story.SeriesId = seriesId;
+            story.SeriesSortOrder = maxOrder + 1;
         }
         else
         {
             story.SeriesId = null;
+            story.SeriesSortOrder = 0;
         }
 
         story.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
 
         return ToSummaryDto(story);
+    }
+
+    public static async Task<IReadOnlyList<StorySummaryDto>?> ReorderStoriesInSeriesAsync(
+        long userId,
+        long seriesId,
+        ReorderSeriesStoriesRequest request,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var seriesExists = await db.Series
+            .AnyAsync(item => item.Id == seriesId && item.UserId == userId, cancellationToken);
+
+        if (!seriesExists)
+        {
+            return null;
+        }
+
+        var requestedIds = request.StoryIds.ToList();
+        if (requestedIds.Count == 0)
+        {
+            throw new InvalidOperationException("At least one story is required.");
+        }
+
+        if (requestedIds.Distinct().Count() != requestedIds.Count)
+        {
+            throw new InvalidOperationException("Duplicate story IDs are not allowed.");
+        }
+
+        var stories = await db.Stories
+            .Include(item => item.Documents)
+            .Where(item => item.UserId == userId && requestedIds.Contains(item.Id))
+            .ToListAsync(cancellationToken);
+
+        if (stories.Count != requestedIds.Count)
+        {
+            throw new InvalidOperationException("One or more stories were not found.");
+        }
+
+        var currentSeriesStoryIds = await db.Stories
+            .AsNoTracking()
+            .Where(item => item.UserId == userId && item.SeriesId == seriesId)
+            .Select(item => item.Id)
+            .ToListAsync(cancellationToken);
+
+        var missingFromRequest = currentSeriesStoryIds.Except(requestedIds).ToList();
+        if (missingFromRequest.Count > 0)
+        {
+            throw new InvalidOperationException("Story order must include every story in the series.");
+        }
+
+        foreach (var story in stories)
+        {
+            if (story.SeriesId is { } existingSeriesId && existingSeriesId != seriesId)
+            {
+                throw new InvalidOperationException($"Story '{story.Id}' belongs to a different series.");
+            }
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var storiesById = stories.ToDictionary(story => story.Id);
+
+        for (var index = 0; index < requestedIds.Count; index++)
+        {
+            var story = storiesById[requestedIds[index]];
+            story.SeriesId = seriesId;
+            story.SeriesSortOrder = index;
+            story.UpdatedAt = now;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return
+        [
+            ..requestedIds.Select(id => ToSummaryDto(storiesById[id])),
+        ];
     }
 
     private static string? ValidateCreateRequest(CreateStoryRequest request)
@@ -294,6 +377,7 @@ public static class StoryService
             story.Id,
             story.Name,
             story.SeriesId,
+            story.SeriesSortOrder,
             story.Documents.Count(document => document.Kind == StoryDocumentKinds.Manuscript),
             story.Documents.Count(document => document.Kind == StoryDocumentKinds.Character),
             story.Documents.Count(document => document.Kind == StoryDocumentKinds.Location),

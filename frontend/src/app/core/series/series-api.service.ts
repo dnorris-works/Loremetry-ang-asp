@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { Story } from '../stories/story.models';
 import { CreateSeriesRequest, Series, SeriesDetail, UpdateSeriesRequest } from './series.models';
 
 @Injectable({ providedIn: 'root' })
@@ -24,5 +25,9 @@ export class SeriesApiService {
 
   updateSeries(id: number, request: UpdateSeriesRequest): Observable<Series> {
     return this.http.put<Series>(`${this.baseUrl}/${id}`, request);
+  }
+
+  reorderSeriesStories(seriesId: number, storyIds: number[]): Observable<Story[]> {
+    return this.http.put<Story[]>(`${this.baseUrl}/${seriesId}/story-order`, { storyIds });
   }
 }

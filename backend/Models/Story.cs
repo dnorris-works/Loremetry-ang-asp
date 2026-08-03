@@ -8,6 +8,8 @@ public class Story
 
     public long? SeriesId { get; set; }
 
+    public int SeriesSortOrder { get; set; }
+
     public string Name { get; set; } = string.Empty;
 
     public DateTimeOffset CreatedAt { get; set; }

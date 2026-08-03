@@ -15,6 +15,7 @@ public static class SeriesEndpoints
         series.MapGet("/{id:long}", GetSeries);
         series.MapPost("/", CreateSeries);
         series.MapPut("/{id:long}", UpdateSeries);
+        series.MapPut("/{id:long}/story-order", ReorderSeriesStories);
 
         return app;
     }
@@ -104,6 +105,39 @@ public static class SeriesEndpoints
             return item is null
                 ? Results.NotFound(new { message = $"Series '{id}' was not found." })
                 : Results.Ok(item);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.BadRequest(new { message = exception.Message });
+        }
+    }
+
+    private static async Task<IResult> ReorderSeriesStories(
+        long id,
+        ReorderSeriesStoriesRequest request,
+        HttpRequest httpRequest,
+        AuthService authService,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var authResult = await AuthEndpointHelpers.TryResolveUserAsync(httpRequest, authService, cancellationToken);
+        if (authResult.Error is { } error)
+        {
+            return error;
+        }
+
+        try
+        {
+            var stories = await StoryService.ReorderStoriesInSeriesAsync(
+                authResult.User!.DbUserId,
+                id,
+                request,
+                db,
+                cancellationToken);
+
+            return stories is null
+                ? Results.NotFound(new { message = $"Series '{id}' was not found." })
+                : Results.Ok(stories);
         }
         catch (InvalidOperationException exception)
         {
