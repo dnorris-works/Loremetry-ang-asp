@@ -1,9 +1,9 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { AuthService } from '../../core/auth/auth.service';
 
-export interface NavItem {
+interface NavItem {
   label: string;
   route: string;
 }
@@ -17,9 +17,12 @@ export interface NavItem {
 export class AppHeader {
   protected readonly auth = inject(AuthService);
 
-  readonly appName = input('Loremetry');
-  readonly navItems = input<NavItem[]>([
-    { label: 'Home', route: '/' },
+  protected readonly appName = 'Loremetry';
+
+  protected readonly navItems = computed<NavItem[]>(() => [
+    { label: 'Dashboard', route: '/' },
+    ...(this.auth.isAdmin() ? [{ label: 'Admin', route: '/admin' }] : []),
+    { label: 'Settings', route: '/settings' },
   ]);
 
   protected readonly userLabel = computed(() => {

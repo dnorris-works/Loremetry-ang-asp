@@ -39,7 +39,7 @@ public static class AdminEndpoints
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
 
-        var schemas = new List<SchemaInfoDto>();
+        List<SchemaInfoDto> schemas = [];
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
@@ -80,7 +80,7 @@ public static class AdminEndpoints
         parameter.Value = schemaName;
         command.Parameters.Add(parameter);
 
-        var objects = new List<SchemaObjectDto>();
+        List<SchemaObjectDto> objects = [];
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
@@ -127,7 +127,7 @@ public static class AdminEndpoints
         objectParameter.Value = objectName;
         command.Parameters.Add(objectParameter);
 
-        var columns = new List<ColumnInfoDto>();
+        List<ColumnInfoDto> columns = [];
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
@@ -277,7 +277,7 @@ public static class AdminEndpoints
         var columns = Enumerable.Range(0, reader.FieldCount)
             .Select(reader.GetName)
             .ToList();
-        var rows = new List<IReadOnlyList<object?>>();
+        List<IReadOnlyList<object?>> rows = [];
 
         while (await reader.ReadAsync(cancellationToken))
         {

@@ -27,15 +27,16 @@ public static class StoryService
             })
             .ToListAsync(cancellationToken);
 
-        return stories
-            .Select(story => new StorySummaryDto(
+        return
+        [
+            ..stories.Select(story => new StorySummaryDto(
                 story.Id,
                 story.Name,
                 story.ManuscriptCount,
                 story.BibleCount,
                 story.CreatedAt,
-                story.UpdatedAt))
-            .ToList();
+                story.UpdatedAt)),
+        ];
     }
 
     public static async Task<StoryDetailDto?> GetForUserAsync(
@@ -73,9 +74,11 @@ public static class StoryService
             UpdatedAt = now,
         };
 
-        var documents = new List<StoryDocument>();
-        documents.AddRange(MapManuscriptDocuments(request.Manuscripts, now));
-        documents.AddRange(MapBibleDocuments(request.Bibles ?? [], now));
+        List<LoreStoryDocument> documents =
+        [
+            ..MapManuscriptDocuments(request.Manuscripts, now),
+            ..MapBibleDocuments(request.Bibles ?? [], now),
+        ];
 
         foreach (var (document, index) in documents.Select((document, index) => (document, index)))
         {
@@ -115,14 +118,14 @@ public static class StoryService
         return DocumentInputHelper.ValidateBibleDocuments(request.Bibles ?? []);
     }
 
-    private static IEnumerable<StoryDocument> MapManuscriptDocuments(
+    private static IEnumerable<LoreStoryDocument> MapManuscriptDocuments(
         IReadOnlyList<StoryDocumentInputDto> documents,
         DateTimeOffset createdAt)
     {
         foreach (var document in documents)
         {
             var mapped = DocumentInputHelper.MapManuscriptDocument(document);
-            yield return new StoryDocument
+            yield return new LoreStoryDocument
             {
                 Kind = StoryDocumentKinds.Manuscript,
                 FileName = mapped.FileName,
@@ -134,13 +137,13 @@ public static class StoryService
         }
     }
 
-    private static IEnumerable<StoryDocument> MapBibleDocuments(
+    private static IEnumerable<LoreStoryDocument> MapBibleDocuments(
         IReadOnlyList<StoryDocumentInputDto> documents,
         DateTimeOffset createdAt)
     {
         foreach (var mapped in DocumentInputHelper.MapBibleDocuments(documents))
         {
-            yield return new StoryDocument
+            yield return new LoreStoryDocument
             {
                 Kind = StoryDocumentKinds.Bible,
                 FileName = mapped.FileName,
@@ -165,17 +168,18 @@ public static class StoryService
         new(
             story.Id,
             story.Name,
-            story.Documents
-                .OrderBy(document => document.SortOrder)
-                .Select(document => new StoryDocumentDto(
-                    document.Id,
-                    document.Kind,
-                    document.FileName,
-                    document.MimeType,
-                    !string.IsNullOrEmpty(document.TextContent),
-                    document.BinaryContent is { Length: > 0 },
-                    document.SortOrder))
-                .ToList(),
+            [
+                ..story.Documents
+                    .OrderBy(document => document.SortOrder)
+                    .Select(document => new StoryDocumentDto(
+                        document.Id,
+                        document.Kind,
+                        document.FileName,
+                        document.MimeType,
+                        !string.IsNullOrEmpty(document.TextContent),
+                        document.BinaryContent is { Length: > 0 },
+                        document.SortOrder)),
+            ],
             story.CreatedAt,
             story.UpdatedAt);
 }

@@ -21,11 +21,10 @@ public static class SettingsEndpoints
         "high-contrast",
     ];
 
-    private static readonly IReadOnlyDictionary<string, string> DefaultValues =
-        new Dictionary<string, string>
-        {
-            [AppSettingKeys.Theme] = "system",
-        };
+    private static readonly Dictionary<string, string> DefaultValues = new()
+    {
+        [AppSettingKeys.Theme] = "system",
+    };
 
     public static IEndpointRouteBuilder MapSettingsEndpoints(this IEndpointRouteBuilder app)
     {

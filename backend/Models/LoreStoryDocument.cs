@@ -1,6 +1,6 @@
 namespace backend.Models;
 
-public class StoryDocument
+public class LoreStoryDocument
 {
     public long Id { get; set; }
 

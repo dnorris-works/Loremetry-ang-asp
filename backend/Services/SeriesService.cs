@@ -52,7 +52,7 @@ public static class SeriesService
         }
 
         var now = DateTimeOffset.UtcNow;
-        var series = new Series
+        var series = new LoreSeries
         {
             UserId = userId,
             Name = request.Name.Trim(),
@@ -95,7 +95,7 @@ public static class SeriesService
         return DocumentInputHelper.ValidateBibleDocuments(request.Bibles ?? []);
     }
 
-    private static SeriesSummaryDto ToSummaryDto(Series series) =>
+    private static SeriesSummaryDto ToSummaryDto(LoreSeries series) =>
         new(
             series.Id,
             series.Name,
@@ -103,20 +103,21 @@ public static class SeriesService
             series.CreatedAt,
             series.UpdatedAt);
 
-    private static SeriesDetailDto ToDetailDto(Series series) =>
+    private static SeriesDetailDto ToDetailDto(LoreSeries series) =>
         new(
             series.Id,
             series.Name,
-            series.BibleDocuments
-                .OrderBy(document => document.SortOrder)
-                .Select(document => new SeriesBibleDocumentDto(
-                    document.Id,
-                    document.FileName,
-                    document.MimeType,
-                    !string.IsNullOrEmpty(document.TextContent),
-                    document.BinaryContent is { Length: > 0 },
-                    document.SortOrder))
-                .ToList(),
+            [
+                ..series.BibleDocuments
+                    .OrderBy(document => document.SortOrder)
+                    .Select(document => new SeriesBibleDocumentDto(
+                        document.Id,
+                        document.FileName,
+                        document.MimeType,
+                        !string.IsNullOrEmpty(document.TextContent),
+                        document.BinaryContent is { Length: > 0 },
+                        document.SortOrder)),
+            ],
             series.CreatedAt,
             series.UpdatedAt);
 }

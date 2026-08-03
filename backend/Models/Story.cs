@@ -14,5 +14,5 @@ public class Story
 
     public User User { get; set; } = null!;
 
-    public ICollection<StoryDocument> Documents { get; set; } = [];
+    public ICollection<LoreStoryDocument> Documents { get; set; } = [];
 }

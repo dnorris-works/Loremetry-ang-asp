@@ -18,5 +18,5 @@ public class SeriesBibleDocument
 
     public DateTimeOffset CreatedAt { get; set; }
 
-    public Series Series { get; set; } = null!;
+    public LoreSeries Series { get; set; } = null!;
 }

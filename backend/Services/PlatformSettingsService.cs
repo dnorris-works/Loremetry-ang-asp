@@ -82,7 +82,7 @@ public static class PlatformSettingsService
             throw new InvalidOperationException("default_provider must be tokenmix or anthropic.");
         }
 
-        var updates = new Dictionary<string, string>
+        Dictionary<string, string> updates = new()
         {
             [PlatformSettingKeys.AnthropicApiKey] = request.AnthropicApiKey.Trim(),
             [PlatformSettingKeys.TokenmixApiKey] = request.TokenmixApiKey.Trim(),

@@ -1,12 +1,20 @@
 .app-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 1.5rem;
   height: 3.5rem;
   padding-inline: 1.5rem;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
+}
+
+.app-header__brand {
+  flex-shrink: 0;
+}
+
+.app-header__nav {
+  flex: 1;
+  min-width: 0;
 }
 
 .app-header__logo {
@@ -63,6 +71,7 @@
   align-items: center;
   gap: 0.75rem;
   flex-shrink: 0;
+  margin-left: auto;
 }
 
 .app-header__user {

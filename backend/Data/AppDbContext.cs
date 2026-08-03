@@ -13,9 +13,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Story> Stories => Set<Story>();
 
-    public DbSet<StoryDocument> StoryDocuments => Set<StoryDocument>();
+    public DbSet<LoreStoryDocument> StoryDocuments => Set<LoreStoryDocument>();
 
-    public DbSet<Series> Series => Set<Series>();
+    public DbSet<LoreSeries> Series => Set<LoreSeries>();
 
     public DbSet<SeriesBibleDocument> SeriesBibleDocuments => Set<SeriesBibleDocument>();
 
@@ -75,7 +75,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<StoryDocument>(entity =>
+        modelBuilder.Entity<LoreStoryDocument>(entity =>
         {
             entity.ToTable("story_documents", "lore");
             entity.HasKey(document => document.Id);
@@ -96,7 +96,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<Series>(entity =>
+        modelBuilder.Entity<LoreSeries>(entity =>
         {
             entity.ToTable("series", "lore");
             entity.HasKey(series => series.Id);

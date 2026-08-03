@@ -14,7 +14,7 @@ public static class DocumentInputHelper
 
     public static IReadOnlyList<MappedDocumentContent> MapBibleDocuments(
         IReadOnlyList<StoryDocumentInputDto> documents) =>
-        documents.Select(MapBibleDocument).ToList();
+        [..documents.Select(MapBibleDocument)];
 
     public static MappedDocumentContent MapBibleDocument(StoryDocumentInputDto document)
     {
@@ -57,7 +57,7 @@ public static class DocumentInputHelper
         string kind,
         bool requireMarkdownContent = false)
     {
-        var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
 
         for (var index = 0; index < documents.Count; index++)
         {

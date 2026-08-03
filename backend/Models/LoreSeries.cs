@@ -1,6 +1,6 @@
 namespace backend.Models;
 
-public class Series
+public class LoreSeries
 {
     public long Id { get; set; }
 

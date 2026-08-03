@@ -1,84 +1,98 @@
 <aside class="app-sidebar">
-  <div class="app-sidebar__section-header">
-    <h2 class="app-sidebar__section-title" id="sidebar-series-label">Series</h2>
-    <button
-      type="button"
-      class="app-sidebar__add-button"
-      aria-label="Add series"
-      (click)="openAddSeriesPanel()"
-    >
-      +
-    </button>
-  </div>
+  <section class="app-sidebar__accordion">
+    <div class="app-sidebar__section-header">
+      <button
+        type="button"
+        class="app-sidebar__section-toggle"
+        [attr.aria-expanded]="isSeriesOpen()"
+        aria-controls="sidebar-series-panel"
+        (click)="toggleSeries()"
+      >
+        <span class="app-sidebar__section-title" id="sidebar-series-label">Series</span>
+        <span class="app-sidebar__section-chevron" aria-hidden="true">
+          {{ isSeriesOpen() ? '▾' : '▸' }}
+        </span>
+      </button>
 
-  @if (series().length === 0) {
-    <p class="app-sidebar__section-empty">No series yet.</p>
-  } @else {
-    <ul class="app-sidebar__section-list" aria-labelledby="sidebar-series-label">
-      @for (item of series(); track item.id) {
-        <li>
-          <div class="app-sidebar__section-item">
-            <span class="app-sidebar__section-name">{{ item.name }}</span>
-            @if (item.bibleCount > 0) {
-              <span class="app-sidebar__section-meta">{{ item.bibleCount }} bible</span>
+      <button
+        type="button"
+        class="app-sidebar__add-button"
+        aria-label="Add series"
+        (click)="openAddSeriesPanel($event)"
+      >
+        +
+      </button>
+    </div>
+
+    @if (isSeriesOpen()) {
+      <div id="sidebar-series-panel" class="app-sidebar__section-panel" aria-labelledby="sidebar-series-label">
+        @if (series().length === 0) {
+          <p class="app-sidebar__section-empty">No series yet.</p>
+        } @else {
+          <ul class="app-sidebar__section-list">
+            @for (item of series(); track item.id) {
+              <li>
+                <div class="app-sidebar__section-item">
+                  <span class="app-sidebar__section-name">{{ item.name }}</span>
+                  @if (item.bibleCount > 0) {
+                    <span class="app-sidebar__section-meta">{{ item.bibleCount }} bible</span>
+                  }
+                </div>
+              </li>
             }
-          </div>
-        </li>
-      }
-    </ul>
-  }
+          </ul>
+        }
+      </div>
+    }
+  </section>
 
-  <div class="app-sidebar__section-header">
-    <h2 class="app-sidebar__section-title" id="sidebar-stories-label">Stories</h2>
-    <button
-      type="button"
-      class="app-sidebar__add-button"
-      aria-label="Add story"
-      (click)="openAddStoryPanel()"
-    >
-      +
-    </button>
-  </div>
+  <section class="app-sidebar__accordion">
+    <div class="app-sidebar__section-header">
+      <button
+        type="button"
+        class="app-sidebar__section-toggle"
+        [attr.aria-expanded]="isStoriesOpen()"
+        aria-controls="sidebar-stories-panel"
+        (click)="toggleStories()"
+      >
+        <span class="app-sidebar__section-title" id="sidebar-stories-label">Stories</span>
+        <span class="app-sidebar__section-chevron" aria-hidden="true">
+          {{ isStoriesOpen() ? '▾' : '▸' }}
+        </span>
+      </button>
 
-  @if (stories().length === 0) {
-    <p class="app-sidebar__section-empty">No stories yet.</p>
-  } @else {
-    <ul class="app-sidebar__section-list" aria-labelledby="sidebar-stories-label">
-      @for (story of stories(); track story.id) {
-        <li>
-          <div class="app-sidebar__section-item">
-            <span class="app-sidebar__section-name">{{ story.name }}</span>
-            <span class="app-sidebar__section-meta">
-              {{ story.manuscriptCount }} manuscript
-              @if (story.bibleCount > 0) {
-                · {{ story.bibleCount }} bible
-              }
-            </span>
-          </div>
-        </li>
-      }
-    </ul>
-  }
+      <button
+        type="button"
+        class="app-sidebar__add-button"
+        aria-label="Add story"
+        (click)="openAddStoryPanel($event)"
+      >
+        +
+      </button>
+    </div>
 
-  <p class="app-sidebar__heading" id="sidebar-nav-label">Navigation</p>
-
-  <nav class="app-sidebar__nav" aria-labelledby="sidebar-nav-label">
-    <ul class="app-sidebar__list">
-      @for (item of navItems(); track item.label) {
-        <li>
-          <a
-            class="app-sidebar__link"
-            [routerLink]="item.route"
-            routerLinkActive="app-sidebar__link--active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/' }"
-          >
-            @if (item.icon) {
-              <span class="app-sidebar__icon" aria-hidden="true">{{ item.icon }}</span>
+    @if (isStoriesOpen()) {
+      <div id="sidebar-stories-panel" class="app-sidebar__section-panel" aria-labelledby="sidebar-stories-label">
+        @if (stories().length === 0) {
+          <p class="app-sidebar__section-empty">No stories yet.</p>
+        } @else {
+          <ul class="app-sidebar__section-list">
+            @for (story of stories(); track story.id) {
+              <li>
+                <div class="app-sidebar__section-item">
+                  <span class="app-sidebar__section-name">{{ story.name }}</span>
+                  <span class="app-sidebar__section-meta">
+                    {{ story.manuscriptCount }} manuscript
+                    @if (story.bibleCount > 0) {
+                      · {{ story.bibleCount }} bible
+                    }
+                  </span>
+                </div>
+              </li>
             }
-            <span>{{ item.label }}</span>
-          </a>
-        </li>
-      }
-    </ul>
-  </nav>
+          </ul>
+        }
+      </div>
+    }
+  </section>
 </aside>
