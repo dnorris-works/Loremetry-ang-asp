@@ -11,7 +11,8 @@ import {
   ColumnInfo,
   CreateCollectionRequest,
   CreateFieldRequest,
-  TableInfo,
+  SchemaInfo,
+  SchemaObject,
 } from './admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -70,13 +71,17 @@ export class AdminApiService {
     return this.http.delete<void>(`${this.baseUrl}/entries/${id}`);
   }
 
-  getTables(): Observable<TableInfo[]> {
-    return this.http.get<TableInfo[]>(`${this.baseUrl}/schema/tables`);
+  getSchemas(): Observable<SchemaInfo[]> {
+    return this.http.get<SchemaInfo[]>(`${this.baseUrl}/schema/schemas`);
   }
 
-  getColumns(tableName: string): Observable<ColumnInfo[]> {
+  getSchemaObjects(schemaName: string): Observable<SchemaObject[]> {
+    return this.http.get<SchemaObject[]>(`${this.baseUrl}/schema/${schemaName}/objects`);
+  }
+
+  getObjectColumns(schemaName: string, objectName: string): Observable<ColumnInfo[]> {
     return this.http.get<ColumnInfo[]>(
-      `${this.baseUrl}/schema/tables/${tableName}/columns`,
+      `${this.baseUrl}/schema/${schemaName}/objects/${objectName}/columns`,
     );
   }
 }

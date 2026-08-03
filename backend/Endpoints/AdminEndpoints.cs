@@ -32,8 +32,9 @@ public static class AdminEndpoints
         admin.MapPut("/entries/{id:guid}", UpdateEntry);
         admin.MapDelete("/entries/{id:guid}", DeleteEntry);
 
-        admin.MapGet("/schema/tables", GetTables);
-        admin.MapGet("/schema/tables/{tableName}/columns", GetColumns);
+        admin.MapGet("/schema/schemas", GetSchemas);
+        admin.MapGet("/schema/{schemaName}/objects", GetSchemaObjects);
+        admin.MapGet("/schema/{schemaName}/objects/{objectName}/columns", GetColumns);
 
         return app;
     }
@@ -284,13 +285,15 @@ public static class AdminEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> GetTables(AppDbContext db, CancellationToken cancellationToken)
+    private static async Task<IResult> GetSchemas(AppDbContext db, CancellationToken cancellationToken)
     {
         const string sql = """
-            SELECT table_schema AS "Schema", table_name AS "Name"
-            FROM information_schema.tables
-            WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-            ORDER BY table_name;
+            SELECT schema_name AS "Name"
+            FROM information_schema.schemata
+            WHERE schema_name NOT IN ('pg_catalog', 'information_schema')
+              AND schema_name NOT LIKE 'pg_toast%'
+              AND schema_name NOT LIKE 'pg_temp_%'
+            ORDER BY schema_name;
             """;
 
         await using var connection = db.Database.GetDbConnection();
@@ -299,29 +302,34 @@ public static class AdminEndpoints
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
 
-        var tables = new List<TableInfoDto>();
+        var schemas = new List<SchemaInfoDto>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
-            tables.Add(new TableInfoDto(reader.GetString(1), reader.GetString(0)));
+            schemas.Add(new SchemaInfoDto(reader.GetString(0)));
         }
 
-        return Results.Ok(tables);
+        return Results.Ok(schemas);
     }
 
-    private static async Task<IResult> GetColumns(
-        string tableName,
+    private static async Task<IResult> GetSchemaObjects(
+        string schemaName,
         AppDbContext db,
         CancellationToken cancellationToken)
     {
         const string sql = """
-            SELECT column_name AS "Name",
-                   data_type AS "DataType",
-                   is_nullable = 'YES' AS "IsNullable",
-                   column_default AS "DefaultValue"
-            FROM information_schema.columns
-            WHERE table_schema = 'public' AND table_name = @tableName
-            ORDER BY ordinal_position;
+            SELECT table_name AS "Name", table_type AS "Type"
+            FROM information_schema.tables
+            WHERE table_schema = @schemaName
+            UNION ALL
+            SELECT sequence_name, 'SEQUENCE'
+            FROM information_schema.sequences
+            WHERE sequence_schema = @schemaName
+            UNION ALL
+            SELECT routine_name, routine_type
+            FROM information_schema.routines
+            WHERE routine_schema = @schemaName
+            ORDER BY 2, 1;
             """;
 
         await using var connection = db.Database.GetDbConnection();
@@ -331,9 +339,56 @@ public static class AdminEndpoints
         command.CommandText = sql;
 
         var parameter = command.CreateParameter();
-        parameter.ParameterName = "tableName";
-        parameter.Value = tableName;
+        parameter.ParameterName = "schemaName";
+        parameter.Value = schemaName;
         command.Parameters.Add(parameter);
+
+        var objects = new List<SchemaObjectDto>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var type = reader.GetString(1) switch
+            {
+                "BASE TABLE" => "TABLE",
+                _ => reader.GetString(1),
+            };
+            objects.Add(new SchemaObjectDto(reader.GetString(0), type));
+        }
+
+        return Results.Ok(objects);
+    }
+
+    private static async Task<IResult> GetColumns(
+        string schemaName,
+        string objectName,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT column_name AS "Name",
+                   data_type AS "DataType",
+                   is_nullable = 'YES' AS "IsNullable",
+                   column_default AS "DefaultValue"
+            FROM information_schema.columns
+            WHERE table_schema = @schemaName AND table_name = @objectName
+            ORDER BY ordinal_position;
+            """;
+
+        await using var connection = db.Database.GetDbConnection();
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+
+        var schemaParameter = command.CreateParameter();
+        schemaParameter.ParameterName = "schemaName";
+        schemaParameter.Value = schemaName;
+        command.Parameters.Add(schemaParameter);
+
+        var objectParameter = command.CreateParameter();
+        objectParameter.ParameterName = "objectName";
+        objectParameter.Value = objectName;
+        command.Parameters.Add(objectParameter);
 
         var columns = new List<ColumnInfoDto>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);

@@ -48,7 +48,9 @@ public record CreateCollectionEntryRequest(Dictionary<string, object?> Values);
 
 public record UpdateCollectionEntryRequest(Dictionary<string, object?> Values);
 
-public record TableInfoDto(string Name, string Schema);
+public record SchemaInfoDto(string Name);
+
+public record SchemaObjectDto(string Name, string Type);
 
 public record ColumnInfoDto(
     string Name,

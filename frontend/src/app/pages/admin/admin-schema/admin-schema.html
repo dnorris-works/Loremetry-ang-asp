@@ -1,29 +1,75 @@
 <section class="admin-schema">
-  <article class="admin-card">
-    <h2 class="admin-card__title">Database tables</h2>
-    <p class="admin-card__description">Browse the current PostgreSQL schema.</p>
+  @if (errorMessage()) {
+    <p class="admin-collections__error" role="alert">{{ errorMessage() }}</p>
+  }
 
-    @if (tables().length === 0) {
-      <p class="admin-card__muted">No tables found.</p>
-    } @else {
-      <div class="admin-schema__table-list">
-        @for (table of tables(); track table.name) {
-          <button
-            type="button"
-            class="admin-schema__table-button"
-            [class.admin-schema__table-button--active]="selectedTable() === table.name"
-            (click)="selectTable(table.name)"
-          >
-            <code>{{ table.name }}</code>
-          </button>
-        }
-      </div>
-    }
-  </article>
-
-  @if (selectedTable()) {
+  <div class="admin-schema__grid">
     <article class="admin-card">
-      <h2 class="admin-card__title">Columns: {{ selectedTable() }}</h2>
+      <h2 class="admin-card__title">Schemas</h2>
+      <p class="admin-card__description">Select a PostgreSQL schema to browse its objects.</p>
+
+      @if (schemas().length === 0) {
+        <p class="admin-card__muted">No schemas found.</p>
+      } @else {
+        <div class="admin-schema__button-list">
+          @for (schema of schemas(); track schema.name) {
+            <button
+              type="button"
+              class="admin-schema__select-button"
+              [class.admin-schema__select-button--active]="selectedSchema() === schema.name"
+              (click)="selectSchema(schema.name)"
+            >
+              <code>{{ schema.name }}</code>
+            </button>
+          }
+        </div>
+      }
+    </article>
+
+    @if (selectedSchema()) {
+      <article class="admin-card">
+        <h2 class="admin-card__title">Objects: {{ selectedSchema() }}</h2>
+        <p class="admin-card__description">Tables, views, sequences, and routines in this schema.</p>
+
+        @if (objects().length === 0) {
+          <p class="admin-card__muted">No objects found.</p>
+        } @else {
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Type</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (object of objects(); track object.name + object.type) {
+                  <tr
+                    class="admin-schema__object-row"
+                    [class.admin-schema__object-row--active]="
+                      selectedObject()?.name === object.name &&
+                      selectedObject()?.type === object.type
+                    "
+                    [class.admin-schema__object-row--selectable]="isColumnObject(object)"
+                    (click)="selectObject(object)"
+                  >
+                    <td><code>{{ object.name }}</code></td>
+                    <td>{{ object.type }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </article>
+    }
+  </div>
+
+  @if (selectedObject() && isColumnObject(selectedObject()!)) {
+    <article class="admin-card">
+      <h2 class="admin-card__title">
+        Columns: {{ selectedSchema() }}.{{ selectedObject()!.name }}
+      </h2>
 
       @if (columns().length === 0) {
         <p class="admin-card__muted">No columns found.</p>

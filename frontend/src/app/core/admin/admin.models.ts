@@ -39,9 +39,13 @@ export interface CollectionEntry {
   updatedAt: string;
 }
 
-export interface TableInfo {
+export interface SchemaInfo {
   name: string;
-  schema: string;
+}
+
+export interface SchemaObject {
+  name: string;
+  type: string;
 }
 
 export interface ColumnInfo {
