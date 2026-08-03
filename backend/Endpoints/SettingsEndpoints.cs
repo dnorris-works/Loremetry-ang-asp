@@ -34,8 +34,8 @@ public static class SettingsEndpoints
     {
         var settings = await db.AppSettings
             .AsNoTracking()
-            .OrderBy(setting => setting.Key)
-            .Select(setting => new AppSettingDto(setting.Key, setting.Value, setting.UpdatedAt))
+            .OrderBy(setting => setting.SettingKey)
+            .Select(setting => new AppSettingDto(setting.SettingKey, setting.Value, setting.UpdatedAt))
             .ToListAsync(cancellationToken);
 
         return Results.Ok(settings);
@@ -58,7 +58,7 @@ public static class SettingsEndpoints
             return Results.BadRequest(new { message = validationError });
         }
 
-        var setting = await db.AppSettings.FirstOrDefaultAsync(item => item.Key == key, cancellationToken);
+        var setting = await db.AppSettings.FirstOrDefaultAsync(item => item.SettingKey == key, cancellationToken);
         if (setting is null)
         {
             return Results.NotFound(new { message = $"Setting '{key}' was not found." });
@@ -69,7 +69,7 @@ public static class SettingsEndpoints
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new AppSettingDto(setting.Key, setting.Value, setting.UpdatedAt));
+        return Results.Ok(new AppSettingDto(setting.SettingKey, setting.Value, setting.UpdatedAt));
     }
 
     private static string? ValidateSettingValue(string key, string value)
