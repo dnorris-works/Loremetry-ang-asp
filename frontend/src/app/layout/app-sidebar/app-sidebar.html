@@ -1,4 +1,36 @@
 <aside class="app-sidebar">
+  <div class="app-sidebar__stories-header">
+    <h2 class="app-sidebar__stories-title" id="sidebar-stories-label">Stories</h2>
+    <button
+      type="button"
+      class="app-sidebar__add-story"
+      aria-label="Add story"
+      (click)="openAddStoryPanel()"
+    >
+      +
+    </button>
+  </div>
+
+  @if (stories().length === 0) {
+    <p class="app-sidebar__stories-empty">No stories yet.</p>
+  } @else {
+    <ul class="app-sidebar__stories-list" aria-labelledby="sidebar-stories-label">
+      @for (story of stories(); track story.id) {
+        <li>
+          <div class="app-sidebar__story-item">
+            <span class="app-sidebar__story-name">{{ story.name }}</span>
+            <span class="app-sidebar__story-path">
+              {{ story.manuscriptFiles.length }} manuscript
+              @if (story.bibleFiles.length > 0) {
+                · {{ story.bibleFiles.length }} bible
+              }
+            </span>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+
   <p class="app-sidebar__heading" id="sidebar-nav-label">Navigation</p>
 
   <nav class="app-sidebar__nav" aria-labelledby="sidebar-nav-label">

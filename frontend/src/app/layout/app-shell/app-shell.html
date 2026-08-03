@@ -20,7 +20,11 @@
     </div>
 
     <main class="app-shell__main" id="main-content">
-      <router-outlet />
+      @if (isStoryPanelOpen()) {
+        <app-story-panel />
+      } @else {
+        <router-outlet />
+      }
     </main>
   </div>
 
