@@ -1,0 +1,99 @@
+<section class="admin-collections">
+  @if (errorMessage()) {
+    <p class="admin-collections__error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  <article class="admin-card">
+    <h2 class="admin-card__title">Create collection</h2>
+    <p class="admin-card__description">
+      Collections define the structure of your data. Add fields to change the schema.
+    </p>
+
+    <div class="admin-form-grid">
+      <label class="admin-field">
+        <span class="admin-field__label">Name</span>
+        <input
+          class="admin-field__input"
+          type="text"
+          [value]="newName()"
+          (input)="onNameInput($event)"
+        />
+      </label>
+
+      <label class="admin-field">
+        <span class="admin-field__label">Slug</span>
+        <input
+          class="admin-field__input"
+          type="text"
+          [value]="newSlug()"
+          (input)="newSlug.set($any($event.target).value)"
+        />
+      </label>
+
+      <label class="admin-field admin-field--full">
+        <span class="admin-field__label">Description</span>
+        <input
+          class="admin-field__input"
+          type="text"
+          [value]="newDescription()"
+          (input)="newDescription.set($any($event.target).value)"
+        />
+      </label>
+    </div>
+
+    <button type="button" class="admin-button" (click)="createCollection()">
+      Create collection
+    </button>
+  </article>
+
+  <article class="admin-card">
+    <div class="admin-card__header">
+      <h2 class="admin-card__title">Collections</h2>
+      <button type="button" class="admin-button admin-button--ghost" (click)="loadCollections()">
+        Refresh
+      </button>
+    </div>
+
+    @if (isLoading()) {
+      <p class="admin-card__muted">Loading collections...</p>
+    } @else if (collections().length === 0) {
+      <p class="admin-card__muted">No collections yet. Create one above.</p>
+    } @else {
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Slug</th>
+              <th scope="col">Fields</th>
+              <th scope="col">Entries</th>
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (collection of collections(); track collection.id) {
+              <tr>
+                <td>{{ collection.name }}</td>
+                <td><code>{{ collection.slug }}</code></td>
+                <td>{{ collection.fieldCount }}</td>
+                <td>{{ collection.entryCount }}</td>
+                <td class="admin-table__actions">
+                  <a class="admin-link" [routerLink]="['/admin/collections', collection.id]">
+                    Manage
+                  </a>
+                  <button
+                    type="button"
+                    class="admin-link admin-link--danger"
+                    (click)="deleteCollection(collection.id, collection.name)"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </article>
+</section>

@@ -23,7 +23,7 @@ export class AppSidebar {
 
   readonly items = input<SidebarItem[]>([
     { label: 'Dashboard', route: '/', icon: '◉' },
-    { label: 'Projects', route: '/projects', icon: '▣' },
+    { label: 'Admin', route: '/admin', icon: '⛭' },
     { label: 'Settings', action: 'settings', icon: '⚙' },
   ]);
 

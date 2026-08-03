@@ -1,0 +1,49 @@
+---
+description: Always follow best practices for code and layout in this project
+alwaysApply: true
+---
+
+# Best Practices (Always)
+
+Follow best practices for **all code changes** and **all UI/layout work** in this repo. When in doubt, match existing patterns before introducing new ones.
+
+## General code
+
+- Keep changes focused and minimal; do not refactor unrelated code.
+- Read surrounding code first and follow its naming, structure, and abstractions.
+- Prefer clear, maintainable solutions over clever or over-engineered ones.
+- Use strict typing; avoid `any` unless truly unavoidable.
+- Write self-explanatory code; comment only non-obvious business logic.
+- Reuse existing services, components, and utilities instead of duplicating logic.
+- **Avoid fallbacks in general.** Prefer failing clearly over silently degrading behavior.
+- If a fallback is truly necessary, it must surface the error or reason for the fallback and explain its effects (UI message, log, or API error response). Never swallow errors or substitute default values without making that visible.
+
+## Frontend (Angular)
+
+- Follow `frontend/AGENTS.md` for Angular, TypeScript, signals, templates, and accessibility rules.
+- Use standalone components, signals, native control flow (`@if`, `@for`), and `inject()`.
+- Lazy-load feature routes; keep components small and single-purpose.
+- Use `input()` / `output()` / `computed()`; avoid legacy decorator patterns where AGENTS.md says not to.
+
+## Backend (.NET)
+
+- Use minimal APIs or focused endpoint groups; keep `Program.cs` thin.
+- Use EF Core with explicit entity configuration in `AppDbContext`.
+- **Do not use EF migrations.** No `Migrations/` folder, no `dotnet ef migrations`, no `MigrateAsync()`, and no migration UI or API endpoints. Schema is created via `EnsureCreatedAsync()` in development and raw SQL where needed (e.g. `CREATE SCHEMA IF NOT EXISTS lore`).
+- Validate input, return clear HTTP status codes, and keep DTOs separate from entities.
+- Prefer async APIs and cancellation tokens for database operations.
+
+## Layout and UI design
+
+- Design for clarity, consistency, and accessibility (WCAG AA minimum).
+- Use existing design tokens from `frontend/src/styles.css` and theme CSS variables (`--color-*`).
+- Use semantic HTML, visible focus states, and meaningful labels/`aria-*` where needed.
+- Keep layouts responsive; test narrow and wide viewports.
+- Match the established shell patterns: header, sidebar, main content, footer.
+- Prefer component-scoped CSS; avoid global style changes unless intentional.
+- Do not use `ngClass` / `ngStyle`; use native `class` and `style` bindings.
+
+## Before finishing
+
+- Ensure the change builds and fits the project’s established conventions.
+- Do not add tests, docs, or extra files unless requested or clearly needed.

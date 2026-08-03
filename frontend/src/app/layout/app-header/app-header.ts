@@ -16,6 +16,5 @@ export class AppHeader {
   readonly appName = input('Loremetry');
   readonly navItems = input<NavItem[]>([
     { label: 'Home', route: '/' },
-    { label: 'About', route: '/about' },
   ]);
 }

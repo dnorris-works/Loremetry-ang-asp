@@ -1,7 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { Injectable, effect, inject, signal } from '@angular/core';
 
-import { APP_THEMES, AppTheme, ThemeId } from './theme.models';
+import { APP_THEMES, ThemeId } from './theme.models';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -10,8 +10,6 @@ export class ThemeService {
 
   readonly themes = APP_THEMES;
   readonly selectedThemeId = signal<ThemeId>('light');
-
-  readonly activeTheme = signal<AppTheme>(APP_THEMES[0]);
 
   constructor() {
     const mediaQuery = this.document.defaultView?.matchMedia(
@@ -28,7 +26,6 @@ export class ThemeService {
       const theme =
         APP_THEMES.find((item) => item.id === resolvedId) ?? APP_THEMES[0];
 
-      this.activeTheme.set(theme);
       this.document.documentElement.dataset['theme'] = resolvedId;
       this.document.documentElement.style.colorScheme = theme.colorScheme;
     });

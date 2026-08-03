@@ -15,6 +15,67 @@
   font-size: 0.8125rem;
 }
 
+.app-footer__end {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.app-footer__db-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.app-footer__db-dot {
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 999px;
+  background: var(--color-text-muted);
+}
+
+.app-footer__db-status[data-status='connected'] {
+  color: color-mix(in srgb, oklch(55% 0.15 145) 80%, var(--color-text));
+  border-color: color-mix(in srgb, oklch(55% 0.15 145) 35%, var(--color-border));
+}
+
+.app-footer__db-status[data-status='connected'] .app-footer__db-dot {
+  background: oklch(55% 0.15 145);
+}
+
+.app-footer__db-status[data-status='disconnected'] {
+  color: color-mix(in srgb, oklch(55% 0.2 25) 80%, var(--color-text));
+  border-color: color-mix(in srgb, oklch(55% 0.2 25) 35%, var(--color-border));
+}
+
+.app-footer__db-status[data-status='disconnected'] .app-footer__db-dot {
+  background: oklch(55% 0.2 25);
+}
+
+.app-footer__db-status[data-status='checking'] .app-footer__db-dot {
+  animation: app-footer-db-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes app-footer-db-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
 .app-footer__nav {
   display: flex;
   align-items: center;

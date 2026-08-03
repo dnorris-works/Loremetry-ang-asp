@@ -3,12 +3,24 @@
     &copy; {{ year() }} {{ appName() }}. All rights reserved.
   </p>
 
-  <nav class="app-footer__nav" aria-label="Footer navigation">
-    <a class="app-footer__link" href="https://angular.dev" target="_blank" rel="noopener noreferrer">
-      Angular Docs
-    </a>
-    <a class="app-footer__link" href="https://github.com" target="_blank" rel="noopener noreferrer">
-      GitHub
-    </a>
-  </nav>
+  <div class="app-footer__end">
+    <p
+      class="app-footer__db-status"
+      [attr.data-status]="dbStatus()"
+      aria-live="polite"
+      [attr.aria-label]="dbStatusLabel()"
+    >
+      <span class="app-footer__db-dot" aria-hidden="true"></span>
+      <span>{{ dbStatusLabel() }}</span>
+    </p>
+
+    <nav class="app-footer__nav" aria-label="Footer navigation">
+      <a class="app-footer__link" href="https://angular.dev" target="_blank" rel="noopener noreferrer">
+        Angular Docs
+      </a>
+      <a class="app-footer__link" href="https://github.com" target="_blank" rel="noopener noreferrer">
+        GitHub
+      </a>
+    </nav>
+  </div>
 </footer>

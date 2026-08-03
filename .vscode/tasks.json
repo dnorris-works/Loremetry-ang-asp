@@ -4,7 +4,7 @@
     {
       "label": "postgres: up",
       "type": "shell",
-      "command": "docker compose up -d",
+      "command": "${workspaceFolder}/scripts/dev/postgres-up.sh",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -13,7 +13,7 @@
     {
       "label": "postgres: wait",
       "type": "shell",
-      "command": "until docker compose exec -T postgres pg_isready -U loremetry -d loremetry > /dev/null 2>&1; do echo 'Waiting for Postgres...'; sleep 1; done",
+      "command": "${workspaceFolder}/scripts/dev/postgres-wait.sh",
       "options": {
         "cwd": "${workspaceFolder}"
       },
@@ -26,9 +26,18 @@
       "problemMatcher": []
     },
     {
+      "label": "backend: wait",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/dev/backend-wait.sh",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "postgres: down",
       "type": "shell",
-      "command": "docker compose down",
+      "command": "if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then docker compose down; else brew services stop postgresql@16 2>/dev/null || brew services stop postgresql@17 2>/dev/null || true; fi",
       "options": {
         "cwd": "${workspaceFolder}"
       },

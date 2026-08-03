@@ -1,0 +1,56 @@
+<section class="admin-schema">
+  <article class="admin-card">
+    <h2 class="admin-card__title">Database tables</h2>
+    <p class="admin-card__description">Browse the current PostgreSQL schema.</p>
+
+    @if (tables().length === 0) {
+      <p class="admin-card__muted">No tables found.</p>
+    } @else {
+      <div class="admin-schema__table-list">
+        @for (table of tables(); track table.name) {
+          <button
+            type="button"
+            class="admin-schema__table-button"
+            [class.admin-schema__table-button--active]="selectedTable() === table.name"
+            (click)="selectTable(table.name)"
+          >
+            <code>{{ table.name }}</code>
+          </button>
+        }
+      </div>
+    }
+  </article>
+
+  @if (selectedTable()) {
+    <article class="admin-card">
+      <h2 class="admin-card__title">Columns: {{ selectedTable() }}</h2>
+
+      @if (columns().length === 0) {
+        <p class="admin-card__muted">No columns found.</p>
+      } @else {
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th scope="col">Name</th>
+                <th scope="col">Type</th>
+                <th scope="col">Nullable</th>
+                <th scope="col">Default</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (column of columns(); track column.name) {
+                <tr>
+                  <td><code>{{ column.name }}</code></td>
+                  <td>{{ column.dataType }}</td>
+                  <td>{{ column.isNullable ? 'Yes' : 'No' }}</td>
+                  <td>{{ column.defaultValue ?? '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  }
+</section>

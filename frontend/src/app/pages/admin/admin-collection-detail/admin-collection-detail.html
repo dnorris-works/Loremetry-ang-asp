@@ -1,0 +1,225 @@
+@if (isLoading()) {
+  <p class="admin-card__muted">Loading collection...</p>
+} @else if (!collection()) {
+  <p class="admin-collections__error" role="alert">{{ errorMessage() ?? 'Collection not found.' }}</p>
+} @else {
+  <section class="admin-collection-detail">
+    <a class="admin-back-link" routerLink="/admin/collections">&larr; Back to collections</a>
+
+    @if (errorMessage()) {
+      <p class="admin-collections__error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <article class="admin-card">
+      <h2 class="admin-card__title">{{ collection()!.name }}</h2>
+      <p class="admin-card__description">
+        <code>{{ collection()!.slug }}</code>
+        @if (collection()!.description) {
+          <span> — {{ collection()!.description }}</span>
+        }
+      </p>
+    </article>
+
+    <div class="admin-collection-detail__grid">
+      <article class="admin-card">
+        <h2 class="admin-card__title">Fields (structure)</h2>
+        <p class="admin-card__description">Add or remove fields to change this collection's schema.</p>
+
+        <div class="admin-form-grid">
+          <label class="admin-field">
+            <span class="admin-field__label">Field name</span>
+            <input
+              class="admin-field__input"
+              type="text"
+              [value]="fieldName()"
+              (input)="onFieldNameInput($event)"
+            />
+          </label>
+
+          <label class="admin-field">
+            <span class="admin-field__label">Field key</span>
+            <input
+              class="admin-field__input"
+              type="text"
+              [value]="fieldKey()"
+              (input)="fieldKey.set($any($event.target).value)"
+            />
+          </label>
+
+          <label class="admin-field">
+            <span class="admin-field__label">Type</span>
+            <select
+              class="admin-field__select"
+              [value]="fieldType()"
+              (change)="fieldType.set($any($event.target).value)"
+            >
+              @for (type of fieldTypes; track type) {
+                <option [value]="type">{{ type }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="admin-field">
+            <span class="admin-field__label">Display order</span>
+            <input
+              class="admin-field__input"
+              type="number"
+              [value]="fieldOrder()"
+              (input)="fieldOrder.set(+$any($event.target).value)"
+            />
+          </label>
+
+          <label class="admin-field admin-field--checkbox">
+            <input
+              type="checkbox"
+              [checked]="fieldRequired()"
+              (change)="fieldRequired.set($any($event.target).checked)"
+            />
+            <span>Required</span>
+          </label>
+        </div>
+
+        <button type="button" class="admin-button" (click)="addField()">Add field</button>
+
+        @if (sortedFields().length === 0) {
+          <p class="admin-card__muted">No fields yet.</p>
+        } @else {
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Key</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">Required</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (field of sortedFields(); track field.id) {
+                  <tr>
+                    <td>{{ field.name }}</td>
+                    <td><code>{{ field.fieldKey }}</code></td>
+                    <td>{{ field.fieldType }}</td>
+                    <td>{{ field.isRequired ? 'Yes' : 'No' }}</td>
+                    <td>
+                      <button
+                        type="button"
+                        class="admin-link admin-link--danger"
+                        (click)="deleteField(field)"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </article>
+
+      <article class="admin-card">
+        <h2 class="admin-card__title">
+          {{ editingEntryId() ? 'Edit entry' : 'New entry' }}
+        </h2>
+
+        @if (sortedFields().length === 0) {
+          <p class="admin-card__muted">Add fields before creating entries.</p>
+        } @else {
+          <div class="admin-form-grid admin-form-grid--single">
+            @for (field of sortedFields(); track field.id) {
+              <label class="admin-field">
+                <span class="admin-field__label">
+                  {{ field.name }}
+                  @if (field.isRequired) {
+                    <span aria-hidden="true">*</span>
+                  }
+                </span>
+
+                @if (field.fieldType === 'Boolean') {
+                  <select
+                    class="admin-field__select"
+                    [value]="entryValues()[field.fieldKey] ?? 'false'"
+                    (change)="setEntryValue(field.fieldKey, $any($event.target).value)"
+                  >
+                    <option value="false">False</option>
+                    <option value="true">True</option>
+                  </select>
+                } @else if (field.fieldType === 'Json') {
+                  <textarea
+                    class="admin-field__textarea"
+                    [value]="entryValues()[field.fieldKey] ?? ''"
+                    (input)="setEntryValue(field.fieldKey, $any($event.target).value)"
+                  ></textarea>
+                } @else {
+                  <input
+                    class="admin-field__input"
+                    [type]="field.fieldType === 'Number' ? 'number' : field.fieldType === 'Date' ? 'date' : 'text'"
+                    [value]="entryValues()[field.fieldKey] ?? ''"
+                    (input)="setEntryValue(field.fieldKey, $any($event.target).value)"
+                  />
+                }
+              </label>
+            }
+          </div>
+
+          <div class="admin-collection-detail__actions">
+            <button type="button" class="admin-button" (click)="saveEntry()">
+              {{ editingEntryId() ? 'Update entry' : 'Create entry' }}
+            </button>
+            @if (editingEntryId()) {
+              <button type="button" class="admin-button admin-button--ghost" (click)="resetEntryForm()">
+                Cancel edit
+              </button>
+            }
+          </div>
+        }
+      </article>
+    </div>
+
+    <article class="admin-card">
+      <h2 class="admin-card__title">Entries</h2>
+
+      @if (entries().length === 0) {
+        <p class="admin-card__muted">No entries yet.</p>
+      } @else {
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                @for (field of sortedFields(); track field.id) {
+                  <th scope="col">{{ field.name }}</th>
+                }
+                <th scope="col">Updated</th>
+                <th scope="col">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of entries(); track entry.id) {
+                <tr>
+                  @for (field of sortedFields(); track field.id) {
+                    <td>{{ displayEntryValue(entry, field) }}</td>
+                  }
+                  <td>{{ entry.updatedAt | date: 'short' }}</td>
+                  <td class="admin-table__actions">
+                    <button type="button" class="admin-link" (click)="startEditEntry(entry)">
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      class="admin-link admin-link--danger"
+                      (click)="deleteEntry(entry)"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </article>
+  </section>
+}

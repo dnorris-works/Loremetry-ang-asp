@@ -27,17 +27,25 @@
       "request": "launch",
       "command": "npm run start",
       "cwd": "${workspaceFolder}/frontend"
+    },
+    {
+      "name": "Frontend (Angular, after Backend)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run start",
+      "cwd": "${workspaceFolder}/frontend",
+      "preLaunchTask": "backend: wait"
     }
   ],
   "compounds": [
     {
       "name": "Full Stack (BE + FE)",
-      "configurations": ["Backend (.NET)", "Frontend (Angular)"],
+      "configurations": ["Backend (.NET)", "Frontend (Angular, after Backend)"],
       "stopAll": true
     },
     {
       "name": "Full Stack + Postgres",
-      "configurations": ["Backend (.NET)", "Frontend (Angular)"],
+      "configurations": ["Backend (.NET)", "Frontend (Angular, after Backend)"],
       "preLaunchTask": "postgres: up-and-wait",
       "stopAll": true
     }

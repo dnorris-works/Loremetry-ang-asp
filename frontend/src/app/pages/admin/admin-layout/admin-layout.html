@@ -1,0 +1,29 @@
+<section class="admin-layout">
+  <header class="admin-layout__header">
+    <div>
+      <h1 class="admin-layout__title">Admin Panel</h1>
+      <p class="admin-layout__subtitle">
+        Manage collections, records, and database structure.
+      </p>
+    </div>
+
+    <nav class="admin-layout__nav" aria-label="Admin sections">
+      <a
+        class="admin-layout__nav-link"
+        routerLink="/admin/collections"
+        routerLinkActive="admin-layout__nav-link--active"
+      >
+        Collections
+      </a>
+      <a
+        class="admin-layout__nav-link"
+        routerLink="/admin/schema"
+        routerLinkActive="admin-layout__nav-link--active"
+      >
+        Schema
+      </a>
+    </nav>
+  </header>
+
+  <router-outlet />
+</section>
