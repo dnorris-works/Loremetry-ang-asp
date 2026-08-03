@@ -1,13 +1,15 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, of, tap } from 'rxjs';
 
+import { AuthService } from '../auth/auth.service';
 import { APP_SETTING_KEYS, AppSettingKey } from './app-settings.models';
 import { SettingsApiService } from './settings-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class AppSettingsService {
   private readonly settingsApi = inject(SettingsApiService);
+  private readonly auth = inject(AuthService);
 
   readonly values = signal<Record<string, string>>({});
   readonly isLoaded = signal(false);
@@ -15,7 +17,14 @@ export class AppSettingsService {
   readonly saveError = signal<string | null>(null);
 
   constructor() {
-    this.loadSettings();
+    effect(() => {
+      if (this.auth.enteredApp()) {
+        this.loadSettings();
+        return;
+      }
+
+      this.reset();
+    });
   }
 
   get(key: AppSettingKey): string | undefined {
@@ -24,6 +33,7 @@ export class AppSettingsService {
 
   loadSettings(): void {
     this.loadError.set(null);
+    this.isLoaded.set(false);
 
     this.settingsApi
       .getSettings()
@@ -72,6 +82,13 @@ export class AppSettingsService {
         }),
       )
       .subscribe();
+  }
+
+  reset(): void {
+    this.values.set({});
+    this.isLoaded.set(false);
+    this.loadError.set(null);
+    this.saveError.set(null);
   }
 }
 

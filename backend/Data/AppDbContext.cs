@@ -5,19 +5,24 @@ namespace backend.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<AppSetting> AppSettings => Set<AppSetting>();
+    public DbSet<UserSetting> UserSettings => Set<UserSetting>();
 
     public DbSet<User> Users => Set<User>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AppSetting>(entity =>
+        modelBuilder.Entity<UserSetting>(entity =>
         {
-            entity.ToTable("app_settings", "lore");
-            entity.HasKey(setting => setting.SettingKey);
+            entity.ToTable("user_settings", "lore");
+            entity.HasKey(setting => new { setting.UserId, setting.SettingKey });
+            entity.Property(setting => setting.UserId).HasColumnName("user_id");
             entity.Property(setting => setting.SettingKey).HasColumnName("key").HasMaxLength(120);
             entity.Property(setting => setting.Value).HasColumnName("value").IsRequired();
             entity.Property(setting => setting.UpdatedAt).HasColumnName("updated_at");
+            entity.HasOne(setting => setting.User)
+                .WithMany()
+                .HasForeignKey(setting => setting.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<User>(entity =>

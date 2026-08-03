@@ -13,8 +13,6 @@ export class ThemeService {
   readonly themes = APP_THEMES;
   readonly selectedThemeId = signal<ThemeId>('light');
 
-  private hydratedFromDatabase = false;
-
   constructor() {
     const mediaQuery = this.document.defaultView?.matchMedia(
       '(prefers-color-scheme: dark)',
@@ -25,16 +23,16 @@ export class ThemeService {
     });
 
     effect(() => {
-      if (!this.appSettings.isLoaded() || this.hydratedFromDatabase) {
+      if (!this.appSettings.isLoaded()) {
         return;
       }
 
       const storedTheme = this.appSettings.get(APP_SETTING_KEYS.theme);
       if (storedTheme && this.isThemeId(storedTheme)) {
         this.selectedThemeId.set(storedTheme);
+      } else {
+        this.selectedThemeId.set('light');
       }
-
-      this.hydratedFromDatabase = true;
     });
 
     effect(() => {

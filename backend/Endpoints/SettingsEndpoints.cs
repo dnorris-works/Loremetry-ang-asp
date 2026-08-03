@@ -1,3 +1,4 @@
+using backend.Auth;
 using backend.Data;
 using backend.Dtos;
 using backend.Models;
@@ -20,6 +21,12 @@ public static class SettingsEndpoints
         "high-contrast",
     ];
 
+    private static readonly IReadOnlyDictionary<string, string> DefaultValues =
+        new Dictionary<string, string>
+        {
+            [AppSettingKeys.Theme] = "light",
+        };
+
     public static IEndpointRouteBuilder MapSettingsEndpoints(this IEndpointRouteBuilder app)
     {
         var settings = app.MapGroup("/api/settings");
@@ -30,13 +37,35 @@ public static class SettingsEndpoints
         return app;
     }
 
-    private static async Task<IResult> GetSettings(AppDbContext db, CancellationToken cancellationToken)
+    private static async Task<IResult> GetSettings(
+        HttpRequest request,
+        AuthService authService,
+        AppDbContext db,
+        CancellationToken cancellationToken)
     {
-        var settings = await db.AppSettings
+        var authResult = await TryResolveUser(request, authService, cancellationToken);
+        if (authResult.Error is { } error)
+        {
+            return error;
+        }
+
+        var persisted = await db.UserSettings
             .AsNoTracking()
-            .OrderBy(setting => setting.SettingKey)
-            .Select(setting => new AppSettingDto(setting.SettingKey, setting.Value, setting.UpdatedAt))
-            .ToListAsync(cancellationToken);
+            .Where(setting => setting.UserId == authResult.User!.DbUserId)
+            .ToDictionaryAsync(setting => setting.SettingKey, cancellationToken);
+
+        var settings = DefaultValues.Keys
+            .OrderBy(key => key)
+            .Select(key =>
+            {
+                if (persisted.TryGetValue(key, out var setting))
+                {
+                    return new AppSettingDto(setting.SettingKey, setting.Value, setting.UpdatedAt);
+                }
+
+                return new AppSettingDto(key, DefaultValues[key], DateTimeOffset.UtcNow);
+            })
+            .ToList();
 
         return Results.Ok(settings);
     }
@@ -44,9 +73,17 @@ public static class SettingsEndpoints
     private static async Task<IResult> UpdateSetting(
         string key,
         UpdateAppSettingRequest request,
+        HttpRequest httpRequest,
+        AuthService authService,
         AppDbContext db,
         CancellationToken cancellationToken)
     {
+        var authResult = await TryResolveUser(httpRequest, authService, cancellationToken);
+        if (authResult.Error is { } error)
+        {
+            return error;
+        }
+
         if (string.IsNullOrWhiteSpace(request.Value))
         {
             return Results.BadRequest(new { message = "Value is required." });
@@ -58,18 +95,38 @@ public static class SettingsEndpoints
             return Results.BadRequest(new { message = errorMessage });
         }
 
-        var setting = await db.AppSettings.FirstOrDefaultAsync(item => item.SettingKey == key, cancellationToken);
-        if (setting is not { } existingSetting)
+        if (!DefaultValues.ContainsKey(key))
         {
             return Results.NotFound(new { message = $"Setting '{key}' was not found." });
         }
 
-        existingSetting.Value = request.Value.Trim();
-        existingSetting.UpdatedAt = DateTimeOffset.UtcNow;
+        var userId = authResult.User!.DbUserId;
+        var setting = await db.UserSettings.FirstOrDefaultAsync(
+            item => item.UserId == userId && item.SettingKey == key,
+            cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (setting is null)
+        {
+            setting = new UserSetting
+            {
+                UserId = userId,
+                SettingKey = key,
+                Value = request.Value.Trim(),
+                UpdatedAt = now,
+            };
+            db.UserSettings.Add(setting);
+        }
+        else
+        {
+            setting.Value = request.Value.Trim();
+            setting.UpdatedAt = now;
+        }
 
         await db.SaveChangesAsync(cancellationToken);
 
-        return Results.Ok(new AppSettingDto(existingSetting.SettingKey, existingSetting.Value, existingSetting.UpdatedAt));
+        return Results.Ok(new AppSettingDto(setting.SettingKey, setting.Value, setting.UpdatedAt));
     }
 
     private static string? ValidateSettingValue(string key, string value) =>
@@ -78,6 +135,22 @@ public static class SettingsEndpoints
             AppSettingKeys.Theme when !ThemeValues.Contains(value) => $"Theme '{value}' is not supported.",
             _ => null,
         };
+
+    private static async Task<(AuthUser? User, IResult? Error)> TryResolveUser(
+        HttpRequest request,
+        AuthService authService,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var user = await authService.ResolveAsync(request.Headers, cancellationToken);
+            return (user, null);
+        }
+        catch (AuthException exception)
+        {
+            return (null, Results.Json(new { message = exception.Message }, statusCode: StatusCodes.Status401Unauthorized));
+        }
+    }
 }
 
 public static class AppSettingKeys

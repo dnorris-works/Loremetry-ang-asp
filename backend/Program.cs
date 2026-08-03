@@ -35,18 +35,6 @@ using (var scope = app.Services.CreateScope())
 
     await db.Database.ExecuteSqlRawAsync("CREATE SCHEMA IF NOT EXISTS lore;");
     await db.Database.ExecuteSqlRawAsync("""
-        CREATE TABLE IF NOT EXISTS lore.app_settings (
-            key VARCHAR(120) PRIMARY KEY,
-            value TEXT NOT NULL,
-            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        );
-        """);
-    await db.Database.ExecuteSqlRawAsync("""
-        INSERT INTO lore.app_settings (key, value, updated_at)
-        VALUES ('theme', 'light', NOW())
-        ON CONFLICT (key) DO NOTHING;
-        """);
-    await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.users (
             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
             clerk_id VARCHAR(255),
@@ -64,6 +52,15 @@ using (var scope = app.Services.CreateScope())
         """);
     await db.Database.ExecuteSqlRawAsync("""
         CREATE UNIQUE INDEX IF NOT EXISTS users_clerk_id_unique ON lore.users (clerk_id);
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.user_settings (
+            user_id BIGINT NOT NULL REFERENCES lore.users(id) ON DELETE CASCADE,
+            key VARCHAR(120) NOT NULL,
+            value TEXT NOT NULL,
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (user_id, key)
+        );
         """);
 }
 
