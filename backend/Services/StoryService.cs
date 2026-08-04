@@ -65,7 +65,8 @@ public static class StoryService
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        var validationError = ValidateCreateRequest(request);
+        var expanded = ExpandStoryRequest(request);
+        var validationError = ValidateCreateRequest(expanded);
         if (validationError is { } message)
         {
             throw new InvalidOperationException(message);
@@ -82,9 +83,9 @@ public static class StoryService
 
         List<LoreStoryDocument> documents =
         [
-            ..MapManuscriptDocuments(request.Manuscripts, now),
-            ..MapReferenceDocuments(request.Characters ?? [], StoryDocumentKinds.Character, now),
-            ..MapReferenceDocuments(request.Locations ?? [], StoryDocumentKinds.Location, now),
+            ..MapManuscriptDocuments(expanded.Manuscripts, now),
+            ..MapReferenceDocuments(expanded.Characters, StoryDocumentKinds.Character, now),
+            ..MapReferenceDocuments(expanded.Locations, StoryDocumentKinds.Location, now),
         ];
 
         foreach (var (document, index) in documents.Select((document, index) => (document, index)))
@@ -106,7 +107,8 @@ public static class StoryService
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        var validationError = ValidateUpdateRequest(request);
+        var expanded = ExpandStoryRequest(request);
+        var validationError = ValidateUpdateRequest(expanded);
         if (validationError is { } message)
         {
             throw new InvalidOperationException(message);
@@ -129,9 +131,9 @@ public static class StoryService
 
         List<LoreStoryDocument> documents =
         [
-            ..MapManuscriptDocuments(request.Manuscripts, now),
-            ..MapReferenceDocuments(request.Characters ?? [], StoryDocumentKinds.Character, now),
-            ..MapReferenceDocuments(request.Locations ?? [], StoryDocumentKinds.Location, now),
+            ..MapManuscriptDocuments(expanded.Manuscripts, now),
+            ..MapReferenceDocuments(expanded.Characters, StoryDocumentKinds.Character, now),
+            ..MapReferenceDocuments(expanded.Locations, StoryDocumentKinds.Location, now),
         ];
 
         foreach (var (document, index) in documents.Select((document, index) => (document, index)))
@@ -264,6 +266,60 @@ public static class StoryService
         [
             ..requestedIds.Select(id => ToSummaryDto(storiesById[id])),
         ];
+    }
+
+    private static CreateStoryRequest ExpandStoryRequest(CreateStoryRequest request)
+    {
+        var expanded = ExpandStoryDocuments(
+            request.Manuscripts,
+            request.Characters,
+            request.Locations);
+
+        return request with
+        {
+            Manuscripts = expanded.Manuscripts,
+            Characters = expanded.Characters,
+            Locations = expanded.Locations,
+        };
+    }
+
+    private static UpdateStoryRequest ExpandStoryRequest(UpdateStoryRequest request)
+    {
+        var expanded = ExpandStoryDocuments(
+            request.Manuscripts,
+            request.Characters,
+            request.Locations);
+
+        return request with
+        {
+            Manuscripts = expanded.Manuscripts,
+            Characters = expanded.Characters,
+            Locations = expanded.Locations,
+        };
+    }
+
+    private static ExpandedStoryDocuments ExpandStoryDocuments(
+        IReadOnlyList<StoryDocumentInputDto> manuscripts,
+        IReadOnlyList<StoryDocumentInputDto> characters,
+        IReadOnlyList<StoryDocumentInputDto> locations)
+    {
+        try
+        {
+            return DocxImportService.ExpandStoryDocuments(
+                manuscripts,
+                characters ?? [],
+                locations ?? []);
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw new InvalidOperationException(
+                "Failed to extract content from one or more DOCX files.",
+                exception);
+        }
     }
 
     private static string? ValidateCreateRequest(CreateStoryRequest request)

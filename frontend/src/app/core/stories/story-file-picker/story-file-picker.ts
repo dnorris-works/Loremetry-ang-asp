@@ -34,7 +34,7 @@ import {
 export class StoryFilePicker {
   readonly label = input('Files');
   readonly description = input(
-    'Browse a folder for .md files (including subfolders), drag and drop, or add from recent (.md, .txt, or .docx).',
+    'Browse a folder for .md files (including subfolders), drag and drop, add files, or import a .docx to extract (.md, .txt, or .docx).',
   );
   readonly listTitle = input('Selected files');
   readonly pickerTypeLabel = input('Files');

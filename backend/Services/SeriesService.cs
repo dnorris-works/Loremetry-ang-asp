@@ -46,7 +46,8 @@ public static class SeriesService
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        var validationError = ValidateCreateRequest(request);
+        var expanded = ExpandSeriesRequest(request);
+        var validationError = ValidateCreateRequest(expanded);
         if (validationError is { } message)
         {
             throw new InvalidOperationException(message);
@@ -62,13 +63,13 @@ public static class SeriesService
         };
 
         var sortOrder = 0;
-        foreach (var document in MapCategoryDocuments(request.Characters ?? [], BibleDocumentCategories.Character, now))
+        foreach (var document in MapCategoryDocuments(expanded.Characters ?? [], BibleDocumentCategories.Character, now))
         {
             document.SortOrder = sortOrder++;
             series.BibleDocuments.Add(document);
         }
 
-        foreach (var document in MapCategoryDocuments(request.Locations ?? [], BibleDocumentCategories.Location, now))
+        foreach (var document in MapCategoryDocuments(expanded.Locations ?? [], BibleDocumentCategories.Location, now))
         {
             document.SortOrder = sortOrder++;
             series.BibleDocuments.Add(document);
@@ -87,7 +88,8 @@ public static class SeriesService
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        var validationError = ValidateUpdateRequest(request);
+        var expanded = ExpandSeriesRequest(request);
+        var validationError = ValidateUpdateRequest(expanded);
         if (validationError is { } message)
         {
             throw new InvalidOperationException(message);
@@ -109,14 +111,14 @@ public static class SeriesService
         series.BibleDocuments.Clear();
 
         var sortOrder = 0;
-        foreach (var document in MapCategoryDocuments(request.Characters ?? [], BibleDocumentCategories.Character, now))
+        foreach (var document in MapCategoryDocuments(expanded.Characters ?? [], BibleDocumentCategories.Character, now))
         {
             document.SeriesId = series.Id;
             document.SortOrder = sortOrder++;
             series.BibleDocuments.Add(document);
         }
 
-        foreach (var document in MapCategoryDocuments(request.Locations ?? [], BibleDocumentCategories.Location, now))
+        foreach (var document in MapCategoryDocuments(expanded.Locations ?? [], BibleDocumentCategories.Location, now))
         {
             document.SeriesId = series.Id;
             document.SortOrder = sortOrder++;
@@ -172,6 +174,58 @@ public static class SeriesService
         }
 
         return DocumentInputHelper.ValidateReferenceDocuments(request.Locations ?? [], "Location");
+    }
+
+    private static CreateSeriesRequest ExpandSeriesRequest(CreateSeriesRequest request)
+    {
+        try
+        {
+            return request with
+            {
+                Characters = DocxImportService.ExpandCategoryDocuments(
+                    request.Characters ?? [],
+                    DocxImportTarget.Character),
+                Locations = DocxImportService.ExpandCategoryDocuments(
+                    request.Locations ?? [],
+                    DocxImportTarget.Location),
+            };
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw new InvalidOperationException(
+                "Failed to extract content from one or more DOCX files.",
+                exception);
+        }
+    }
+
+    private static UpdateSeriesRequest ExpandSeriesRequest(UpdateSeriesRequest request)
+    {
+        try
+        {
+            return request with
+            {
+                Characters = DocxImportService.ExpandCategoryDocuments(
+                    request.Characters ?? [],
+                    DocxImportTarget.Character),
+                Locations = DocxImportService.ExpandCategoryDocuments(
+                    request.Locations ?? [],
+                    DocxImportTarget.Location),
+            };
+        }
+        catch (InvalidOperationException)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            throw new InvalidOperationException(
+                "Failed to extract content from one or more DOCX files.",
+                exception);
+        }
     }
 
     private static IEnumerable<SeriesBibleDocument> MapCategoryDocuments(

@@ -22,30 +22,20 @@ public static class DocumentInputHelper
     {
         var fileName = document.FileName.Trim();
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        string? textContent = null;
-        byte[]? binaryContent = null;
-
-        if (extension is ".md" or ".txt")
-        {
-            textContent = document.TextContent!.Trim();
-        }
-        else if (extension == ".docx")
-        {
-            TryDecodeBase64(document.BinaryContentBase64, out binaryContent);
-        }
+        var textContent = extension is ".md" or ".txt" ? document.TextContent!.Trim() : null;
 
         return new MappedDocumentContent(
             fileName,
             document.MimeType.Trim(),
             textContent,
-            binaryContent);
+            null);
     }
 
     public static MappedDocumentContent MapManuscriptDocument(StoryDocumentInputDto document)
     {
         var fileName = document.FileName.Trim();
         var extension = Path.GetExtension(fileName).ToLowerInvariant();
-        string? textContent = extension == ".md" ? document.TextContent!.Trim() : null;
+        string? textContent = extension is ".md" or ".txt" ? document.TextContent!.Trim() : null;
 
         return new MappedDocumentContent(
             fileName,
@@ -94,11 +84,10 @@ public static class DocumentInputHelper
 
             var extension = Path.GetExtension(fileName).ToLowerInvariant();
             var hasText = !string.IsNullOrWhiteSpace(document.TextContent);
-            var hasBinary = TryDecodeBase64(document.BinaryContentBase64, out _);
 
-            if (kind == "manuscript" && extension == ".md" && !hasText)
+            if (kind == "manuscript" && extension is ".md" or ".txt" && !hasText)
             {
-                return $"Markdown manuscript '{fileName}' must include text content.";
+                return $"Manuscript '{fileName}' must include text content.";
             }
 
             if (isReferenceDocument)
@@ -108,9 +97,9 @@ public static class DocumentInputHelper
                     return $"{kind} file '{fileName}' must include text content.";
                 }
 
-                if (extension == ".docx" && !hasBinary)
+                if (extension == ".docx")
                 {
-                    return $"{kind} file '{fileName}' must include binary content.";
+                    return $"{kind} file '{fileName}' must be extracted before save.";
                 }
             }
 
@@ -125,26 +114,6 @@ public static class DocumentInputHelper
 
     private static bool HasAllowedExtension(string fileName) =>
         AllowedExtensions.Contains(Path.GetExtension(fileName).ToLowerInvariant());
-
-    private static bool TryDecodeBase64(string? value, out byte[]? bytes)
-    {
-        bytes = null;
-
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-
-        try
-        {
-            bytes = Convert.FromBase64String(value.Trim());
-            return bytes.Length > 0;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
-    }
 }
 
 public sealed record MappedDocumentContent(
