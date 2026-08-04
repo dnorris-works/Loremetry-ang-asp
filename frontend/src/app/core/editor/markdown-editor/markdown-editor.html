@@ -40,26 +40,30 @@
     }
   </div>
 
-  @if (viewMode() === 'wysiwyg') {
+  <div class="markdown-editor__body">
     <div
-      #wysiwyg
-      class="markdown-editor__wysiwyg"
-      contenteditable="true"
-      role="textbox"
-      aria-label="Visual editor"
-      aria-multiline="true"
-      (input)="onWysiwygInput()"
-    ></div>
-  } @else {
-    <textarea
-      #textarea
-      class="markdown-editor__textarea"
-      rows="16"
-      aria-label="Markdown content"
-      placeholder="Start writing…"
-      (input)="onCodeInput($event)"
-    ></textarea>
-  }
+      class="markdown-editor__pane markdown-editor__pane--visual"
+      [class.markdown-editor__pane--hidden]="viewMode() !== 'wysiwyg'"
+      [attr.aria-hidden]="viewMode() !== 'wysiwyg'"
+    >
+      <div tiptapEditor [editor]="editor" class="markdown-editor__tiptap-host"></div>
+    </div>
+
+    <div
+      class="markdown-editor__pane markdown-editor__pane--code"
+      [class.markdown-editor__pane--hidden]="viewMode() !== 'code'"
+      [attr.aria-hidden]="viewMode() !== 'code'"
+    >
+      <textarea
+        #textarea
+        class="markdown-editor__textarea"
+        rows="16"
+        aria-label="Markdown content"
+        placeholder="Start writing…"
+        (input)="onCodeInput($event)"
+      ></textarea>
+    </div>
+  </div>
 
   <footer class="markdown-editor__footer">
     <span class="markdown-editor__meta">{{ markdown().length }} characters</span>

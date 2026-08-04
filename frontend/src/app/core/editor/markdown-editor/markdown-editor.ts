@@ -1,13 +1,18 @@
 import {
   Component,
   ElementRef,
+  OnDestroy,
   effect,
   model,
   signal,
   viewChild,
 } from '@angular/core';
+import { Editor } from '@tiptap/core';
+import Link from '@tiptap/extension-link';
+import { Markdown } from '@tiptap/markdown';
+import StarterKit from '@tiptap/starter-kit';
+import { TiptapEditorDirective } from 'ngx-tiptap';
 
-import { htmlToMarkdown, markdownToHtml } from '../markdown-converter';
 import {
   applyMarkdownFormat,
   MarkdownFormatAction,
@@ -27,15 +32,14 @@ interface ToolbarGroup {
 
 @Component({
   selector: 'app-markdown-editor',
+  imports: [TiptapEditorDirective],
   templateUrl: './markdown-editor.html',
   styleUrl: './markdown-editor.css',
 })
-export class MarkdownEditor {
+export class MarkdownEditor implements OnDestroy {
   readonly markdown = model('');
 
-  private readonly textareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('textarea');
-  private readonly wysiwygRef = viewChild<ElementRef<HTMLDivElement>>('wysiwyg');
-
+  protected readonly editor: Editor;
   protected readonly viewMode = signal<EditorViewMode>('wysiwyg');
   protected readonly toolbarGroups: ToolbarGroup[] = [
     {
@@ -68,21 +72,43 @@ export class MarkdownEditor {
     },
   ];
 
-  private readonly wysiwygDirty = signal(false);
-  private lastRenderedMarkdown = '';
+  private readonly textareaRef = viewChild<ElementRef<HTMLTextAreaElement>>('textarea');
 
   constructor() {
+    this.editor = new Editor({
+      extensions: [
+        StarterKit,
+        Link.configure({
+          openOnClick: false,
+          autolink: true,
+        }),
+        Markdown,
+      ],
+      content: '',
+      contentType: 'markdown',
+      editorProps: {
+        attributes: {
+          class: 'markdown-editor__prosemirror tiptap',
+        },
+      },
+      onUpdate: ({ editor }) => this.handleEditorUpdate(editor),
+    });
+
     effect(() => {
       const markdown = this.markdown();
       const mode = this.viewMode();
 
-      if (mode === 'wysiwyg') {
-        this.renderWysiwyg(markdown);
+      if (mode === 'code') {
+        this.syncCodeTextarea(markdown);
         return;
       }
 
-      this.syncCodeView(markdown);
+      this.syncEditorMarkdown(markdown);
     });
+  }
+
+  ngOnDestroy(): void {
+    this.editor.destroy();
   }
 
   protected setViewMode(mode: EditorViewMode): void {
@@ -91,27 +117,20 @@ export class MarkdownEditor {
     }
 
     if (mode === 'code') {
-      if (this.wysiwygDirty()) {
-        this.syncMarkdownFromWysiwyg();
-        this.wysiwygDirty.set(false);
-      }
+      this.markdown.set(this.editor.getMarkdown());
       this.viewMode.set('code');
       return;
     }
 
-    this.lastRenderedMarkdown = '';
+    this.editor.commands.setContent(this.markdown(), {
+      contentType: 'markdown',
+      emitUpdate: false,
+    });
     this.viewMode.set('wysiwyg');
   }
 
   protected onCodeInput(event: Event): void {
-    const value = (event.target as HTMLTextAreaElement).value;
-    this.lastRenderedMarkdown = value;
-    this.markdown.set(value);
-  }
-
-  protected onWysiwygInput(): void {
-    this.wysiwygDirty.set(true);
-    this.syncMarkdownFromWysiwyg();
+    this.markdown.set((event.target as HTMLTextAreaElement).value);
   }
 
   protected applyFormat(action: MarkdownFormatAction): void {
@@ -120,34 +139,39 @@ export class MarkdownEditor {
       return;
     }
 
-    this.applyWysiwygFormat(action);
-    this.wysiwygDirty.set(true);
-    this.syncMarkdownFromWysiwyg();
+    this.applyVisualFormat(action);
   }
 
-  private renderWysiwyg(markdown: string): void {
-    const editor = this.wysiwygRef()?.nativeElement;
-    if (!editor) {
+  private handleEditorUpdate(editor: Editor): void {
+    if (this.viewMode() !== 'wysiwyg') {
       return;
     }
 
-    if (markdown === this.lastRenderedMarkdown) {
+    const nextMarkdown = editor.getMarkdown();
+    if (nextMarkdown !== this.markdown()) {
+      this.markdown.set(nextMarkdown);
+    }
+  }
+
+  private syncEditorMarkdown(markdown: string): void {
+    const currentMarkdown = this.editor.getMarkdown();
+    if (currentMarkdown === markdown) {
       return;
     }
 
-    editor.innerHTML = markdownToHtml(markdown);
-    this.lastRenderedMarkdown = markdown;
-    this.wysiwygDirty.set(false);
+    this.editor.commands.setContent(markdown, {
+      contentType: 'markdown',
+      emitUpdate: false,
+    });
   }
 
-  private syncCodeView(markdown: string): void {
+  private syncCodeTextarea(markdown: string): void {
     const textarea = this.textareaRef()?.nativeElement;
     if (!textarea || textarea.value === markdown) {
       return;
     }
 
     textarea.value = markdown;
-    this.lastRenderedMarkdown = markdown;
   }
 
   private applyCodeFormat(action: MarkdownFormatAction): void {
@@ -163,72 +187,55 @@ export class MarkdownEditor {
       action,
     );
 
-    this.lastRenderedMarkdown = result.value;
     this.markdown.set(result.value);
     textarea.focus();
     textarea.setSelectionRange(result.selectionStart, result.selectionEnd);
   }
 
-  private applyWysiwygFormat(action: MarkdownFormatAction): void {
-    const editor = this.wysiwygRef()?.nativeElement;
-    if (!editor) {
-      return;
-    }
-
-    editor.focus();
+  private applyVisualFormat(action: MarkdownFormatAction): void {
+    const chain = this.editor.chain().focus();
 
     switch (action) {
       case 'bold':
-        document.execCommand('bold');
+        chain.toggleBold().run();
         break;
       case 'italic':
-        document.execCommand('italic');
+        chain.toggleItalic().run();
         break;
       case 'strikethrough':
-        document.execCommand('strikeThrough');
+        chain.toggleStrike().run();
         break;
       case 'heading1':
-        document.execCommand('formatBlock', false, 'h1');
+        chain.toggleHeading({ level: 1 }).run();
         break;
       case 'heading2':
-        document.execCommand('formatBlock', false, 'h2');
+        chain.toggleHeading({ level: 2 }).run();
         break;
       case 'heading3':
-        document.execCommand('formatBlock', false, 'h3');
+        chain.toggleHeading({ level: 3 }).run();
         break;
       case 'bulletList':
-        document.execCommand('insertUnorderedList');
+        chain.toggleBulletList().run();
         break;
       case 'orderedList':
-        document.execCommand('insertOrderedList');
+        chain.toggleOrderedList().run();
         break;
       case 'blockquote':
-        document.execCommand('formatBlock', false, 'blockquote');
+        chain.toggleBlockquote().run();
         break;
       case 'codeBlock':
-        document.execCommand('formatBlock', false, 'pre');
+        chain.toggleCodeBlock().run();
         break;
       case 'link': {
         const url = window.prompt('Link URL');
         if (url?.trim()) {
-          document.execCommand('createLink', false, url.trim());
+          chain.setLink({ href: url.trim() }).run();
         }
         break;
       }
       case 'horizontalRule':
-        document.execCommand('insertHorizontalRule');
+        chain.setHorizontalRule().run();
         break;
     }
-  }
-
-  private syncMarkdownFromWysiwyg(): void {
-    const editor = this.wysiwygRef()?.nativeElement;
-    if (!editor) {
-      return;
-    }
-
-    const markdown = htmlToMarkdown(editor.innerHTML);
-    this.lastRenderedMarkdown = markdown;
-    this.markdown.set(markdown);
   }
 }
