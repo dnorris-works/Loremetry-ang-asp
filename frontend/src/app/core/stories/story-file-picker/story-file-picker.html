@@ -44,11 +44,21 @@
           } @else if (isReading()) {
             Reading files…
           } @else {
-            Drag files here
+            Drag files or folders here
           }
         </p>
 
         <div class="story-file-picker__control">
+        <button
+          [id]="listboxId + '-browse-folder'"
+          type="button"
+          class="story-file-picker__browse"
+          [disabled]="isReading()"
+          (click)="browseFolder()"
+        >
+          {{ isReading() ? 'Reading files…' : 'Browse folder' }}
+        </button>
+
         <button
           [id]="listboxId + '-browse'"
           type="button"
@@ -56,7 +66,7 @@
           [disabled]="isReading()"
           (click)="browse()"
         >
-          {{ isReading() ? 'Reading files…' : 'Browse files' }}
+          Browse files
         </button>
 
         @if (filteredOptions().length > 0) {
@@ -187,5 +197,16 @@
     tabindex="-1"
     aria-hidden="true"
     (change)="onFileSelected($event)"
+  />
+
+  <input
+    #folderInput
+    class="story-file-picker__file-input"
+    type="file"
+    multiple
+    webkitdirectory
+    tabindex="-1"
+    aria-hidden="true"
+    (change)="onFolderSelected($event)"
   />
 </div>

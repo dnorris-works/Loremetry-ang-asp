@@ -15,7 +15,16 @@ import {
   STORY_FILE_PICKER_TYPES,
 } from '../story-file.constants';
 import { StoryDocumentInput } from '../story.models';
-import { readStoryFile, storyDocumentKey } from '../story-file.utils';
+import {
+  StoryFileSelection,
+  collectMarkdownFilesFromDataTransfer,
+  collectMarkdownFilesFromDirectory,
+  filterMarkdownFiles,
+  isMarkdownFileName,
+  readStoryFile,
+  storyDocumentKey,
+  toStoryFileSelection,
+} from '../story-file.utils';
 
 @Component({
   selector: 'app-story-file-picker',
@@ -25,7 +34,7 @@ import { readStoryFile, storyDocumentKey } from '../story-file.utils';
 export class StoryFilePicker {
   readonly label = input('Files');
   readonly description = input(
-    'Browse, drag and drop, or add from recent files (.md, .txt, or .docx).',
+    'Browse a folder for .md files (including subfolders), drag and drop, or add from recent (.md, .txt, or .docx).',
   );
   readonly listTitle = input('Selected files');
   readonly pickerTypeLabel = input('Files');
@@ -57,6 +66,7 @@ export class StoryFilePicker {
   protected readonly selectedCount = computed(() => this.selectedKeys().size);
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+  private readonly folderInput = viewChild<ElementRef<HTMLInputElement>>('folderInput');
   private readonly selectAllCheckbox = viewChild<ElementRef<HTMLInputElement>>('selectAllCheckbox');
   private dragDepth = 0;
 
@@ -146,12 +156,52 @@ export class StoryFilePicker {
       return;
     }
 
+    const items = event.dataTransfer?.items ? Array.from(event.dataTransfer.items) : [];
+    const hasDirectory = items.some((item) => {
+      const entry = item.webkitGetAsEntry?.();
+      return entry?.isDirectory;
+    });
+
+    if (hasDirectory && event.dataTransfer) {
+      const selections = await collectMarkdownFilesFromDataTransfer(event.dataTransfer);
+      await this.emitSelectedFiles(selections, { folderImport: true });
+      return;
+    }
+
     const files = event.dataTransfer?.files ? Array.from(event.dataTransfer.files) : [];
     if (files.length === 0) {
       return;
     }
 
-    await this.emitSelectedFiles(files);
+    await this.emitSelectedFiles(files.map((file) => toStoryFileSelection(file)));
+  }
+
+  protected async browseFolder(): Promise<void> {
+    const showDirectoryPicker = (
+      window as Window & {
+        showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>;
+      }
+    ).showDirectoryPicker;
+
+    if (showDirectoryPicker) {
+      try {
+        const directory = await showDirectoryPicker.call(window);
+        const selections = await collectMarkdownFilesFromDirectory(directory);
+        await this.emitSelectedFiles(selections, { folderImport: true });
+        return;
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        this.browseError.emit(
+          error instanceof Error ? error.message : 'Failed to open the folder picker.',
+        );
+        return;
+      }
+    }
+
+    this.folderInput()?.nativeElement.click();
   }
 
   protected async browse(): Promise<void> {
@@ -177,7 +227,7 @@ export class StoryFilePicker {
           })),
         });
         const files = await Promise.all(handles.map((handle) => handle.getFile()));
-        await this.emitSelectedFiles(files);
+        await this.emitSelectedFiles(files.map((file) => toStoryFileSelection(file)));
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') {
@@ -194,6 +244,19 @@ export class StoryFilePicker {
     this.fileInput()?.nativeElement.click();
   }
 
+  protected async onFolderSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+
+    if (files.length === 0) {
+      return;
+    }
+
+    const selections = filterMarkdownFiles(files);
+    await this.emitSelectedFiles(selections, { folderImport: true });
+    input.value = '';
+  }
+
   protected async onFileSelected(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     const files = input.files ? Array.from(input.files) : [];
@@ -202,7 +265,7 @@ export class StoryFilePicker {
       return;
     }
 
-    await this.emitSelectedFiles(files);
+    await this.emitSelectedFiles(files.map((file) => toStoryFileSelection(file)));
     input.value = '';
   }
 
@@ -276,18 +339,28 @@ export class StoryFilePicker {
     }
   }
 
-  private async emitSelectedFiles(files: File[]): Promise<void> {
-    const allowedFiles = files.filter((file) => this.isAllowedFile(file.name));
-    const rejectedCount = files.length - allowedFiles.length;
+  private async emitSelectedFiles(
+    selections: StoryFileSelection[] | File[],
+    options?: { folderImport?: boolean },
+  ): Promise<void> {
+    const normalizedSelections: StoryFileSelection[] = selections.map((selection) =>
+      selection instanceof File ? toStoryFileSelection(selection) : selection,
+    );
+    const allowedSelections = options?.folderImport
+      ? normalizedSelections.filter((selection) => isMarkdownFileName(selection.fileName))
+      : normalizedSelections.filter((selection) => this.isAllowedFile(selection.fileName));
+    const rejectedCount = normalizedSelections.length - allowedSelections.length;
 
-    if (allowedFiles.length === 0) {
+    if (allowedSelections.length === 0) {
       this.browseError.emit(
-        `Only .md, .txt, and .docx ${this.pickerTypeLabel().toLowerCase()} are supported.`,
+        options?.folderImport
+          ? `No .md ${this.pickerTypeLabel().toLowerCase()} were found in that folder.`
+          : `Only .md, .txt, and .docx ${this.pickerTypeLabel().toLowerCase()} are supported.`,
       );
       return;
     }
 
-    if (rejectedCount > 0) {
+    if (rejectedCount > 0 && !options?.folderImport) {
       this.browseError.emit(
         `${rejectedCount} file${rejectedCount === 1 ? '' : 's'} skipped. Only .md, .txt, and .docx are supported.`,
       );
@@ -296,7 +369,7 @@ export class StoryFilePicker {
     this.isReading.set(true);
 
     try {
-      const documents = await Promise.all(allowedFiles.map((file) => readStoryFile(file)));
+      const documents = await Promise.all(allowedSelections.map((selection) => readStoryFile(selection)));
       this.valueChange.emit(this.mergeFiles(this.value(), documents));
       this.isRecentOpen.set(false);
       if (this.collapsible()) {
