@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, viewChild } from '@angular/core';
 
 import { MarkdownEditor } from '../../core/editor/markdown-editor/markdown-editor';
 import { WritingService } from '../../core/writing/writing.service';
@@ -11,6 +11,7 @@ import { WritingService } from '../../core/writing/writing.service';
 })
 export class WritingPanel {
   private readonly writingService = inject(WritingService);
+  private readonly markdownEditor = viewChild(MarkdownEditor);
 
   protected readonly title = this.writingService.title;
   protected readonly content = this.writingService.content;
@@ -47,6 +48,11 @@ export class WritingPanel {
   }
 
   protected async save(): Promise<void> {
+    const editor = this.markdownEditor();
+    if (editor) {
+      this.writingService.content.set(editor.flushMarkdown());
+    }
+
     await this.writingService.save();
   }
 }

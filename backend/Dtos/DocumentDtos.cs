@@ -1,3 +1,6 @@
 namespace backend.Dtos;
 
-public record UpdateDocumentTextRequest(string TextContent);
+public record UpdateDocumentTextRequest
+{
+    public string TextContent { get; init; } = "";
+}

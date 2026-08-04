@@ -1,7 +1,17 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
 .markdown-editor {
   display: flex;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
+  height: 100%;
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   background: var(--color-surface-muted);
@@ -72,11 +82,14 @@
 .markdown-editor__body {
   position: relative;
   flex: 1;
-  min-height: 16rem;
+  min-height: 0;
 }
 
 .markdown-editor__pane {
-  min-height: 16rem;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .markdown-editor__pane--hidden {
@@ -84,11 +97,20 @@
 }
 
 .markdown-editor__tiptap-host {
-  min-height: 16rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.markdown-editor__tiptap-host > .tiptap {
+  flex: 1;
+  min-height: 0;
 }
 
 .markdown-editor__prosemirror {
-  min-height: 16rem;
+  flex: 1;
+  min-height: 0;
   padding: 0.75rem;
   outline: none;
   color: var(--color-text);
@@ -155,9 +177,9 @@
 }
 
 .markdown-editor__textarea {
+  flex: 1;
   width: 100%;
-  min-height: 16rem;
-  height: 100%;
+  min-height: 0;
   padding: 0.75rem;
   border: none;
   background: transparent;
@@ -165,7 +187,7 @@
   font: inherit;
   font-size: 0.875rem;
   line-height: 1.6;
-  resize: vertical;
+  resize: none;
 }
 
 .markdown-editor__textarea:focus-visible {

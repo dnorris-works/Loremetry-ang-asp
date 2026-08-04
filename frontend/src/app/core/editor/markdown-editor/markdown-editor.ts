@@ -107,6 +107,17 @@ export class MarkdownEditor implements OnDestroy {
     });
   }
 
+  flushMarkdown(): string {
+    const value =
+      this.viewMode() === 'wysiwyg' ? this.editor.getMarkdown() : this.markdown();
+
+    if (value !== this.markdown()) {
+      this.markdown.set(value);
+    }
+
+    return value;
+  }
+
   ngOnDestroy(): void {
     this.editor.destroy();
   }

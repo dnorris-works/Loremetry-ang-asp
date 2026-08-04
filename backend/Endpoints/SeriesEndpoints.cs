@@ -134,7 +134,7 @@ public static class SeriesEndpoints
                 authResult.User!.DbUserId,
                 seriesId,
                 documentId,
-                request.TextContent,
+                request?.TextContent ?? string.Empty,
                 db,
                 cancellationToken);
 

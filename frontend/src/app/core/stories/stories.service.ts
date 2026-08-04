@@ -71,6 +71,24 @@ export class StoriesService {
     }
   }
 
+  async ensureEditingDetail(storyId: number, forceRefresh = false): Promise<StoryDetail | null> {
+    if (!forceRefresh) {
+      const current = this.editingDetail();
+      if (current?.id === storyId) {
+        return current;
+      }
+    }
+
+    try {
+      const detail = await firstValueFrom(this.storiesApi.getStory(storyId));
+      this.editingDetail.set(detail);
+      return detail;
+    } catch (error) {
+      this.saveError.set(this.readErrorMessage(error, 'Failed to load story.'));
+      return null;
+    }
+  }
+
   closePanel(): void {
     this.isPanelOpen.set(false);
     this.editingId.set(null);
@@ -308,6 +326,18 @@ export class StoriesService {
     if (error instanceof HttpErrorResponse) {
       if (typeof error.error?.message === 'string') {
         return error.error.message;
+      }
+
+      if (typeof error.error === 'string' && error.error.trim()) {
+        return error.error;
+      }
+
+      if (typeof error.error?.title === 'string') {
+        return error.error.title;
+      }
+
+      if (error.status === 0) {
+        return 'Could not reach the server. Check that the backend is running.';
       }
     }
 

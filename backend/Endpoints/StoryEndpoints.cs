@@ -134,7 +134,7 @@ public static class StoryEndpoints
                 authResult.User!.DbUserId,
                 storyId,
                 documentId,
-                request.TextContent,
+                request?.TextContent ?? string.Empty,
                 db,
                 cancellationToken);
 

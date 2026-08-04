@@ -64,42 +64,42 @@ export class WritingService {
     this.saveError.set(null);
 
     try {
-      if (context.documentId && context.parentId > 0) {
-        const saved =
-          context.source === 'story'
-            ? await this.storiesService.updateStoryDocumentText(
-                context.parentId,
-                context.documentId,
-                textContent,
-              )
-            : await this.seriesService.updateSeriesDocumentText(
-                context.parentId,
-                context.documentId,
-                textContent,
-              );
+      if (context.parentId > 0) {
+        let documentId = context.documentId ?? (await this.lookupDocumentId(context));
 
-        if (!saved) {
-          this.saveError.set(
-            context.source === 'story'
-              ? (this.storiesService.saveError() ?? 'Failed to save document.')
-              : (this.seriesService.saveError() ?? 'Failed to save document.'),
-          );
-          return false;
+        if (!documentId) {
+          documentId = await this.lookupDocumentId(context, true);
         }
+
+        if (documentId) {
+          const resolvedId = await this.persistWithRetry(context, documentId, textContent);
+          if (!resolvedId) {
+            return false;
+          }
+
+          this.documentContext.set({ ...context, documentId: resolvedId });
+          this.savedContent.set(textContent);
+          return true;
+        }
+
+        this.saveError.set(
+          `Could not find "${context.fileName}" in the ${context.source}. Save the ${context.source} first or reopen the file.`,
+        );
+        return false;
+      }
+
+      if (context.source === 'story') {
+        this.storiesService.updatePanelDocumentText(
+          context.fileName,
+          context.category,
+          textContent,
+        );
       } else {
-        if (context.source === 'story') {
-          this.storiesService.updatePanelDocumentText(
-            context.fileName,
-            context.category,
-            textContent,
-          );
-        } else {
-          this.seriesService.updatePanelDocumentText(
-            context.fileName,
-            context.category,
-            textContent,
-          );
-        }
+        this.seriesService.updatePanelDocumentText(
+          context.fileName,
+          context.category,
+          textContent,
+        );
       }
 
       this.savedContent.set(textContent);
@@ -111,5 +111,74 @@ export class WritingService {
 
   reset(): void {
     this.closePanel();
+  }
+
+  private async persistWithRetry(
+    context: WritingDocumentContext,
+    documentId: number,
+    textContent: string,
+  ): Promise<number | null> {
+    if (await this.persistDocumentText(context, documentId, textContent)) {
+      return documentId;
+    }
+
+    const refreshedId = await this.lookupDocumentId(context, true);
+    if (!refreshedId || refreshedId === documentId) {
+      return null;
+    }
+
+    return (await this.persistDocumentText(context, refreshedId, textContent)) ? refreshedId : null;
+  }
+
+  private async persistDocumentText(
+    context: WritingDocumentContext,
+    documentId: number,
+    textContent: string,
+  ): Promise<boolean> {
+    const saved =
+      context.source === 'story'
+        ? await this.storiesService.updateStoryDocumentText(
+            context.parentId,
+            documentId,
+            textContent,
+          )
+        : await this.seriesService.updateSeriesDocumentText(
+            context.parentId,
+            documentId,
+            textContent,
+          );
+
+    if (saved) {
+      return true;
+    }
+
+    const serviceError =
+      context.source === 'story'
+        ? this.storiesService.saveError()
+        : this.seriesService.saveError();
+
+    this.saveError.set(serviceError ?? 'Failed to save document.');
+    return false;
+  }
+
+  private async lookupDocumentId(
+    context: WritingDocumentContext,
+    forceRefresh = false,
+  ): Promise<number | null> {
+    if (context.source === 'story') {
+      const detail = await this.storiesService.ensureEditingDetail(context.parentId, forceRefresh);
+
+      const document = detail?.documents.find(
+        (item) => item.fileName === context.fileName && item.kind === context.category,
+      );
+      return document?.id ?? null;
+    }
+
+    const detail = await this.seriesService.ensureEditingDetail(context.parentId, forceRefresh);
+
+    const document = detail?.bibleDocuments.find(
+      (item) => item.fileName === context.fileName && item.category === context.category,
+    );
+    return document?.id ?? null;
   }
 }

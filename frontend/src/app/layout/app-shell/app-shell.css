@@ -56,8 +56,11 @@
 }
 
 .app-shell__main {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-width: 0;
+  min-height: 0;
   overflow: auto;
   padding: 1rem;
 }

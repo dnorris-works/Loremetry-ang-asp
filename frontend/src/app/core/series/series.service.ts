@@ -69,6 +69,24 @@ export class SeriesService {
     }
   }
 
+  async ensureEditingDetail(seriesId: number, forceRefresh = false): Promise<SeriesDetail | null> {
+    if (!forceRefresh) {
+      const current = this.editingDetail();
+      if (current?.id === seriesId) {
+        return current;
+      }
+    }
+
+    try {
+      const detail = await firstValueFrom(this.seriesApi.getSeries(seriesId));
+      this.editingDetail.set(detail);
+      return detail;
+    } catch (error) {
+      this.saveError.set(this.readErrorMessage(error, 'Failed to load series.'));
+      return null;
+    }
+  }
+
   closePanel(): void {
     this.isPanelOpen.set(false);
     this.editingId.set(null);
@@ -259,6 +277,18 @@ export class SeriesService {
     if (error instanceof HttpErrorResponse) {
       if (typeof error.error?.message === 'string') {
         return error.error.message;
+      }
+
+      if (typeof error.error === 'string' && error.error.trim()) {
+        return error.error;
+      }
+
+      if (typeof error.error?.title === 'string') {
+        return error.error.title;
+      }
+
+      if (error.status === 0) {
+        return 'Could not reach the server. Check that the backend is running.';
       }
     }
 
