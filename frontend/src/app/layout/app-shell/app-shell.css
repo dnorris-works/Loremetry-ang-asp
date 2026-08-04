@@ -58,9 +58,18 @@
 .app-shell__main {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
   min-height: 0;
   overflow: auto;
   padding: 1rem;
+}
+
+.app-shell__main:has(> app-writing-panel) {
+  overflow: hidden;
+}
+
+.app-shell__main > app-writing-panel {
+  flex: 1 1 0;
+  min-height: 0;
 }

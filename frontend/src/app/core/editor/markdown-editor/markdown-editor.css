@@ -1,23 +1,22 @@
-:host {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
+app-markdown-editor {
+  display: block;
+  flex: 1 1 0;
   min-height: 0;
   width: 100%;
 }
 
-.markdown-editor {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
+app-markdown-editor .markdown-editor {
+  --editor-line-height: 1.25;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   height: 100%;
+  min-height: 0;
   border: 1px solid var(--color-border);
   border-radius: 0.5rem;
   background: var(--color-surface-muted);
 }
 
-.markdown-editor__toolbar {
+app-markdown-editor .markdown-editor__toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
@@ -26,19 +25,19 @@
   background: var(--color-surface);
 }
 
-.markdown-editor__toolbar-group {
+app-markdown-editor .markdown-editor__toolbar-group {
   display: flex;
   gap: 0.125rem;
   padding-right: 0.25rem;
   border-right: 1px solid var(--color-border);
 }
 
-.markdown-editor__toolbar-group:last-child {
+app-markdown-editor .markdown-editor__toolbar-group:last-child {
   border-right: none;
   padding-right: 0;
 }
 
-.markdown-editor__toolbar-button {
+app-markdown-editor .markdown-editor__toolbar-button {
   display: grid;
   place-items: center;
   min-width: 1.75rem;
@@ -54,106 +53,110 @@
   cursor: pointer;
 }
 
-.markdown-editor__toolbar-button:hover {
+app-markdown-editor .markdown-editor__toolbar-button:hover {
   color: var(--color-text);
   background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-muted));
   border-color: var(--color-border);
 }
 
-.markdown-editor__toolbar-button:focus-visible {
+app-markdown-editor .markdown-editor__toolbar-button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;
 }
 
-.markdown-editor__toolbar-button--active {
+app-markdown-editor .markdown-editor__toolbar-button--active {
   color: var(--color-primary);
   background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-muted));
   border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
 }
 
-.markdown-editor__view-toggle {
+app-markdown-editor .markdown-editor__view-toggle {
   padding-right: 0.375rem;
 }
 
-.markdown-editor__toolbar-icon {
+app-markdown-editor .markdown-editor__toolbar-icon {
   line-height: 1;
 }
 
-.markdown-editor__body {
+app-markdown-editor .markdown-editor__body {
   position: relative;
-  flex: 1;
   min-height: 0;
 }
 
-.markdown-editor__pane {
+app-markdown-editor .markdown-editor__pane {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
 }
 
-.markdown-editor__pane--hidden {
+app-markdown-editor .markdown-editor__pane--hidden {
   display: none;
 }
 
-.markdown-editor__tiptap-host {
+app-markdown-editor .markdown-editor__tiptap-host {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
+  height: 100%;
 }
 
-.markdown-editor__tiptap-host > .tiptap {
-  flex: 1;
+app-markdown-editor .markdown-editor__tiptap-host > .tiptap,
+app-markdown-editor .markdown-editor__tiptap-host > .ProseMirror,
+app-markdown-editor .markdown-editor__surface {
+  flex: 1 1 0;
   min-height: 0;
-}
-
-.markdown-editor__prosemirror {
-  flex: 1;
-  min-height: 0;
+  height: 100%;
   padding: 0.75rem;
   outline: none;
+  overflow: auto;
   color: var(--color-text);
   font: inherit;
   font-size: 0.875rem;
-  line-height: 1.6;
+  line-height: var(--editor-line-height);
+  box-sizing: border-box;
 }
 
-.markdown-editor__prosemirror :where(h1, h2, h3, h4, h5, h6) {
-  margin: 0.75rem 0 0.375rem;
-  line-height: 1.3;
+app-markdown-editor .markdown-editor__surface:focus-visible,
+app-markdown-editor .markdown-editor__tiptap-host > .tiptap:focus-visible,
+app-markdown-editor .markdown-editor__tiptap-host > .ProseMirror:focus-visible {
+  outline: none;
 }
 
-.markdown-editor__prosemirror :where(h1) {
+app-markdown-editor .markdown-editor__surface :where(h1, h2, h3, h4, h5, h6, p, ul, ol, blockquote, pre) {
+  margin: 0;
+  line-height: var(--editor-line-height);
+}
+
+app-markdown-editor .markdown-editor__surface :where(h1) {
   font-size: 1.375rem;
 }
 
-.markdown-editor__prosemirror :where(h2) {
+app-markdown-editor .markdown-editor__surface :where(h2) {
   font-size: 1.125rem;
 }
 
-.markdown-editor__prosemirror :where(h3) {
+app-markdown-editor .markdown-editor__surface :where(h3) {
   font-size: 1rem;
 }
 
-.markdown-editor__prosemirror :where(p) {
-  margin: 0 0 0.625rem;
+app-markdown-editor .markdown-editor__surface :where(p + p) {
+  margin-top: 0.25rem;
 }
 
-.markdown-editor__prosemirror :where(ul, ol) {
-  margin: 0 0 0.625rem;
+app-markdown-editor .markdown-editor__surface :where(ul, ol) {
   padding-left: 1.25rem;
 }
 
-.markdown-editor__prosemirror :where(blockquote) {
-  margin: 0 0 0.625rem;
+app-markdown-editor .markdown-editor__surface :where(blockquote) {
   padding-left: 0.75rem;
   border-left: 3px solid var(--color-border);
   color: var(--color-text-muted);
 }
 
-.markdown-editor__prosemirror :where(pre) {
-  margin: 0 0 0.625rem;
+app-markdown-editor .markdown-editor__surface :where(pre) {
   padding: 0.625rem;
   border-radius: 0.375rem;
   background: color-mix(in srgb, var(--color-surface) 80%, var(--color-border));
@@ -161,40 +164,43 @@
   font-size: 0.8125rem;
 }
 
-.markdown-editor__prosemirror :where(code) {
+app-markdown-editor .markdown-editor__surface :where(code) {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.8125rem;
 }
 
-.markdown-editor__prosemirror :where(a) {
+app-markdown-editor .markdown-editor__surface :where(a) {
   color: var(--color-primary);
 }
 
-.markdown-editor__prosemirror :where(hr) {
-  margin: 0.75rem 0;
+app-markdown-editor .markdown-editor__surface :where(hr) {
+  margin: 0.5rem 0;
   border: 0;
   border-top: 1px solid var(--color-border);
 }
 
-.markdown-editor__textarea {
-  flex: 1;
+app-markdown-editor .markdown-editor__textarea {
+  flex: 1 1 0;
   width: 100%;
   min-height: 0;
+  height: 100%;
   padding: 0.75rem;
   border: none;
   background: transparent;
   color: var(--color-text);
   font: inherit;
   font-size: 0.875rem;
-  line-height: 1.6;
+  line-height: var(--editor-line-height);
+  white-space: pre-wrap;
   resize: none;
+  box-sizing: border-box;
 }
 
-.markdown-editor__textarea:focus-visible {
+app-markdown-editor .markdown-editor__textarea:focus-visible {
   outline: none;
 }
 
-.markdown-editor__footer {
+app-markdown-editor .markdown-editor__footer {
   display: flex;
   justify-content: space-between;
   gap: 0.5rem;
@@ -203,7 +209,7 @@
   background: var(--color-surface);
 }
 
-.markdown-editor__meta {
+app-markdown-editor .markdown-editor__meta {
   font-size: 0.6875rem;
   color: var(--color-text-muted);
 }

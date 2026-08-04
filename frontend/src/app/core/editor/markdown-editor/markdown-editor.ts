@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  ViewEncapsulation,
   effect,
   model,
   signal,
@@ -35,6 +36,7 @@ interface ToolbarGroup {
   imports: [TiptapEditorDirective],
   templateUrl: './markdown-editor.html',
   styleUrl: './markdown-editor.css',
+  encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditor implements OnDestroy {
   readonly markdown = model('');
@@ -88,7 +90,7 @@ export class MarkdownEditor implements OnDestroy {
       contentType: 'markdown',
       editorProps: {
         attributes: {
-          class: 'markdown-editor__prosemirror tiptap',
+          class: 'markdown-editor__surface tiptap',
         },
       },
       onUpdate: ({ editor }) => this.handleEditorUpdate(editor),
