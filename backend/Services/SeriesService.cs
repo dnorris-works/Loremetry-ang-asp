@@ -130,6 +130,47 @@ public static class SeriesService
         return ToSummaryDto(series);
     }
 
+    public static async Task<SeriesBibleDocumentDto?> UpdateDocumentTextAsync(
+        long userId,
+        long seriesId,
+        long documentId,
+        string textContent,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var document = await db.SeriesBibleDocuments
+            .Include(item => item.Series)
+            .FirstOrDefaultAsync(
+                item => item.Id == documentId && item.SeriesId == seriesId && item.Series.UserId == userId,
+                cancellationToken);
+
+        if (document is null)
+        {
+            return null;
+        }
+
+        var extension = Path.GetExtension(document.FileName).ToLowerInvariant();
+        if (extension is not ".md" and not ".txt")
+        {
+            throw new InvalidOperationException($"File '{document.FileName}' cannot be edited as text.");
+        }
+
+        document.TextContent = textContent;
+        document.BinaryContent = null;
+        document.Series.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new SeriesBibleDocumentDto(
+            document.Id,
+            document.Category,
+            document.FileName,
+            document.MimeType,
+            document.TextContent,
+            ToBase64(document.BinaryContent),
+            document.SortOrder);
+    }
+
     private static string? ValidateCreateRequest(CreateSeriesRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Name))

@@ -20,7 +20,9 @@
     </div>
 
     <main class="app-shell__main" id="main-content">
-      @if (isSeriesPanelOpen()) {
+      @if (isWritingPanelOpen()) {
+        <app-writing-panel />
+      } @else if (isSeriesPanelOpen()) {
         <app-series-panel />
       } @else if (isStoryPanelOpen()) {
         <app-story-panel />

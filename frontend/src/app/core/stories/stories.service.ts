@@ -5,8 +5,9 @@ import { catchError, firstValueFrom, of } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { SeriesApiService } from '../series/series-api.service';
 import { StoriesApiService } from './stories-api.service';
-import { CreateStoryRequest, Story, StoryDetail, StoryDocumentInput } from './story.models';
+import { CreateStoryRequest, Story, StoryDetail, StoryDocument, StoryDocumentInput, StoryPanelDraft } from './story.models';
 import { storyDocumentKey } from './story-file.utils';
+import { WritingDocumentCategory } from '../writing/writing.models';
 
 @Injectable({ providedIn: 'root' })
 export class StoriesService {
@@ -27,6 +28,7 @@ export class StoriesService {
   readonly recentManuscriptFiles = signal<StoryDocumentInput[]>([]);
   readonly recentCharacterFiles = signal<StoryDocumentInput[]>([]);
   readonly recentLocationFiles = signal<StoryDocumentInput[]>([]);
+  readonly panelDraft = signal<StoryPanelDraft | null>(null);
 
   readonly isEditing = computed(() => this.editingId() !== null);
 
@@ -44,6 +46,7 @@ export class StoriesService {
   openAddPanel(): void {
     this.editingId.set(null);
     this.editingDetail.set(null);
+    this.panelDraft.set(null);
     this.isPanelOpen.set(true);
     this.saveError.set(null);
     this.panelLoadError.set(null);
@@ -51,6 +54,7 @@ export class StoriesService {
 
   async openEditPanel(id: number): Promise<void> {
     this.editingId.set(id);
+    this.panelDraft.set(null);
     this.isPanelOpen.set(true);
     this.saveError.set(null);
     this.panelLoadError.set(null);
@@ -71,8 +75,79 @@ export class StoriesService {
     this.isPanelOpen.set(false);
     this.editingId.set(null);
     this.editingDetail.set(null);
+    this.panelDraft.set(null);
     this.saveError.set(null);
     this.panelLoadError.set(null);
+  }
+
+  setPanelDraft(draft: StoryPanelDraft): void {
+    this.panelDraft.set(draft);
+  }
+
+  updatePanelDocumentText(fileName: string, category: WritingDocumentCategory, textContent: string): void {
+    const draft = this.panelDraft();
+    if (!draft) {
+      return;
+    }
+
+    const key = fileName.toLowerCase();
+    const updateFiles = (files: StoryDocumentInput[]) =>
+      files.map((file) =>
+        file.fileName.toLowerCase() === key ? { ...file, textContent } : file,
+      );
+
+    switch (category) {
+      case 'manuscript':
+        this.panelDraft.set({ ...draft, manuscripts: updateFiles(draft.manuscripts) });
+        break;
+      case 'character':
+        this.panelDraft.set({ ...draft, characters: updateFiles(draft.characters) });
+        break;
+      case 'location':
+        this.panelDraft.set({ ...draft, locations: updateFiles(draft.locations) });
+        break;
+    }
+  }
+
+  applyDocumentTextUpdate(document: StoryDocument): void {
+    const detail = this.editingDetail();
+    if (!detail) {
+      return;
+    }
+
+    this.editingDetail.set({
+      ...detail,
+      documents: detail.documents.map((item) =>
+        item.id === document.id
+          ? {
+              ...item,
+              textContent: document.textContent,
+              binaryContentBase64: document.binaryContentBase64,
+            }
+          : item,
+      ),
+    });
+
+    this.updatePanelDocumentText(document.fileName, document.kind, document.textContent ?? '');
+  }
+
+  async updateStoryDocumentText(
+    storyId: number,
+    documentId: number,
+    textContent: string,
+  ): Promise<StoryDocument | null> {
+    this.saveError.set(null);
+
+    try {
+      const document = await firstValueFrom(
+        this.storiesApi.updateStoryDocumentText(storyId, documentId, textContent),
+      );
+      this.applyDocumentTextUpdate(document);
+      return document;
+    } catch (error) {
+      this.saveError.set(this.readErrorMessage(error, 'Failed to save document.'));
+      return null;
+    }
   }
 
   async addStory(request: CreateStoryRequest): Promise<Story | null> {
@@ -223,6 +298,7 @@ export class StoriesService {
     this.loadError.set(null);
     this.saveError.set(null);
     this.panelLoadError.set(null);
+    this.panelDraft.set(null);
     this.recentManuscriptFiles.set([]);
     this.recentCharacterFiles.set([]);
     this.recentLocationFiles.set([]);

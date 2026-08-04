@@ -44,6 +44,7 @@ export class StoryFilePicker {
   readonly value = input<StoryDocumentInput[]>([]);
   readonly valueChange = output<StoryDocumentInput[]>();
   readonly browseError = output<string>();
+  readonly fileOpen = output<StoryDocumentInput>();
 
   protected readonly accept = STORY_FILE_ACCEPT;
   protected readonly isRecentOpen = signal(false);
@@ -318,6 +319,10 @@ export class StoryFilePicker {
       return next;
     });
     this.valueChange.emit(this.value().filter((file) => file.fileName !== fileName));
+  }
+
+  protected openFile(file: StoryDocumentInput): void {
+    this.fileOpen.emit(file);
   }
 
   protected filteredOptions(): StoryDocumentInput[] {

@@ -2,6 +2,7 @@ import { StoryDetail, StoryDocument, StoryDocumentInput } from './story.models';
 
 export function toStoryDocumentInput(document: StoryDocument): StoryDocumentInput {
   return {
+    id: document.id,
     fileName: document.fileName,
     mimeType: document.mimeType,
     textContent: document.textContent ?? null,

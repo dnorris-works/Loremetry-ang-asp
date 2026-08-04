@@ -1,0 +1,54 @@
+<section class="writing-panel" aria-labelledby="writing-panel-title">
+  <header class="writing-panel__header">
+    <div>
+      <h2 id="writing-panel-title" class="writing-panel__title theme-heading">
+        {{ headerTitle() }}
+      </h2>
+      <p class="writing-panel__subtitle">{{ subtitle() }}</p>
+    </div>
+
+    <div class="writing-panel__header-actions">
+      @if (isDocumentMode()) {
+        <button
+          type="button"
+          class="writing-panel__button"
+          [disabled]="isSaving() || !isDirty()"
+          (click)="save()"
+        >
+          {{ isSaving() ? 'Saving…' : 'Save' }}
+        </button>
+      }
+
+      <button type="button" class="writing-panel__close" aria-label="Close writing panel" (click)="close()">
+        &times;
+      </button>
+    </div>
+  </header>
+
+  @if (saveError()) {
+    <p class="writing-panel__error" role="alert">{{ saveError() }}</p>
+  }
+
+  <div class="writing-panel__form">
+    @if (!isDocumentMode()) {
+      <label class="writing-panel__field">
+        <span class="writing-panel__field-label">Title</span>
+        <input
+          class="writing-panel__input"
+          type="text"
+          name="writingTitle"
+          autocomplete="off"
+          placeholder="Optional title"
+          [value]="title()"
+          (input)="onTitleInput($event)"
+        />
+      </label>
+    }
+
+    <app-markdown-editor
+      class="writing-panel__editor"
+      [markdown]="content()"
+      (markdownChange)="onContentChange($event)"
+    />
+  </div>
+</section>

@@ -1,8 +1,16 @@
 export interface StoryDocumentInput {
+  id?: number;
   fileName: string;
   mimeType: string;
   textContent?: string | null;
   binaryContentBase64?: string | null;
+}
+
+export interface StoryPanelDraft {
+  name: string;
+  manuscripts: StoryDocumentInput[];
+  characters: StoryDocumentInput[];
+  locations: StoryDocumentInput[];
 }
 
 export interface StoryDocument {

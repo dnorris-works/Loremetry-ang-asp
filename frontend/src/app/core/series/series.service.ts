@@ -6,7 +6,8 @@ import { AuthService } from '../auth/auth.service';
 import { StoryDocumentInput } from '../stories/story.models';
 import { storyDocumentKey } from '../stories/story-file.utils';
 import { SeriesApiService } from './series-api.service';
-import { CreateSeriesRequest, Series, SeriesDetail } from './series.models';
+import { SeriesPanelDraft, SeriesBibleDocument, Series, SeriesDetail, CreateSeriesRequest } from './series.models';
+import { WritingDocumentCategory } from '../writing/writing.models';
 
 @Injectable({ providedIn: 'root' })
 export class SeriesService {
@@ -25,6 +26,7 @@ export class SeriesService {
   readonly panelLoadError = signal<string | null>(null);
   readonly recentCharacterFiles = signal<StoryDocumentInput[]>([]);
   readonly recentLocationFiles = signal<StoryDocumentInput[]>([]);
+  readonly panelDraft = signal<SeriesPanelDraft | null>(null);
 
   readonly isEditing = computed(() => this.editingId() !== null);
 
@@ -42,6 +44,7 @@ export class SeriesService {
   openAddPanel(): void {
     this.editingId.set(null);
     this.editingDetail.set(null);
+    this.panelDraft.set(null);
     this.isPanelOpen.set(true);
     this.saveError.set(null);
     this.panelLoadError.set(null);
@@ -49,6 +52,7 @@ export class SeriesService {
 
   async openEditPanel(id: number): Promise<void> {
     this.editingId.set(id);
+    this.panelDraft.set(null);
     this.isPanelOpen.set(true);
     this.saveError.set(null);
     this.panelLoadError.set(null);
@@ -69,8 +73,74 @@ export class SeriesService {
     this.isPanelOpen.set(false);
     this.editingId.set(null);
     this.editingDetail.set(null);
+    this.panelDraft.set(null);
     this.saveError.set(null);
     this.panelLoadError.set(null);
+  }
+
+  setPanelDraft(draft: SeriesPanelDraft): void {
+    this.panelDraft.set(draft);
+  }
+
+  updatePanelDocumentText(fileName: string, category: WritingDocumentCategory, textContent: string): void {
+    const draft = this.panelDraft();
+    if (!draft) {
+      return;
+    }
+
+    const key = fileName.toLowerCase();
+    const updateFiles = (files: StoryDocumentInput[]) =>
+      files.map((file) =>
+        file.fileName.toLowerCase() === key ? { ...file, textContent } : file,
+      );
+
+    if (category === 'character') {
+      this.panelDraft.set({ ...draft, characters: updateFiles(draft.characters) });
+      return;
+    }
+
+    this.panelDraft.set({ ...draft, locations: updateFiles(draft.locations) });
+  }
+
+  applyDocumentTextUpdate(document: SeriesBibleDocument): void {
+    const detail = this.editingDetail();
+    if (!detail) {
+      return;
+    }
+
+    this.editingDetail.set({
+      ...detail,
+      bibleDocuments: detail.bibleDocuments.map((item) =>
+        item.id === document.id
+          ? {
+              ...item,
+              textContent: document.textContent,
+              binaryContentBase64: document.binaryContentBase64,
+            }
+          : item,
+      ),
+    });
+
+    this.updatePanelDocumentText(document.fileName, document.category, document.textContent ?? '');
+  }
+
+  async updateSeriesDocumentText(
+    seriesId: number,
+    documentId: number,
+    textContent: string,
+  ): Promise<SeriesBibleDocument | null> {
+    this.saveError.set(null);
+
+    try {
+      const document = await firstValueFrom(
+        this.seriesApi.updateSeriesDocumentText(seriesId, documentId, textContent),
+      );
+      this.applyDocumentTextUpdate(document);
+      return document;
+    } catch (error) {
+      this.saveError.set(this.readErrorMessage(error, 'Failed to save document.'));
+      return null;
+    }
   }
 
   async addSeries(request: CreateSeriesRequest): Promise<Series | null> {
@@ -180,6 +250,7 @@ export class SeriesService {
     this.loadError.set(null);
     this.saveError.set(null);
     this.panelLoadError.set(null);
+    this.panelDraft.set(null);
     this.recentCharacterFiles.set([]);
     this.recentLocationFiles.set([]);
   }

@@ -33,4 +33,10 @@ export interface SeriesDetail {
   updatedAt: string;
 }
 
+export interface SeriesPanelDraft {
+  name: string;
+  characters: StoryDocumentInput[];
+  locations: StoryDocumentInput[];
+}
+
 export type UpdateSeriesRequest = CreateSeriesRequest;

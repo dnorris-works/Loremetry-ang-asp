@@ -16,6 +16,7 @@ public static class StoryEndpoints
         stories.MapPost("/", CreateStory);
         stories.MapPut("/{id:long}", UpdateStory);
         stories.MapPatch("/{id:long}/series", AssignStorySeries);
+        stories.MapPatch("/{storyId:long}/documents/{documentId:long}", UpdateStoryDocument);
 
         return app;
     }
@@ -105,6 +106,41 @@ public static class StoryEndpoints
             return story is null
                 ? Results.NotFound(new { message = $"Story '{id}' was not found." })
                 : Results.Ok(story);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return Results.BadRequest(new { message = exception.Message });
+        }
+    }
+
+    private static async Task<IResult> UpdateStoryDocument(
+        long storyId,
+        long documentId,
+        UpdateDocumentTextRequest request,
+        HttpRequest httpRequest,
+        AuthService authService,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var authResult = await AuthEndpointHelpers.TryResolveUserAsync(httpRequest, authService, cancellationToken);
+        if (authResult.Error is { } error)
+        {
+            return error;
+        }
+
+        try
+        {
+            var document = await StoryService.UpdateDocumentTextAsync(
+                authResult.User!.DbUserId,
+                storyId,
+                documentId,
+                request.TextContent,
+                db,
+                cancellationToken);
+
+            return document is null
+                ? Results.NotFound(new { message = $"Document '{documentId}' was not found." })
+                : Results.Ok(document);
         }
         catch (InvalidOperationException exception)
         {

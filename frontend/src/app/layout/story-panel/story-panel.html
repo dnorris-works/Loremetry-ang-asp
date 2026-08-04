@@ -49,6 +49,7 @@
       [value]="manuscriptFiles()"
       (valueChange)="onManuscriptFilesChange($event)"
       (browseError)="onBrowseError($event)"
+      (fileOpen)="openManuscript($event)"
     />
 
     <app-story-file-picker
@@ -61,6 +62,7 @@
       [value]="characterFiles()"
       (valueChange)="onCharacterFilesChange($event)"
       (browseError)="onBrowseError($event)"
+      (fileOpen)="openCharacter($event)"
     />
 
     <app-story-file-picker
@@ -73,6 +75,7 @@
       [value]="locationFiles()"
       (valueChange)="onLocationFilesChange($event)"
       (browseError)="onBrowseError($event)"
+      (fileOpen)="openLocation($event)"
     />
 
     <div class="story-panel__actions">

@@ -160,9 +160,14 @@
                     />
                   </td>
                   <td class="story-file-picker__col-name">
-                    <span class="story-file-picker__file-name" [title]="file.fileName">
+                    <button
+                      type="button"
+                      class="story-file-picker__file-open"
+                      [title]="'Open ' + file.fileName"
+                      (click)="openFile(file)"
+                    >
                       {{ file.fileName }}
-                    </span>
+                    </button>
                   </td>
                   <td class="story-file-picker__col-type">
                     {{ fileTypeLabel(file.fileName) }}

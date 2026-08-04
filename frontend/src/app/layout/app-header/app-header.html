@@ -17,6 +17,16 @@
           </a>
         </li>
       }
+      <li>
+        <button
+          type="button"
+          class="app-header__nav-link app-header__nav-button"
+          [class.app-header__nav-link--active]="isWritingPanelOpen()"
+          (click)="openWritingPanel()"
+        >
+          Write
+        </button>
+      </li>
     </ul>
   </nav>
 

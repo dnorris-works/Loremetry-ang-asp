@@ -1,0 +1,71 @@
+<div class="markdown-editor">
+  <div class="markdown-editor__toolbar" role="toolbar" aria-label="Formatting">
+    <div class="markdown-editor__toolbar-group markdown-editor__view-toggle" role="group" aria-label="Editor view">
+      <button
+        type="button"
+        class="markdown-editor__toolbar-button"
+        [class.markdown-editor__toolbar-button--active]="viewMode() === 'wysiwyg'"
+        aria-label="Visual editor"
+        title="Visual editor"
+        (click)="setViewMode('wysiwyg')"
+      >
+        <span class="markdown-editor__toolbar-icon" aria-hidden="true">Visual</span>
+      </button>
+      <button
+        type="button"
+        class="markdown-editor__toolbar-button"
+        [class.markdown-editor__toolbar-button--active]="viewMode() === 'code'"
+        aria-label="Markdown code view"
+        title="Markdown code view"
+        (click)="setViewMode('code')"
+      >
+        <span class="markdown-editor__toolbar-icon" aria-hidden="true">Code</span>
+      </button>
+    </div>
+
+    @for (group of toolbarGroups; track group.items[0].action) {
+      <div class="markdown-editor__toolbar-group">
+        @for (item of group.items; track item.action) {
+          <button
+            type="button"
+            class="markdown-editor__toolbar-button"
+            [attr.aria-label]="item.label"
+            [title]="item.label"
+            (click)="applyFormat(item.action)"
+          >
+            <span class="markdown-editor__toolbar-icon" aria-hidden="true">{{ item.icon }}</span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (viewMode() === 'wysiwyg') {
+    <div
+      #wysiwyg
+      class="markdown-editor__wysiwyg"
+      contenteditable="true"
+      role="textbox"
+      aria-label="Visual editor"
+      aria-multiline="true"
+      (input)="onWysiwygInput()"
+    ></div>
+  } @else {
+    <textarea
+      #textarea
+      class="markdown-editor__textarea"
+      rows="16"
+      [value]="markdown()"
+      aria-label="Markdown content"
+      placeholder="Start writing…"
+      (input)="onCodeInput($event)"
+    ></textarea>
+  }
+
+  <footer class="markdown-editor__footer">
+    <span class="markdown-editor__meta">{{ markdown().length }} characters</span>
+    <span class="markdown-editor__meta">
+      {{ viewMode() === 'wysiwyg' ? 'Visual · Markdown output' : 'Markdown code view' }}
+    </span>
+  </footer>
+</div>

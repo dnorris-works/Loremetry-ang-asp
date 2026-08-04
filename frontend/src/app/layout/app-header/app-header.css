@@ -63,6 +63,13 @@
   outline-offset: 2px;
 }
 
+.app-header__nav-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+}
+
 .app-header__actions {
   display: flex;
   align-items: center;

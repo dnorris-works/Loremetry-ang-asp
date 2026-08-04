@@ -3,6 +3,7 @@ import { StoryDocumentInput } from '../stories/story.models';
 
 function toDocumentInput(document: SeriesBibleDocument): StoryDocumentInput {
   return {
+    id: document.id,
     fileName: document.fileName,
     mimeType: document.mimeType,
     textContent: document.textContent ?? null,

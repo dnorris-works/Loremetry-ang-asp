@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { CreateStoryRequest, Story, StoryDetail, UpdateStoryRequest } from './story.models';
+import { CreateStoryRequest, Story, StoryDetail, StoryDocument, UpdateStoryRequest } from './story.models';
 
 @Injectable({ providedIn: 'root' })
 export class StoriesApiService {
@@ -28,5 +28,16 @@ export class StoriesApiService {
 
   assignStoryToSeries(storyId: number, seriesId: number): Observable<Story> {
     return this.http.patch<Story>(`${this.baseUrl}/${storyId}/series`, { seriesId });
+  }
+
+  updateStoryDocumentText(
+    storyId: number,
+    documentId: number,
+    textContent: string,
+  ): Observable<StoryDocument> {
+    return this.http.patch<StoryDocument>(
+      `${this.baseUrl}/${storyId}/documents/${documentId}`,
+      { textContent },
+    );
   }
 }

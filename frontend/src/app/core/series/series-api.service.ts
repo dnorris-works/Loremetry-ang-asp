@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import { Story } from '../stories/story.models';
-import { CreateSeriesRequest, Series, SeriesDetail, UpdateSeriesRequest } from './series.models';
+import { CreateSeriesRequest, Series, SeriesBibleDocument, SeriesDetail, UpdateSeriesRequest } from './series.models';
 
 @Injectable({ providedIn: 'root' })
 export class SeriesApiService {
@@ -29,5 +29,16 @@ export class SeriesApiService {
 
   reorderSeriesStories(seriesId: number, storyIds: number[]): Observable<Story[]> {
     return this.http.put<Story[]>(`${this.baseUrl}/${seriesId}/story-order`, { storyIds });
+  }
+
+  updateSeriesDocumentText(
+    seriesId: number,
+    documentId: number,
+    textContent: string,
+  ): Observable<SeriesBibleDocument> {
+    return this.http.patch<SeriesBibleDocument>(
+      `${this.baseUrl}/${seriesId}/documents/${documentId}`,
+      { textContent },
+    );
   }
 }

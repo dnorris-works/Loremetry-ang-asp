@@ -180,3 +180,8 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 export function storyDocumentKey(document: StoryDocumentInput): string {
   return document.fileName.toLowerCase();
 }
+
+export function isEditableTextDocument(document: StoryDocumentInput): boolean {
+  const lowerName = document.fileName.toLowerCase();
+  return lowerName.endsWith('.md') || lowerName.endsWith('.txt');
+}

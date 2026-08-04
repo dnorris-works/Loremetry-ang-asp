@@ -6,8 +6,10 @@ import { StoriesService } from '../../core/stories/stories.service';
 import { AppFooter } from '../app-footer/app-footer';
 import { AppHeader } from '../app-header/app-header';
 import { AppSidebar } from '../app-sidebar/app-sidebar';
+import { WritingService } from '../../core/writing/writing.service';
 import { SeriesPanel } from '../series-panel/series-panel';
 import { StoryPanel } from '../story-panel/story-panel';
+import { WritingPanel } from '../writing-panel/writing-panel';
 
 const MIN_SIDEBAR_WIDTH = 180;
 const MAX_SIDEBAR_WIDTH = 420;
@@ -15,16 +17,26 @@ const DEFAULT_SIDEBAR_WIDTH = 220;
 
 @Component({
   selector: 'app-shell',
-  imports: [AppHeader, AppSidebar, SeriesPanel, StoryPanel, AppFooter, RouterOutlet],
+  imports: [
+    AppHeader,
+    AppSidebar,
+    SeriesPanel,
+    StoryPanel,
+    WritingPanel,
+    AppFooter,
+    RouterOutlet,
+  ],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
 })
 export class AppShell {
   private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
+  private readonly writingService = inject(WritingService);
 
   protected readonly isSeriesPanelOpen = this.seriesService.isPanelOpen;
   protected readonly isStoryPanelOpen = this.storiesService.isPanelOpen;
+  protected readonly isWritingPanelOpen = this.writingService.isPanelOpen;
   protected readonly sidebarWidth = signal(DEFAULT_SIDEBAR_WIDTH);
   protected readonly isResizing = signal(false);
 

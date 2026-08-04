@@ -148,6 +148,47 @@ public static class StoryService
         return ToSummaryDto(story);
     }
 
+    public static async Task<StoryDocumentDto?> UpdateDocumentTextAsync(
+        long userId,
+        long storyId,
+        long documentId,
+        string textContent,
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var document = await db.StoryDocuments
+            .Include(item => item.Story)
+            .FirstOrDefaultAsync(
+                item => item.Id == documentId && item.StoryId == storyId && item.Story.UserId == userId,
+                cancellationToken);
+
+        if (document is null)
+        {
+            return null;
+        }
+
+        var extension = Path.GetExtension(document.FileName).ToLowerInvariant();
+        if (extension is not ".md" and not ".txt")
+        {
+            throw new InvalidOperationException($"File '{document.FileName}' cannot be edited as text.");
+        }
+
+        document.TextContent = textContent;
+        document.BinaryContent = null;
+        document.Story.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await db.SaveChangesAsync(cancellationToken);
+
+        return new StoryDocumentDto(
+            document.Id,
+            document.Kind,
+            document.FileName,
+            document.MimeType,
+            document.TextContent,
+            ToBase64(document.BinaryContent),
+            document.SortOrder);
+    }
+
     public static async Task<StorySummaryDto?> AssignToSeriesAsync(
         long userId,
         long storyId,

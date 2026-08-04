@@ -5,6 +5,7 @@ import { AddStoryToSeriesDialog } from '../add-story-to-series-dialog/add-story-
 import { SeriesService } from '../../core/series/series.service';
 import { Story } from '../../core/stories/story.models';
 import { StoriesService } from '../../core/stories/stories.service';
+import { WritingService } from '../../core/writing/writing.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -15,6 +16,7 @@ import { StoriesService } from '../../core/stories/stories.service';
 export class AppSidebar {
   private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
+  private readonly writingService = inject(WritingService);
 
   protected readonly series = this.seriesService.series;
   protected readonly stories = this.storiesService.stories;
@@ -40,22 +42,26 @@ export class AppSidebar {
 
   protected openAddSeriesPanel(event: Event): void {
     event.stopPropagation();
+    this.writingService.closePanel();
     this.storiesService.closePanel();
     this.seriesService.openAddPanel();
   }
 
   protected openAddStoryPanel(event: Event): void {
     event.stopPropagation();
+    this.writingService.closePanel();
     this.seriesService.closePanel();
     this.storiesService.openAddPanel();
   }
 
   protected openEditSeries(id: number): void {
+    this.writingService.closePanel();
     this.storiesService.closePanel();
     void this.seriesService.openEditPanel(id);
   }
 
   protected openEditStory(id: number): void {
+    this.writingService.closePanel();
     this.seriesService.closePanel();
     void this.storiesService.openEditPanel(id);
   }
