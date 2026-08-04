@@ -68,6 +68,7 @@ export class MarkdownEditor {
     },
   ];
 
+  private readonly wysiwygDirty = signal(false);
   private lastRenderedMarkdown = '';
 
   constructor() {
@@ -75,17 +76,12 @@ export class MarkdownEditor {
       const markdown = this.markdown();
       const mode = this.viewMode();
 
-      if (mode !== 'wysiwyg' || markdown === this.lastRenderedMarkdown) {
+      if (mode === 'wysiwyg') {
+        this.renderWysiwyg(markdown);
         return;
       }
 
-      const editor = this.wysiwygRef()?.nativeElement;
-      if (!editor) {
-        return;
-      }
-
-      editor.innerHTML = markdownToHtml(markdown);
-      this.lastRenderedMarkdown = markdown;
+      this.syncCodeView(markdown);
     });
   }
 
@@ -95,12 +91,15 @@ export class MarkdownEditor {
     }
 
     if (mode === 'code') {
-      this.syncMarkdownFromWysiwyg();
+      if (this.wysiwygDirty()) {
+        this.syncMarkdownFromWysiwyg();
+        this.wysiwygDirty.set(false);
+      }
       this.viewMode.set('code');
       return;
     }
 
-    this.lastRenderedMarkdown = this.markdown();
+    this.lastRenderedMarkdown = '';
     this.viewMode.set('wysiwyg');
   }
 
@@ -111,6 +110,7 @@ export class MarkdownEditor {
   }
 
   protected onWysiwygInput(): void {
+    this.wysiwygDirty.set(true);
     this.syncMarkdownFromWysiwyg();
   }
 
@@ -121,7 +121,33 @@ export class MarkdownEditor {
     }
 
     this.applyWysiwygFormat(action);
+    this.wysiwygDirty.set(true);
     this.syncMarkdownFromWysiwyg();
+  }
+
+  private renderWysiwyg(markdown: string): void {
+    const editor = this.wysiwygRef()?.nativeElement;
+    if (!editor) {
+      return;
+    }
+
+    if (markdown === this.lastRenderedMarkdown) {
+      return;
+    }
+
+    editor.innerHTML = markdownToHtml(markdown);
+    this.lastRenderedMarkdown = markdown;
+    this.wysiwygDirty.set(false);
+  }
+
+  private syncCodeView(markdown: string): void {
+    const textarea = this.textareaRef()?.nativeElement;
+    if (!textarea || textarea.value === markdown) {
+      return;
+    }
+
+    textarea.value = markdown;
+    this.lastRenderedMarkdown = markdown;
   }
 
   private applyCodeFormat(action: MarkdownFormatAction): void {

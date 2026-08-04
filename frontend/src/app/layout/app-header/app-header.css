@@ -70,6 +70,21 @@
   font: inherit;
 }
 
+.app-header__nav-button.app-header__nav-link--active {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.app-header__nav-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.app-header__nav-button:disabled:hover {
+  color: var(--color-text-muted);
+  background: transparent;
+}
+
 .app-header__actions {
   display: flex;
   align-items: center;

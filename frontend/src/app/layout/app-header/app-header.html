@@ -10,8 +10,8 @@
           <a
             class="app-header__nav-link"
             [routerLink]="item.route"
-            routerLinkActive="app-header__nav-link--active"
-            [routerLinkActiveOptions]="{ exact: item.route === '/' }"
+            [class.app-header__nav-link--active]="isRouteNavActive(item.route)"
+            [attr.aria-current]="isRouteNavActive(item.route) ? 'page' : null"
           >
             {{ item.label }}
           </a>
@@ -21,7 +21,10 @@
         <button
           type="button"
           class="app-header__nav-link app-header__nav-button"
-          [class.app-header__nav-link--active]="isWritingPanelOpen()"
+          [class.app-header__nav-link--active]="isWriteMenuActive()"
+          [disabled]="isWriteMenuDisabled()"
+          [attr.aria-disabled]="isWriteMenuDisabled()"
+          [attr.aria-current]="isWriteMenuActive() ? 'page' : null"
           (click)="openWritingPanel()"
         >
           Write

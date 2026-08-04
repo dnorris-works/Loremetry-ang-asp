@@ -25,11 +25,12 @@
       <select
         id="theme-select"
         class="settings__select"
-        [value]="themeService.selectedThemeId()"
         (change)="onThemeChange($event)"
       >
         @for (theme of themeService.themes; track theme.id) {
-          <option [value]="theme.id">{{ theme.name }}</option>
+          <option [value]="theme.id" [selected]="theme.id === themeService.selectedThemeId()">
+            {{ theme.name }}
+          </option>
         }
       </select>
     </label>
