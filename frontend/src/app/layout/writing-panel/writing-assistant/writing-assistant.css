@@ -1,0 +1,186 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.writing-assistant {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-height: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-surface-muted);
+}
+
+.writing-assistant__header {
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.writing-assistant__title {
+  margin: 0 0 0.125rem;
+  font-size: 0.875rem;
+}
+
+.writing-assistant__subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.writing-assistant__messages {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0.75rem;
+}
+
+.writing-assistant__placeholder {
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px dashed var(--color-border);
+  border-radius: 0.375rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.writing-assistant__message {
+  margin-bottom: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background: var(--color-surface);
+}
+
+.writing-assistant__message--user {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+
+.writing-assistant__message-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.writing-assistant__message-text {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.writing-assistant__context-list,
+.writing-assistant__pending {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.writing-assistant__pending {
+  margin: 0;
+}
+
+.writing-assistant__context-chip {
+  padding: 0.125rem 0.4375rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-muted);
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.writing-assistant__context-chip--pending {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  color: var(--color-text);
+}
+
+.writing-assistant__catalog-error {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid color-mix(in srgb, oklch(55% 0.2 25) 35%, var(--color-border));
+  background: color-mix(in srgb, oklch(55% 0.2 25) 8%, var(--color-surface));
+  color: color-mix(in srgb, oklch(55% 0.2 25) 80%, var(--color-text));
+  font-size: 0.75rem;
+}
+
+.writing-assistant__composer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.625rem 0.75rem;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.writing-assistant__composer-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.writing-assistant__composer-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-end;
+}
+
+.writing-assistant__input {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 2.5rem;
+  max-height: 6rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background: var(--color-surface-muted);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+.writing-assistant__input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.writing-assistant__send {
+  flex-shrink: 0;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 0.375rem;
+  background: var(--color-primary);
+  color: oklch(100% 0 0);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.writing-assistant__send:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.writing-assistant__send:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.writing-assistant__hint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+}

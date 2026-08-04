@@ -12,8 +12,17 @@
   flex: 1 1 0;
   min-height: 0;
   width: 100%;
-  max-width: 52rem;
   margin: 0 auto;
+}
+
+.writing-panel--resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+.writing-panel--resizing .writing-panel__editor-pane,
+.writing-panel--resizing .writing-panel__assistant-pane {
+  pointer-events: none;
 }
 
 .writing-panel__header {
@@ -92,18 +101,74 @@
   outline-offset: 2px;
 }
 
+.writing-panel__workspace {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  gap: 0;
+}
+
+.writing-panel__editor-pane {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+}
+
+.writing-panel__assistant-pane {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.writing-panel__split-handle {
+  flex-shrink: 0;
+  width: 6px;
+  margin: 0 -3px;
+  cursor: col-resize;
+  touch-action: none;
+  position: relative;
+}
+
+.writing-panel__split-handle::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.writing-panel__split-handle:hover::after,
+.writing-panel__split-handle:focus-visible::after,
+.writing-panel--resizing .writing-panel__split-handle::after {
+  background: var(--color-primary);
+}
+
+.writing-panel__split-handle:focus-visible {
+  outline: none;
+}
+
 .writing-panel__form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 0;
 }
 
 .writing-panel__title-row {
   display: flex;
   gap: 0.75rem;
   align-items: flex-end;
+}
+
+.writing-panel__title-row--locked .writing-panel__field--destination {
+  flex: 1 1 0;
 }
 
 .writing-panel__field {
@@ -124,6 +189,18 @@
 
 .writing-panel__field--type {
   flex: 0 0 8rem;
+}
+
+.writing-panel__readonly-value {
+  margin: 0;
+  padding: 0.4375rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--color-surface-muted) 70%, var(--color-surface));
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  line-height: 1.25;
 }
 
 .writing-panel__field-label {

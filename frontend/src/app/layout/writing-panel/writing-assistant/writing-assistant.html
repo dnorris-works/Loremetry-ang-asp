@@ -1,0 +1,98 @@
+<section class="writing-assistant" aria-labelledby="writing-assistant-title">
+  <header class="writing-assistant__header">
+    <div>
+      <h3 id="writing-assistant-title" class="writing-assistant__title theme-heading">Assistant</h3>
+      <p class="writing-assistant__subtitle">
+        @if (documentTitle()) {
+          Editing: {{ documentTitle() }}
+        } @else {
+          Edits the open document
+        }
+      </p>
+    </div>
+  </header>
+
+  <div
+    class="writing-assistant__messages"
+    role="log"
+    aria-live="polite"
+    aria-label="Assistant conversation"
+  >
+    @if (messages().length === 0) {
+      <p class="writing-assistant__placeholder">
+        Mention character names, locations, chapters, or story titles in your message. Matching lore
+        from the selected destination will be added to the prompt automatically.
+      </p>
+    }
+
+    @for (message of messages(); track message.id) {
+      <article
+        class="writing-assistant__message"
+        [class.writing-assistant__message--user]="message.role === 'user'"
+        [class.writing-assistant__message--assistant]="message.role === 'assistant'"
+      >
+        <p class="writing-assistant__message-label">
+          {{ message.role === 'user' ? 'You' : 'Assistant' }}
+        </p>
+        <p class="writing-assistant__message-text">{{ message.text }}</p>
+
+        @if (message.matchedEntities.length > 0) {
+          <ul class="writing-assistant__context-list" aria-label="Included lore context">
+            @for (entity of message.matchedEntities; track entity.kind + entity.parentName + entity.fileName) {
+              <li class="writing-assistant__context-chip">
+                {{ entityLabel(entity) }}
+              </li>
+            }
+          </ul>
+        }
+      </article>
+    }
+  </div>
+
+  @if (catalogError()) {
+    <p class="writing-assistant__catalog-error" role="alert">{{ catalogError() }}</p>
+  }
+
+  <form class="writing-assistant__composer" aria-label="Assistant message" (submit)="onSubmit($event)">
+    @if (pendingMatches().length > 0) {
+      <ul class="writing-assistant__pending" aria-label="Detected lore references">
+        @for (entity of pendingMatches(); track entity.kind + entity.parentName + entity.fileName) {
+          <li class="writing-assistant__context-chip writing-assistant__context-chip--pending">
+            {{ entityLabel(entity) }}
+          </li>
+        }
+      </ul>
+    }
+
+    <label class="writing-assistant__composer-label" for="writing-assistant-input">
+      Message
+    </label>
+    <div class="writing-assistant__composer-row">
+      <textarea
+        id="writing-assistant-input"
+        class="writing-assistant__input"
+        rows="2"
+        placeholder="Ask about Elena at the harbor tavern…"
+        [value]="prompt()"
+        [disabled]="isSending() || isCatalogLoading()"
+        aria-describedby="writing-assistant-hint"
+        (input)="onPromptInput($event)"
+      ></textarea>
+      <button
+        type="submit"
+        class="writing-assistant__send"
+        [disabled]="isSending() || isCatalogLoading() || !prompt().trim()"
+        aria-label="Send message"
+      >
+        {{ isSending() ? 'Sending…' : 'Send' }}
+      </button>
+    </div>
+    <p id="writing-assistant-hint" class="writing-assistant__hint">
+      @if (isCatalogLoading()) {
+        Loading lore references…
+      } @else {
+        Matched names and documents are appended to the prompt before the AI call.
+      }
+    </p>
+  </form>
+</section>
