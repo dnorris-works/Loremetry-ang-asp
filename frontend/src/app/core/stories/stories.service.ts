@@ -271,25 +271,33 @@ export class StoriesService {
     this.rememberFiles(files, this.recentLocationFiles);
   }
 
-  private async loadStories(): Promise<void> {
+  async refreshStories(): Promise<boolean> {
     this.isLoading.set(true);
     this.loadError.set(null);
 
-    this.storiesApi
-      .listStories()
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.loadError.set(this.readErrorMessage(error, 'Failed to load stories.'));
-          return of(null);
-        }),
-      )
-      .subscribe((stories) => {
-        this.isLoading.set(false);
+    try {
+      const stories = await firstValueFrom(
+        this.storiesApi.listStories().pipe(
+          catchError((error: HttpErrorResponse) => {
+            this.loadError.set(this.readErrorMessage(error, 'Failed to load stories.'));
+            return of(null);
+          }),
+        ),
+      );
 
-        if (stories) {
-          this.stories.set(stories);
-        }
-      });
+      if (!stories) {
+        return false;
+      }
+
+      this.stories.set(stories);
+      return true;
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  private async loadStories(): Promise<void> {
+    await this.refreshStories();
   }
 
   private rememberFiles(

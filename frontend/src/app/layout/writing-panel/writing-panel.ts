@@ -1,6 +1,7 @@
 import { Component, computed, inject, viewChild } from '@angular/core';
 
 import { MarkdownEditor } from '../../core/editor/markdown-editor/markdown-editor';
+import { writingDestinationKey } from '../../core/writing/writing.models';
 import { WritingService } from '../../core/writing/writing.service';
 
 @Component({
@@ -16,6 +17,13 @@ export class WritingPanel {
   protected readonly title = this.writingService.title;
   protected readonly content = this.writingService.content;
   protected readonly documentContext = this.writingService.documentContext;
+  protected readonly documentTypes = this.writingService.documentTypes;
+  protected readonly documentTypeCode = this.writingService.documentTypeCode;
+  protected readonly documentTypeDisplayName = this.writingService.documentTypeDisplayName;
+  protected readonly destinationKey = this.writingService.destinationKey;
+  protected readonly destinationSeries = this.writingService.destinationSeries;
+  protected readonly destinationStories = this.writingService.destinationStories;
+  protected readonly hasDestinations = this.writingService.hasDestinations;
   protected readonly isDocumentMode = this.writingService.isDocumentMode;
   protected readonly isDirty = this.writingService.isDirty;
   protected readonly isSaving = this.writingService.isSaving;
@@ -32,7 +40,7 @@ export class WritingPanel {
     }
 
     const ownerLabel = context.source === 'story' ? 'Story document' : 'Series document';
-    return `${ownerLabel} · ${context.category}`;
+    return `${ownerLabel} · ${this.documentTypeDisplayName()}`;
   });
 
   protected close(): void {
@@ -41,6 +49,21 @@ export class WritingPanel {
 
   protected onTitleInput(event: Event): void {
     this.writingService.title.set((event.target as HTMLInputElement).value);
+  }
+
+  protected onDocumentTypeChange(event: Event): void {
+    this.writingService.documentTypeCode.set((event.target as HTMLSelectElement).value);
+  }
+
+  protected onDestinationChange(event: Event): void {
+    this.writingService.setDestinationKey((event.target as HTMLSelectElement).value);
+  }
+
+  protected destinationOptionValue(
+    source: 'story' | 'series',
+    id: number,
+  ): string {
+    return writingDestinationKey(source, id);
   }
 
   protected onContentChange(markdown: string): void {

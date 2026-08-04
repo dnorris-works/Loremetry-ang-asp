@@ -31,18 +31,69 @@
 
   <div class="writing-panel__form">
     @if (!isDocumentMode()) {
-      <label class="writing-panel__field">
-        <span class="writing-panel__field-label">Title</span>
-        <input
-          class="writing-panel__input"
-          type="text"
-          name="writingTitle"
-          autocomplete="off"
-          placeholder="Optional title"
-          [value]="title()"
-          (input)="onTitleInput($event)"
-        />
-      </label>
+      <div class="writing-panel__title-row">
+        <label class="writing-panel__field writing-panel__field--title">
+          <span class="writing-panel__field-label">Title</span>
+          <input
+            class="writing-panel__input"
+            type="text"
+            name="writingTitle"
+            autocomplete="off"
+            placeholder="Optional title"
+            [value]="title()"
+            (input)="onTitleInput($event)"
+          />
+        </label>
+
+        <label class="writing-panel__field writing-panel__field--destination">
+          <span class="writing-panel__field-label">Destination</span>
+          <select
+            class="writing-panel__select"
+            name="writingDestination"
+            [value]="destinationKey()"
+            [disabled]="!hasDestinations()"
+            (change)="onDestinationChange($event)"
+          >
+            @if (!hasDestinations()) {
+              <option value="">No stories or series</option>
+            }
+
+            @if (destinationSeries().length > 0) {
+              <optgroup label="Series">
+                @for (series of destinationSeries(); track series.id) {
+                  <option [value]="destinationOptionValue('series', series.id)">
+                    {{ series.name }}
+                  </option>
+                }
+              </optgroup>
+            }
+
+            @if (destinationStories().length > 0) {
+              <optgroup label="Stories">
+                @for (story of destinationStories(); track story.id) {
+                  <option [value]="destinationOptionValue('story', story.id)">
+                    {{ story.name }}
+                  </option>
+                }
+              </optgroup>
+            }
+          </select>
+        </label>
+
+        <label class="writing-panel__field writing-panel__field--type">
+          <span class="writing-panel__field-label">Type</span>
+          <select
+            class="writing-panel__select"
+            name="writingDocumentType"
+            [value]="documentTypeCode()"
+            (change)="onDocumentTypeChange($event)"
+          >
+            @for (type of documentTypes(); track type.code) {
+              <option [value]="type.code">{{ type.displayName }}</option>
+            }
+          </select>
+        </label>
+      </div>
     }
 
     <app-markdown-editor

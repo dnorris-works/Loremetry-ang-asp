@@ -236,25 +236,33 @@ export class SeriesService {
     }
   }
 
-  private async loadSeries(): Promise<void> {
+  async refreshSeries(): Promise<boolean> {
     this.isLoading.set(true);
     this.loadError.set(null);
 
-    this.seriesApi
-      .listSeries()
-      .pipe(
-        catchError((error: HttpErrorResponse) => {
-          this.loadError.set(this.readErrorMessage(error, 'Failed to load series.'));
-          return of(null);
-        }),
-      )
-      .subscribe((items) => {
-        this.isLoading.set(false);
+    try {
+      const items = await firstValueFrom(
+        this.seriesApi.listSeries().pipe(
+          catchError((error: HttpErrorResponse) => {
+            this.loadError.set(this.readErrorMessage(error, 'Failed to load series.'));
+            return of(null);
+          }),
+        ),
+      );
 
-        if (items) {
-          this.series.set(items);
-        }
-      });
+      if (!items) {
+        return false;
+      }
+
+      this.series.set(items);
+      return true;
+    } finally {
+      this.isLoading.set(false);
+    }
+  }
+
+  private async loadSeries(): Promise<void> {
+    await this.refreshSeries();
   }
 
   private reset(): void {

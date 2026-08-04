@@ -21,6 +21,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<SeriesBibleDocument> SeriesBibleDocuments => Set<SeriesBibleDocument>();
 
+    public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserSetting>(entity =>
@@ -151,6 +153,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 .WithMany(series => series.BibleDocuments)
                 .HasForeignKey(document => document.SeriesId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DocumentType>(entity =>
+        {
+            entity.ToTable("document_types", "lore");
+            entity.HasKey(type => type.Code);
+            entity.Property(type => type.Code).HasColumnName("code").HasMaxLength(20);
+            entity.Property(type => type.DisplayName).HasColumnName("display_name").HasMaxLength(100).IsRequired();
+            entity.Property(type => type.SortOrder).HasColumnName("sort_order");
+            entity.Property(type => type.AppliesToStory).HasColumnName("applies_to_story");
+            entity.Property(type => type.AppliesToSeries).HasColumnName("applies_to_series");
+            entity.Property(type => type.Active).HasColumnName("active");
         });
     }
 }

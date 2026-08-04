@@ -214,6 +214,24 @@ using (var scope = app.Services.CreateScope())
     await db.Database.ExecuteSqlRawAsync("""
         DROP INDEX IF EXISTS lore.series_bible_documents_series_id_idx;
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.document_types (
+            code VARCHAR(20) PRIMARY KEY,
+            display_name VARCHAR(100) NOT NULL,
+            sort_order INT NOT NULL DEFAULT 0,
+            applies_to_story BOOLEAN NOT NULL DEFAULT TRUE,
+            applies_to_series BOOLEAN NOT NULL DEFAULT FALSE,
+            active BOOLEAN NOT NULL DEFAULT TRUE
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        INSERT INTO lore.document_types (code, display_name, sort_order, applies_to_story, applies_to_series, active)
+        VALUES
+            ('manuscript', 'Chapter', 1, TRUE, FALSE, TRUE),
+            ('character', 'Character', 2, TRUE, TRUE, TRUE),
+            ('location', 'Location', 3, TRUE, TRUE, TRUE)
+        ON CONFLICT (code) DO NOTHING;
+        """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
 
@@ -241,6 +259,7 @@ app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
 app.MapStoryEndpoints();
 app.MapSeriesEndpoints();
+app.MapDocumentTypeEndpoints();
 app.MapAuthEndpoints();
 
 app.Run();
