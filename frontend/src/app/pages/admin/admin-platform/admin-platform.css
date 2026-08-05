@@ -244,3 +244,48 @@
   font-size: 0.8125rem;
   line-height: 1.45;
 }
+
+.admin-platform__canopy-pricing {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.admin-platform__pricing-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.admin-platform__pricing-table th,
+.admin-platform__pricing-table td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+}
+
+.admin-platform__pricing-row-active {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.admin-platform__pricing-subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.admin-platform__operation-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.admin-platform__operation-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+}

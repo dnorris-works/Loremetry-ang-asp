@@ -32,7 +32,9 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PlatformConnectionTests>();
 builder.Services.AddScoped<TokenMixCompletionService>();
 builder.Services.AddScoped<TokenMixPricingSyncService>();
+builder.Services.AddScoped<CanopyPricingSyncService>();
 builder.Services.AddScoped<TokenMixPricingSyncJob>();
+builder.Services.AddScoped<CanopyPricingSyncJob>();
 builder.Services.AddHangfire(configuration => configuration
     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
     .UseSimpleAssemblyNameTypeSerializer()
@@ -317,7 +319,27 @@ using (var scope = app.Services.CreateScope())
         CREATE INDEX IF NOT EXISTS ai_usage_events_user_created_idx
         ON lore.ai_usage_events (user_id, created_at DESC);
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.canopy_pricing_plans (
+            id VARCHAR(50) PRIMARY KEY,
+            display_name VARCHAR(120) NOT NULL,
+            monthly_fee_usd DOUBLE PRECISION NOT NULL DEFAULT 0,
+            monthly_request_allowance INT NOT NULL DEFAULT 0,
+            overage_price_per_request DOUBLE PRECISION NOT NULL DEFAULT 0,
+            sort_order INT NOT NULL DEFAULT 0,
+            synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
+
+    var canopyPricingSync = scope.ServiceProvider.GetRequiredService<CanopyPricingSyncService>();
+    var canopySyncResult = await canopyPricingSync.SyncPlansAsync(db, cancellationToken: default);
+    if (!canopySyncResult.Success)
+    {
+        app.Logger.LogWarning(
+            "Canopy pricing sync failed on startup: {Error}",
+            canopySyncResult.Error ?? "Unknown error");
+    }
 }
 
 using (var hangfireScope = app.Services.CreateScope())
@@ -330,10 +352,15 @@ using (var hangfireScope = app.Services.CreateScope())
         TokenMixPricingSyncJob.JobId,
         job => job.SyncAsync(CancellationToken.None),
         pricingSyncCron);
+    recurringJobs.AddOrUpdate<CanopyPricingSyncJob>(
+        CanopyPricingSyncJob.JobId,
+        job => job.SyncAsync(CancellationToken.None),
+        pricingSyncCron);
     backgroundJobs.Enqueue<TokenMixPricingSyncJob>(job => job.SyncAsync(CancellationToken.None));
+    backgroundJobs.Enqueue<CanopyPricingSyncJob>(job => job.SyncAsync(CancellationToken.None));
 
     app.Logger.LogInformation(
-        "TokenMix pricing sync scheduled weekly (cron: {Cron}, UTC); enqueued startup run.",
+        "TokenMix and Canopy pricing sync scheduled weekly (cron: {Cron}, UTC); enqueued startup runs.",
         pricingSyncCron);
 }
 
@@ -364,6 +391,7 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken cancellationT
 app.MapAdminEndpoints();
 app.MapWinningCatEndpoints();
 app.MapProviderModelEndpoints();
+app.MapCanopyPricingEndpoints();
 app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
 app.MapStoryEndpoints();

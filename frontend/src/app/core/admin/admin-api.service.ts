@@ -14,6 +14,8 @@ import {
   UpdatePlatformSettingsRequest,
   WinningCatImportResult,
   WinningCatStaleCleanupResult,
+  CanopyPricingOverview,
+  CanopyOperationEstimate,
 } from './admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -70,5 +72,13 @@ export class AdminApiService {
 
   removeStaleWinningCatCategories(since: string): Observable<WinningCatStaleCleanupResult> {
     return this.http.post<WinningCatStaleCleanupResult>(`${this.baseUrl}/winningcat/remove-stale`, { since });
+  }
+
+  getCanopyPricing(): Observable<CanopyPricingOverview> {
+    return this.http.get<CanopyPricingOverview>(`${this.baseUrl}/canopy-pricing/plans`);
+  }
+
+  getCanopyOperationEstimates(): Observable<CanopyOperationEstimate[]> {
+    return this.http.get<CanopyOperationEstimate[]>(`${this.baseUrl}/canopy-pricing/operations`);
   }
 }

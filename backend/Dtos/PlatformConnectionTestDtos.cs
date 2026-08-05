@@ -15,4 +15,6 @@ public record TestPlatformSettingsRequest(
     string CanopyApiKey,
     string DataForSeoLogin,
     string DataForSeoPassword,
-    string DefaultProvider);
+    string DefaultProvider,
+    string DefaultModel,
+    string CanopyPricingPlan);

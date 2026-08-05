@@ -38,6 +38,7 @@ export interface PlatformSettings {
   dataForSeoPassword: string;
   defaultProvider: string;
   defaultModel: string;
+  canopyPricingPlan: string;
   anthropicConfigured: boolean;
   tokenmixConfigured: boolean;
   canopyConfigured: boolean;
@@ -53,6 +54,42 @@ export interface UpdatePlatformSettingsRequest {
   dataForSeoPassword: string;
   defaultProvider: string;
   defaultModel: string;
+  canopyPricingPlan: string;
+}
+
+export interface CanopyPricingPlan {
+  id: string;
+  displayName: string;
+  monthlyFeeUsd: number;
+  monthlyRequestAllowance: number;
+  overagePricePerRequest: number;
+  sortOrder: number;
+  syncedAt: string;
+}
+
+export interface CanopyPricingOverview {
+  activePlanId: string;
+  requestsUsedThisMonth: number;
+  plans: CanopyPricingPlan[];
+}
+
+export interface CanopyCostEstimate {
+  planId: string;
+  planDisplayName: string;
+  requestCount: number;
+  requestsUsedThisMonth: number;
+  billableRequests: number;
+  monthlyFeeUsd: number;
+  marginalCostUsd: number;
+  hardLimitReached: boolean;
+  pricingMissing: boolean;
+}
+
+export interface CanopyOperationEstimate {
+  operationId: string;
+  label: string;
+  requestCount: number;
+  estimate: CanopyCostEstimate;
 }
 
 export type TestPlatformSettingsRequest = UpdatePlatformSettingsRequest;

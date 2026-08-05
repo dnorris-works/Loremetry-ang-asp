@@ -5,6 +5,8 @@ import { catchError, of } from 'rxjs';
 
 import { AdminApiService } from '../../../core/admin/admin-api.service';
 import {
+  CanopyOperationEstimate,
+  CanopyPricingPlan,
   PlatformServiceStatus,
   PlatformServiceTestResult,
   PlatformSettings,
@@ -22,6 +24,7 @@ export class AdminPlatform implements OnInit {
   protected readonly anthropicApiKey = signal('');
   protected readonly tokenmixApiKey = signal('');
   protected readonly canopyApiKey = signal('');
+  protected readonly canopyPricingPlan = signal('pay_as_you_go');
   protected readonly dataForSeoLogin = signal('');
   protected readonly dataForSeoPassword = signal('');
   protected readonly defaultProvider = signal('tokenmix');
@@ -41,9 +44,13 @@ export class AdminPlatform implements OnInit {
   protected readonly winningCatStaleMessage = signal<string | null>(null);
   protected readonly showStaleCleanup = signal(false);
   protected readonly lastWinningCatImportAt = signal<string | null>(null);
+  protected readonly canopyPlans = signal<CanopyPricingPlan[]>([]);
+  protected readonly canopyRequestsUsedThisMonth = signal(0);
+  protected readonly canopyOperationEstimates = signal<CanopyOperationEstimate[]>([]);
 
   ngOnInit(): void {
     this.loadSettings();
+    this.loadCanopyPricing();
   }
 
   protected loadSettings(): void {
@@ -74,6 +81,48 @@ export class AdminPlatform implements OnInit {
       });
   }
 
+  protected loadCanopyPricing(): void {
+    this.adminApi
+      .getCanopyPricing()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((overview) => {
+        if (!overview) {
+          return;
+        }
+
+        this.canopyPlans.set(overview.plans);
+        this.canopyRequestsUsedThisMonth.set(overview.requestsUsedThisMonth);
+        if (overview.activePlanId) {
+          this.canopyPricingPlan.set(overview.activePlanId);
+        }
+      });
+
+    this.adminApi
+      .getCanopyOperationEstimates()
+      .pipe(
+        catchError(() => of(null)),
+      )
+      .subscribe((estimates) => {
+        if (estimates) {
+          this.canopyOperationEstimates.set(estimates);
+        }
+      });
+  }
+
+  protected formatUsd(amount: number): string {
+    if (amount <= 0) {
+      return '$0.00';
+    }
+
+    if (amount < 0.01) {
+      return '<$0.01';
+    }
+
+    return `$${amount.toFixed(2)}`;
+  }
+
   protected saveSettings(event: Event): void {
     event.preventDefault();
     this.isSaving.set(true);
@@ -101,6 +150,7 @@ export class AdminPlatform implements OnInit {
 
         this.applySettings(settings);
         this.saveMessage.set('Platform settings saved.');
+        this.loadCanopyPricing();
       });
   }
 
@@ -131,6 +181,7 @@ export class AdminPlatform implements OnInit {
 
         this.testResults.set(result.results);
         this.loadSettings();
+        this.loadCanopyPricing();
       });
   }
 
@@ -300,6 +351,7 @@ export class AdminPlatform implements OnInit {
       dataForSeoPassword: this.dataForSeoPassword(),
       defaultProvider: this.defaultProvider(),
       defaultModel: this.defaultModel(),
+      canopyPricingPlan: this.canopyPricingPlan(),
     };
   }
 
@@ -307,6 +359,7 @@ export class AdminPlatform implements OnInit {
     this.anthropicApiKey.set(settings.anthropicApiKey);
     this.tokenmixApiKey.set(settings.tokenmixApiKey);
     this.canopyApiKey.set(settings.canopyApiKey);
+    this.canopyPricingPlan.set(settings.canopyPricingPlan || 'pay_as_you_go');
     this.dataForSeoLogin.set(settings.dataForSeoLogin);
     this.dataForSeoPassword.set(settings.dataForSeoPassword);
     this.defaultProvider.set(settings.defaultProvider);

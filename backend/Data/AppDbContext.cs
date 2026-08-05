@@ -27,6 +27,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ProviderModel> ProviderModels => Set<ProviderModel>();
 
+    public DbSet<CanopyPricingPlan> CanopyPricingPlans => Set<CanopyPricingPlan>();
+
     public DbSet<AiUsageEvent> AiUsageEvents => Set<AiUsageEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -214,6 +216,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(model => model.SortOrder).HasColumnName("sort_order");
             entity.Property(model => model.SyncedAt).HasColumnName("synced_at");
             entity.HasIndex(model => new { model.Provider, model.SortOrder });
+        });
+
+        modelBuilder.Entity<CanopyPricingPlan>(entity =>
+        {
+            entity.ToTable("canopy_pricing_plans", "lore");
+            entity.HasKey(plan => plan.Id);
+            entity.Property(plan => plan.Id).HasColumnName("id").HasMaxLength(50);
+            entity.Property(plan => plan.DisplayName).HasColumnName("display_name").HasMaxLength(120).IsRequired();
+            entity.Property(plan => plan.MonthlyFeeUsd).HasColumnName("monthly_fee_usd");
+            entity.Property(plan => plan.MonthlyRequestAllowance).HasColumnName("monthly_request_allowance");
+            entity.Property(plan => plan.OveragePricePerRequest).HasColumnName("overage_price_per_request");
+            entity.Property(plan => plan.SortOrder).HasColumnName("sort_order");
+            entity.Property(plan => plan.SyncedAt).HasColumnName("synced_at");
         });
 
         modelBuilder.Entity<AiUsageEvent>(entity =>

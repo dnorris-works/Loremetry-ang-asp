@@ -44,10 +44,18 @@ public static class PlatformSettingsEndpoints
 
     private static async Task<IResult> TestPlatformSettings(
         TestPlatformSettingsRequest request,
+        HttpRequest httpRequest,
+        AuthService authService,
         PlatformConnectionTests connectionTests,
         AppDbContext db,
         CancellationToken cancellationToken)
     {
+        var authResult = await AuthEndpointHelpers.TryResolveUserAsync(httpRequest, authService, cancellationToken);
+        if (authResult.Error is { } error)
+        {
+            return error;
+        }
+
         var results = await connectionTests.TestAllAsync(request, cancellationToken);
         var currentSettings = await PlatformSettingsService.GetAsync(db, cancellationToken);
         var settingsForStatus = currentSettings with
@@ -58,6 +66,8 @@ public static class PlatformSettingsEndpoints
             DataForSeoLogin = request.DataForSeoLogin,
             DataForSeoPassword = request.DataForSeoPassword,
             DefaultProvider = request.DefaultProvider,
+            DefaultModel = request.DefaultModel,
+            CanopyPricingPlan = request.CanopyPricingPlan,
             AnthropicConfigured = !string.IsNullOrWhiteSpace(request.AnthropicApiKey),
             TokenmixConfigured = !string.IsNullOrWhiteSpace(request.TokenmixApiKey),
             CanopyConfigured = !string.IsNullOrWhiteSpace(request.CanopyApiKey),
@@ -70,6 +80,18 @@ public static class PlatformSettingsEndpoints
             settingsForStatus,
             results,
             cancellationToken);
+
+        var canopyResult = results.Results.FirstOrDefault(item => item.Service == "canopy");
+        if (canopyResult is { Success: true, Configured: true })
+        {
+            await CanopyCostService.RecordUsageAsync(
+                db,
+                authResult.User!.DbUserId,
+                "connection_test",
+                CanopyPricingCatalog.Operations.ConnectionTest,
+                "/api/amazon/autocomplete",
+                cancellationToken);
+        }
 
         return Results.Ok(results);
     }

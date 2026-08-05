@@ -58,6 +58,7 @@ public static class PlatformSettingsService
         var password = Value(PlatformSettingKeys.DataForSeoPassword);
         var provider = Value(PlatformSettingKeys.DefaultProvider);
         var model = Value(PlatformSettingKeys.DefaultModel);
+        var canopyPlan = Value(PlatformSettingKeys.CanopyPricingPlan);
 
         return new PlatformSettingsDto(
             anthropic,
@@ -67,6 +68,7 @@ public static class PlatformSettingsService
             password,
             provider,
             model,
+            canopyPlan,
             !string.IsNullOrWhiteSpace(anthropic),
             !string.IsNullOrWhiteSpace(tokenmix),
             !string.IsNullOrWhiteSpace(canopy),
@@ -95,6 +97,20 @@ public static class PlatformSettingsService
             throw new InvalidOperationException("default_provider must be tokenmix or anthropic.");
         }
 
+        var canopyPlan = request.CanopyPricingPlan.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(canopyPlan))
+        {
+            canopyPlan = PlatformSettingKeys.DefaultCanopyPricingPlan;
+        }
+
+        var planExists = await db.CanopyPricingPlans
+            .AsNoTracking()
+            .AnyAsync(plan => plan.Id == canopyPlan, cancellationToken);
+        if (!planExists)
+        {
+            throw new InvalidOperationException($"canopy_pricing_plan '{canopyPlan}' is not recognized.");
+        }
+
         Dictionary<string, string> updates = new()
         {
             [PlatformSettingKeys.AnthropicApiKey] = request.AnthropicApiKey.Trim(),
@@ -104,6 +120,7 @@ public static class PlatformSettingsService
             [PlatformSettingKeys.DataForSeoPassword] = request.DataForSeoPassword.Trim(),
             [PlatformSettingKeys.DefaultProvider] = provider,
             [PlatformSettingKeys.DefaultModel] = request.DefaultModel.Trim(),
+            [PlatformSettingKeys.CanopyPricingPlan] = canopyPlan,
         };
 
         var now = DateTimeOffset.UtcNow;

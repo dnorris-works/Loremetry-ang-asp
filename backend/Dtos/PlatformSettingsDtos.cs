@@ -8,6 +8,7 @@ public record PlatformSettingsDto(
     string DataForSeoPassword,
     string DefaultProvider,
     string DefaultModel,
+    string CanopyPricingPlan,
     bool AnthropicConfigured,
     bool TokenmixConfigured,
     bool CanopyConfigured,
@@ -21,7 +22,8 @@ public record UpdatePlatformSettingsRequest(
     string DataForSeoLogin,
     string DataForSeoPassword,
     string DefaultProvider,
-    string DefaultModel);
+    string DefaultModel,
+    string CanopyPricingPlan);
 
 public record WritingAssistantChatRequest(
     string UserPrompt,

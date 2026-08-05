@@ -106,6 +106,58 @@
     }
   </div>
 
+  @if (canopyPlans().length > 0) {
+    <div class="admin-card admin-platform__canopy-pricing">
+      <h3 class="admin-card__title">Canopy cost estimates</h3>
+      <p class="admin-platform__status-note">
+        Rates from
+        <a href="https://www.canopyapi.co/" target="_blank" rel="noopener noreferrer">Canopy API pricing</a>.
+        Match your plan on
+        <a href="https://www.canopyapi.co/account" target="_blank" rel="noopener noreferrer">your Canopy account</a>.
+        Used this month: {{ canopyRequestsUsedThisMonth().toLocaleString() }} request(s).
+      </p>
+
+      <table class="admin-platform__pricing-table">
+        <thead>
+          <tr>
+            <th scope="col">Plan</th>
+            <th scope="col">Monthly fee</th>
+            <th scope="col">Included requests</th>
+            <th scope="col">Overage</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (plan of canopyPlans(); track plan.id) {
+            <tr [class.admin-platform__pricing-row-active]="plan.id === canopyPricingPlan()">
+              <td>{{ plan.displayName }}</td>
+              <td>{{ formatUsd(plan.monthlyFeeUsd) }}</td>
+              <td>{{ plan.monthlyRequestAllowance.toLocaleString() }}</td>
+              <td>
+                @if (plan.overagePricePerRequest > 0) {
+                  {{ formatUsd(plan.overagePricePerRequest) }}/req
+                } @else {
+                  Hard limit
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (canopyOperationEstimates().length > 0) {
+        <h4 class="admin-platform__pricing-subtitle">Typical operations</h4>
+        <ul class="admin-platform__operation-list">
+          @for (item of canopyOperationEstimates(); track item.operationId) {
+            <li>
+              <span>{{ item.label }} ({{ item.requestCount }} req)</span>
+              <span>{{ formatUsd(item.estimate.marginalCostUsd) }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+
   @if (testResults().length > 0) {
     <div class="admin-card admin-platform__tests">
       <h3 class="admin-card__title">Connection test results</h3>
@@ -178,6 +230,24 @@
         (ngModelChange)="canopyApiKey.set($event)"
         name="canopyApiKey"
       />
+    </label>
+
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">Canopy billing plan</span>
+      <select
+        class="admin-platform__input"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="canopyPricingPlan()"
+        (ngModelChange)="canopyPricingPlan.set($event)"
+        name="canopyPricingPlan"
+      >
+        @for (plan of canopyPlans(); track plan.id) {
+          <option [value]="plan.id">{{ plan.displayName }}</option>
+        }
+        @empty {
+          <option value="pay_as_you_go">Pay As You Go</option>
+        }
+      </select>
     </label>
 
     <label class="admin-platform__field">
