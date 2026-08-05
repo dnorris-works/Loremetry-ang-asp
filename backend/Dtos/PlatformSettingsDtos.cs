@@ -11,7 +11,8 @@ public record PlatformSettingsDto(
     bool AnthropicConfigured,
     bool TokenmixConfigured,
     bool CanopyConfigured,
-    bool DataForSeoConfigured);
+    bool DataForSeoConfigured,
+    IReadOnlyList<PlatformServiceStatusDto> ServiceStatuses);
 
 public record UpdatePlatformSettingsRequest(
     string AnthropicApiKey,

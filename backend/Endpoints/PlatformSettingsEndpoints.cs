@@ -22,7 +22,7 @@ public static class PlatformSettingsEndpoints
         AppDbContext db,
         CancellationToken cancellationToken)
     {
-        var settings = await PlatformSettingsService.GetAsync(db, cancellationToken);
+        var settings = await PlatformSettingsService.GetWithServiceStatusesAsync(db, cancellationToken);
         return Results.Ok(settings);
     }
 
@@ -45,9 +45,32 @@ public static class PlatformSettingsEndpoints
     private static async Task<IResult> TestPlatformSettings(
         TestPlatformSettingsRequest request,
         PlatformConnectionTests connectionTests,
+        AppDbContext db,
         CancellationToken cancellationToken)
     {
         var results = await connectionTests.TestAllAsync(request, cancellationToken);
+        var currentSettings = await PlatformSettingsService.GetAsync(db, cancellationToken);
+        var settingsForStatus = currentSettings with
+        {
+            AnthropicApiKey = request.AnthropicApiKey,
+            TokenmixApiKey = request.TokenmixApiKey,
+            CanopyApiKey = request.CanopyApiKey,
+            DataForSeoLogin = request.DataForSeoLogin,
+            DataForSeoPassword = request.DataForSeoPassword,
+            DefaultProvider = request.DefaultProvider,
+            AnthropicConfigured = !string.IsNullOrWhiteSpace(request.AnthropicApiKey),
+            TokenmixConfigured = !string.IsNullOrWhiteSpace(request.TokenmixApiKey),
+            CanopyConfigured = !string.IsNullOrWhiteSpace(request.CanopyApiKey),
+            DataForSeoConfigured = !string.IsNullOrWhiteSpace(request.DataForSeoLogin)
+                && !string.IsNullOrWhiteSpace(request.DataForSeoPassword),
+        };
+
+        await PlatformServiceStatusService.PersistConnectionTestResultsAsync(
+            db,
+            settingsForStatus,
+            results,
+            cancellationToken);
+
         return Results.Ok(results);
     }
 }

@@ -1,10 +1,14 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { catchError, of } from 'rxjs';
 
 import { AdminApiService } from '../../../core/admin/admin-api.service';
-import { PlatformServiceTestResult, PlatformSettings } from '../../../core/admin/admin.models';
+import {
+  PlatformServiceStatus,
+  PlatformServiceTestResult,
+  PlatformSettings,
+} from '../../../core/admin/admin.models';
 
 @Component({
   selector: 'app-admin-platform',
@@ -23,10 +27,7 @@ export class AdminPlatform implements OnInit {
   protected readonly defaultProvider = signal('tokenmix');
   protected readonly defaultModel = signal('');
 
-  protected readonly configured = signal<Pick<
-    PlatformSettings,
-    'anthropicConfigured' | 'tokenmixConfigured' | 'canopyConfigured' | 'dataForSeoConfigured'
-  > | null>(null);
+  protected readonly serviceStatuses = signal<PlatformServiceStatus[]>([]);
 
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
@@ -34,20 +35,6 @@ export class AdminPlatform implements OnInit {
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly saveMessage = signal<string | null>(null);
   protected readonly testResults = signal<PlatformServiceTestResult[]>([]);
-
-  protected readonly serviceStatuses = computed(() => {
-    const status = this.configured();
-    if (!status) {
-      return [];
-    }
-
-    return [
-      { label: 'TokenMix AI', configured: status.tokenmixConfigured },
-      { label: 'Anthropic', configured: status.anthropicConfigured },
-      { label: 'Canopy', configured: status.canopyConfigured },
-      { label: 'DataForSEO', configured: status.dataForSeoConfigured },
-    ];
-  });
 
   ngOnInit(): void {
     this.loadSettings();
@@ -137,7 +124,54 @@ export class AdminPlatform implements OnInit {
         }
 
         this.testResults.set(result.results);
+        this.loadSettings();
       });
+  }
+
+  protected statusLabel(status: PlatformServiceStatus): string {
+    switch (status.state) {
+      case 'connected':
+        return 'Connected';
+      case 'failed':
+        return 'Failed';
+      case 'never_tested':
+        return 'Not tested';
+      case 'ready':
+        return 'Ready';
+      case 'partial':
+        return 'Partial';
+      case 'not_imported':
+        return 'Not imported';
+      case 'not_configured':
+      default:
+        return 'Not configured';
+    }
+  }
+
+  protected statusClass(status: PlatformServiceStatus): string {
+    switch (status.state) {
+      case 'connected':
+      case 'ready':
+        return 'admin-platform__status-ok';
+      case 'failed':
+        return 'admin-platform__status-fail';
+      case 'partial':
+      case 'never_tested':
+        return 'admin-platform__status-warn';
+      case 'not_imported':
+      case 'not_configured':
+      default:
+        return 'admin-platform__status-missing';
+    }
+  }
+
+  protected formatTestedAt(testedAt: string | null): string | null {
+    if (!testedAt) {
+      return null;
+    }
+
+    const date = new Date(testedAt);
+    return Number.isNaN(date.getTime()) ? null : date.toLocaleString();
   }
 
   private currentSettingsPayload() {
@@ -160,11 +194,6 @@ export class AdminPlatform implements OnInit {
     this.dataForSeoPassword.set(settings.dataForSeoPassword);
     this.defaultProvider.set(settings.defaultProvider);
     this.defaultModel.set(settings.defaultModel);
-    this.configured.set({
-      anthropicConfigured: settings.anthropicConfigured,
-      tokenmixConfigured: settings.tokenmixConfigured,
-      canopyConfigured: settings.canopyConfigured,
-      dataForSeoConfigured: settings.dataForSeoConfigured,
-    });
+    this.serviceStatuses.set(settings.serviceStatuses ?? []);
   }
 }

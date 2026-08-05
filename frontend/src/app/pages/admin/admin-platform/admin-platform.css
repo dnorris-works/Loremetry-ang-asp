@@ -42,6 +42,18 @@
   font-size: 0.875rem;
 }
 
+.admin-platform__status-note {
+  margin: 0 0 0.75rem;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.admin-platform__status-note code {
+  color: var(--color-text);
+  font-size: 0.75rem;
+}
+
 .admin-platform__status-list {
   margin: 0;
   padding: 0;
@@ -50,12 +62,26 @@
 
 .admin-platform__status-item {
   display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.admin-platform__status-main {
+  display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 0.875rem;
+}
+
+.admin-platform__status-message,
+.admin-platform__status-meta {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .admin-platform__status-item:last-child {
@@ -64,6 +90,16 @@
 
 .admin-platform__status-ok {
   color: color-mix(in srgb, oklch(52% 0.16 150) 85%, var(--color-text));
+  font-weight: 500;
+}
+
+.admin-platform__status-warn {
+  color: color-mix(in srgb, oklch(68% 0.14 85) 80%, var(--color-text));
+  font-weight: 500;
+}
+
+.admin-platform__status-fail {
+  color: color-mix(in srgb, oklch(55% 0.2 25) 80%, var(--color-text));
   font-weight: 500;
 }
 

@@ -70,7 +70,18 @@ public static class PlatformSettingsService
             !string.IsNullOrWhiteSpace(anthropic),
             !string.IsNullOrWhiteSpace(tokenmix),
             !string.IsNullOrWhiteSpace(canopy),
-            !string.IsNullOrWhiteSpace(login) && !string.IsNullOrWhiteSpace(password));
+            !string.IsNullOrWhiteSpace(login) && !string.IsNullOrWhiteSpace(password),
+            []);
+    }
+
+    public static async Task<PlatformSettingsDto> GetWithServiceStatusesAsync(
+        AppDbContext db,
+        CancellationToken cancellationToken)
+    {
+        var settings = await GetAsync(db, cancellationToken);
+        var serviceStatuses = await PlatformServiceStatusService.GetAllAsync(db, settings, cancellationToken);
+
+        return settings with { ServiceStatuses = serviceStatuses };
     }
 
     public static async Task<PlatformSettingsDto> UpdateAsync(
@@ -119,6 +130,6 @@ public static class PlatformSettingsService
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        return await GetAsync(db, cancellationToken);
+        return await GetWithServiceStatusesAsync(db, cancellationToken);
     }
 }

@@ -233,6 +233,19 @@ using (var scope = app.Services.CreateScope())
             ('location', 'Location', 3, TRUE, TRUE, TRUE)
         ON CONFLICT (code) DO NOTHING;
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.kdp_categories (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            path TEXT NOT NULL,
+            store TEXT NOT NULL DEFAULT 'Kindle',
+            amazon_node_id TEXT,
+            source TEXT NOT NULL DEFAULT 'manual',
+            verified_at TEXT,
+            created_at TEXT NOT NULL DEFAULT NOW()::text,
+            last_seen_at TEXT,
+            CONSTRAINT kdp_categories_path_store_unique UNIQUE (path, store)
+        );
+        """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
 

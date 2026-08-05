@@ -28,23 +28,37 @@
 
   @if (serviceStatuses().length > 0) {
     <div class="admin-card admin-platform__status">
-      <h3 class="admin-card__title">Configured services</h3>
+      <h3 class="admin-card__title">Service status</h3>
+      <p class="admin-platform__status-note">
+        Status is stored in the database. API services update when you run connection tests.
+        WinningCat reflects catalog rows in <code>lore.kdp_categories</code>.
+      </p>
       <ul class="admin-platform__status-list">
-        @for (service of serviceStatuses(); track service.label) {
+        @for (status of serviceStatuses(); track status.service) {
           <li class="admin-platform__status-item">
-            <span>{{ service.label }}</span>
-            <span [class.admin-platform__status-ok]="service.configured" [class.admin-platform__status-missing]="!service.configured">
-              {{ service.configured ? 'Configured' : 'Not configured' }}
-            </span>
+            <div class="admin-platform__status-main">
+              <span>{{ status.label }}</span>
+              <span [class]="statusClass(status)">{{ statusLabel(status) }}</span>
+            </div>
+            @if (status.message) {
+              <p class="admin-platform__status-message">{{ status.message }}</p>
+            }
+            @if (formatTestedAt(status.testedAt); as testedAt) {
+              <p class="admin-platform__status-meta">Last checked: {{ testedAt }}</p>
+            }
           </li>
         }
         <li class="admin-platform__status-item">
-          <span>Default provider</span>
-          <span class="admin-platform__status-ok">{{ defaultProvider() }}</span>
+          <div class="admin-platform__status-main">
+            <span>Default provider</span>
+            <span class="admin-platform__status-ok">{{ defaultProvider() }}</span>
+          </div>
         </li>
         <li class="admin-platform__status-item">
-          <span>Default model</span>
-          <span class="admin-platform__status-ok">{{ defaultModel() || 'gpt-4o-mini (fallback)' }}</span>
+          <div class="admin-platform__status-main">
+            <span>Default model</span>
+            <span class="admin-platform__status-ok">{{ defaultModel() || 'gpt-4o-mini (fallback)' }}</span>
+          </div>
         </li>
       </ul>
     </div>

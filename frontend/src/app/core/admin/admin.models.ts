@@ -21,6 +21,15 @@ export interface SqlQueryResult {
   message: string | null;
 }
 
+export interface PlatformServiceStatus {
+  service: string;
+  label: string;
+  state: string;
+  message: string | null;
+  testedAt: string | null;
+  configured: boolean;
+}
+
 export interface PlatformSettings {
   anthropicApiKey: string;
   tokenmixApiKey: string;
@@ -33,6 +42,7 @@ export interface PlatformSettings {
   tokenmixConfigured: boolean;
   canopyConfigured: boolean;
   dataForSeoConfigured: boolean;
+  serviceStatuses: PlatformServiceStatus[];
 }
 
 export interface UpdatePlatformSettingsRequest {
