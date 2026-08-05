@@ -5,6 +5,12 @@ import { DocumentTypesApiService } from '../document-types/document-types-api.se
 import { DocumentType } from '../document-types/document-types.models';
 import { SeriesService } from '../series/series.service';
 import { StoriesService } from '../stories/stories.service';
+import { WritingDraftApiService } from './writing-draft-api.service';
+import {
+  PANEL_DRAFT_KEY,
+  UpsertWritingDraftRequest,
+  buildDocumentDraftKey,
+} from './writing-draft.models';
 import {
   parseWritingDestinationKey,
   writingDestinationId,
@@ -18,11 +24,15 @@ export class WritingService {
   private readonly storiesService = inject(StoriesService);
   private readonly seriesService = inject(SeriesService);
   private readonly documentTypesApi = inject(DocumentTypesApiService);
+  private readonly draftApi = inject(WritingDraftApiService);
+
+  private contentFlusher: (() => string) | null = null;
 
   readonly isPanelOpen = signal(false);
   readonly title = signal('');
   readonly content = signal('');
   readonly savedContent = signal('');
+  readonly savedTitle = signal('');
   readonly documentContext = signal<WritingDocumentContext | null>(null);
   readonly documentTypes = signal<ReadonlyArray<DocumentType>>([]);
   readonly documentTypeCode = signal('manuscript');
@@ -53,7 +63,18 @@ export class WritingService {
     return series ? { source, id, name: series.name } : null;
   });
 
-  readonly isDirty = computed(() => this.content() !== this.savedContent());
+  readonly isDirty = computed(() => {
+    if (this.isDocumentMode()) {
+      return this.content() !== this.savedContent();
+    }
+
+    return (
+      this.content() !== this.savedContent() ||
+      this.title() !== this.savedTitle() ||
+      this.documentTypeCode() !== this.savedDocumentTypeCode() ||
+      this.destinationKey() !== this.savedDestinationKey()
+    );
+  });
   readonly isDocumentMode = computed(() => this.documentContext() !== null);
   readonly documentTypeDisplayName = computed(() => {
     const code = this.documentTypeCode();
@@ -61,16 +82,37 @@ export class WritingService {
     return type?.displayName ?? code;
   });
 
+  private readonly savedDocumentTypeCode = signal('manuscript');
+  private readonly savedDestinationKey = signal('');
+
+  registerContentFlusher(flusher: () => string): void {
+    this.contentFlusher = flusher;
+  }
+
   openPanel(): void {
+    void this.openPanelAsync();
+  }
+
+  private async openPanelAsync(): Promise<void> {
+    if (this.isPanelOpen()) {
+      const saved = await this.persistDraftIfDirty();
+      if (!saved) {
+        return;
+      }
+    }
+
     this.documentContext.set(null);
     this.title.set('');
     this.content.set('');
     this.savedContent.set('');
+    this.savedTitle.set('');
     this.documentTypeCode.set('manuscript');
+    this.savedDocumentTypeCode.set('manuscript');
     this.destinationKey.set('');
+    this.savedDestinationKey.set('');
     this.saveError.set(null);
     this.isPanelOpen.set(true);
-    void this.initializeDraftPanel();
+    await this.initializeDraftPanel();
   }
 
   openDocument(params: {
@@ -79,28 +121,52 @@ export class WritingService {
     mimeType: string;
     context: WritingDocumentContext;
   }): void {
+    void this.openDocumentAsync(params);
+  }
+
+  private async openDocumentAsync(params: {
+    fileName: string;
+    content: string;
+    mimeType: string;
+    context: WritingDocumentContext;
+  }): Promise<void> {
+    if (this.isPanelOpen()) {
+      const saved = await this.persistDraftIfDirty();
+      if (!saved) {
+        return;
+      }
+    }
+
     this.documentContext.set(params.context);
     this.title.set(params.fileName);
     this.content.set(params.content);
     this.savedContent.set(params.content);
+    this.savedTitle.set(params.fileName);
     this.documentTypeCode.set(params.context.category);
+    this.savedDocumentTypeCode.set(params.context.category);
     this.destinationKey.set(
       writingDestinationKey(params.context.source, params.context.parentId),
     );
+    this.savedDestinationKey.set(this.destinationKey());
     this.saveError.set(null);
     this.isPanelOpen.set(true);
-    void this.loadDocumentTypes(params.context.source);
+    await this.loadDocumentTypes(params.context.source);
+    await this.restoreDocumentDraft(params.context, params.content);
   }
 
   closePanel(): void {
-    this.isPanelOpen.set(false);
-    this.documentContext.set(null);
-    this.title.set('');
-    this.content.set('');
-    this.savedContent.set('');
-    this.documentTypeCode.set('manuscript');
-    this.destinationKey.set('');
-    this.saveError.set(null);
+    void this.closePanelAsync();
+  }
+
+  async closePanelAsync(): Promise<void> {
+    if (this.isPanelOpen()) {
+      const saved = await this.persistDraftIfDirty();
+      if (!saved) {
+        return;
+      }
+    }
+
+    this.clearPanelState();
   }
 
   setDestinationKey(key: string): void {
@@ -113,7 +179,8 @@ export class WritingService {
 
   async save(): Promise<boolean> {
     const context = this.documentContext();
-    const textContent = this.content();
+    const textContent = this.getCurrentContent();
+    this.content.set(textContent);
 
     if (!context) {
       return false;
@@ -138,6 +205,7 @@ export class WritingService {
 
           this.documentContext.set({ ...context, documentId: resolvedId });
           this.savedContent.set(textContent);
+          await this.deleteCurrentDraft();
           return true;
         }
 
@@ -162,6 +230,7 @@ export class WritingService {
       }
 
       this.savedContent.set(textContent);
+      await this.deleteCurrentDraft();
       return true;
     } finally {
       this.isSaving.set(false);
@@ -169,7 +238,135 @@ export class WritingService {
   }
 
   reset(): void {
-    this.closePanel();
+    void this.closePanelAsync();
+  }
+
+  private clearPanelState(): void {
+    this.isPanelOpen.set(false);
+    this.documentContext.set(null);
+    this.title.set('');
+    this.content.set('');
+    this.savedContent.set('');
+    this.savedTitle.set('');
+    this.documentTypeCode.set('manuscript');
+    this.savedDocumentTypeCode.set('manuscript');
+    this.destinationKey.set('');
+    this.savedDestinationKey.set('');
+    this.saveError.set(null);
+  }
+
+  private getCurrentContent(): string {
+    return this.contentFlusher?.() ?? this.content();
+  }
+
+  private currentDraftKey(): string {
+    const context = this.documentContext();
+    if (context) {
+      return buildDocumentDraftKey(context);
+    }
+
+    return PANEL_DRAFT_KEY;
+  }
+
+  private buildDraftRequest(textContent: string): UpsertWritingDraftRequest {
+    const context = this.documentContext();
+
+    if (context) {
+      return {
+        draftKey: buildDocumentDraftKey(context),
+        mode: 'document',
+        source: context.source,
+        parentId: context.parentId,
+        documentId: context.documentId ?? null,
+        category: context.category,
+        title: this.title(),
+        fileName: context.fileName,
+        textContent,
+        destinationKey: this.destinationKey(),
+        mimeType: context.mimeType,
+      };
+    }
+
+    return {
+      draftKey: PANEL_DRAFT_KEY,
+      mode: 'draft',
+      source: parseWritingDestinationKey(this.destinationKey()),
+      parentId: writingDestinationId(this.destinationKey()),
+      documentId: null,
+      category: this.documentTypeCode(),
+      title: this.title(),
+      fileName: '',
+      textContent,
+      destinationKey: this.destinationKey(),
+      mimeType: 'text/markdown',
+    };
+  }
+
+  private async persistDraftIfDirty(): Promise<boolean> {
+    const textContent = this.getCurrentContent();
+    this.content.set(textContent);
+
+    if (!this.isDirty()) {
+      return true;
+    }
+
+    try {
+      await firstValueFrom(this.draftApi.upsertDraft(this.buildDraftRequest(textContent)));
+      return true;
+    } catch {
+      this.saveError.set('Could not save your draft before leaving the Write panel.');
+      return false;
+    }
+  }
+
+  private async deleteCurrentDraft(): Promise<void> {
+    try {
+      await firstValueFrom(this.draftApi.deleteDraft(this.currentDraftKey()));
+    } catch {
+      // Draft cleanup is best-effort after an explicit save.
+    }
+  }
+
+  private async restorePanelDraft(): Promise<void> {
+    try {
+      const draft = await firstValueFrom(this.draftApi.getDraft(PANEL_DRAFT_KEY));
+      if (!draft) {
+        return;
+      }
+
+      this.title.set(draft.title);
+      this.content.set(draft.textContent);
+      this.savedContent.set(draft.textContent);
+      this.savedTitle.set(draft.title);
+      this.documentTypeCode.set(draft.category || 'manuscript');
+      this.savedDocumentTypeCode.set(draft.category || 'manuscript');
+      this.destinationKey.set(draft.destinationKey);
+      this.savedDestinationKey.set(draft.destinationKey);
+
+      const source = parseWritingDestinationKey(draft.destinationKey);
+      if (source) {
+        await this.loadDocumentTypes(source);
+      }
+    } catch {
+      // No saved panel draft.
+    }
+  }
+
+  private async restoreDocumentDraft(
+    context: WritingDocumentContext,
+    baselineContent: string,
+  ): Promise<void> {
+    try {
+      const draft = await firstValueFrom(this.draftApi.getDraft(buildDocumentDraftKey(context)));
+      if (!draft || draft.textContent === baselineContent) {
+        return;
+      }
+
+      this.content.set(draft.textContent);
+      this.savedContent.set(baselineContent);
+    } catch {
+      // No saved document draft.
+    }
   }
 
   private async initializeDraftPanel(): Promise<void> {
@@ -183,6 +380,7 @@ export class WritingService {
     }
 
     this.applyDefaultDestination();
+    await this.restorePanelDraft();
   }
 
   private applyDefaultDestination(): void {

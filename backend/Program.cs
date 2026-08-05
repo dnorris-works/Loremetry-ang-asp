@@ -246,6 +246,25 @@ using (var scope = app.Services.CreateScope())
             CONSTRAINT kdp_categories_path_store_unique UNIQUE (path, store)
         );
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.writing_drafts (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            user_id BIGINT NOT NULL REFERENCES lore.users(id) ON DELETE CASCADE,
+            draft_key VARCHAR(500) NOT NULL,
+            mode VARCHAR(20) NOT NULL,
+            source VARCHAR(20),
+            parent_id BIGINT,
+            document_id BIGINT,
+            category VARCHAR(20) NOT NULL DEFAULT '',
+            title VARCHAR(500) NOT NULL DEFAULT '',
+            file_name VARCHAR(500) NOT NULL DEFAULT '',
+            text_content TEXT NOT NULL DEFAULT '',
+            destination_key VARCHAR(120) NOT NULL DEFAULT '',
+            mime_type VARCHAR(127) NOT NULL DEFAULT '',
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            CONSTRAINT writing_drafts_user_key_unique UNIQUE (user_id, draft_key)
+        );
+        """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
 
@@ -276,6 +295,7 @@ app.MapStoryEndpoints();
 app.MapSeriesEndpoints();
 app.MapDocumentTypeEndpoints();
 app.MapWritingAssistantEndpoints();
+app.MapWritingDraftEndpoints();
 app.MapAuthEndpoints();
 
 app.Run();

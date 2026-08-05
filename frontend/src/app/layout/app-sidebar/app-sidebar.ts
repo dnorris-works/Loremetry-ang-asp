@@ -42,28 +42,37 @@ export class AppSidebar {
 
   protected openAddSeriesPanel(event: Event): void {
     event.stopPropagation();
-    this.writingService.closePanel();
-    this.storiesService.closePanel();
-    this.seriesService.openAddPanel();
+    void this.navigateFromWriting(() => {
+      this.storiesService.closePanel();
+      this.seriesService.openAddPanel();
+    });
   }
 
   protected openAddStoryPanel(event: Event): void {
     event.stopPropagation();
-    this.writingService.closePanel();
-    this.seriesService.closePanel();
-    this.storiesService.openAddPanel();
+    void this.navigateFromWriting(() => {
+      this.seriesService.closePanel();
+      this.storiesService.openAddPanel();
+    });
   }
 
   protected openEditSeries(id: number): void {
-    this.writingService.closePanel();
-    this.storiesService.closePanel();
-    void this.seriesService.openEditPanel(id);
+    void this.navigateFromWriting(() => {
+      this.storiesService.closePanel();
+      void this.seriesService.openEditPanel(id);
+    });
   }
 
   protected openEditStory(id: number): void {
-    this.writingService.closePanel();
-    this.seriesService.closePanel();
-    void this.storiesService.openEditPanel(id);
+    void this.navigateFromWriting(() => {
+      this.seriesService.closePanel();
+      void this.storiesService.openEditPanel(id);
+    });
+  }
+
+  private async navigateFromWriting(action: () => void): Promise<void> {
+    await this.writingService.closePanelAsync();
+    action();
   }
 
   protected openAddToSeriesModal(story: Story, event: Event): void {

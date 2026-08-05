@@ -12,6 +12,7 @@
             [routerLink]="item.route"
             [class.app-header__nav-link--active]="isRouteNavActive(item.route)"
             [attr.aria-current]="isRouteNavActive(item.route) ? 'page' : null"
+            (click)="onNavClick($event, item.route)"
           >
             {{ item.label }}
           </a>
@@ -22,8 +23,6 @@
           type="button"
           class="app-header__nav-link app-header__nav-button"
           [class.app-header__nav-link--active]="isWriteMenuActive()"
-          [disabled]="isWriteMenuDisabled()"
-          [attr.aria-disabled]="isWriteMenuDisabled()"
           [attr.aria-current]="isWriteMenuActive() ? 'page' : null"
           (click)="openWritingPanel()"
         >

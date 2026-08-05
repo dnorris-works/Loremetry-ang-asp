@@ -25,7 +25,6 @@ export class AppHeader {
   private readonly writingService = inject(WritingService);
 
   protected readonly appName = 'Loremetry';
-  protected readonly isWriteMenuDisabled = this.writingService.isDocumentMode;
   protected readonly isWriteMenuActive = computed(
     () => this.writingService.isPanelOpen() && !this.writingService.isDocumentMode(),
   );
@@ -63,13 +62,27 @@ export class AppHeader {
     return path === route || path.startsWith(`${route}/`);
   }
 
-  protected openWritingPanel(): void {
-    if (this.isWriteMenuDisabled()) {
+  protected onNavClick(event: MouseEvent, route: string): void {
+    if (!this.writingService.isPanelOpen()) {
       return;
     }
 
+    event.preventDefault();
+    void this.navigateAway(route);
+  }
+
+  protected openWritingPanel(): void {
+    void this.openWritingPanelAsync();
+  }
+
+  private async openWritingPanelAsync(): Promise<void> {
     this.seriesService.closePanel();
     this.storiesService.closePanel();
     this.writingService.openPanel();
+  }
+
+  private async navigateAway(route: string): Promise<void> {
+    await this.writingService.closePanelAsync();
+    await this.router.navigateByUrl(route);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, afterNextRender, computed, inject, signal, viewChild } from '@angular/core';
 
 import { MarkdownEditor } from '../../core/editor/markdown-editor/markdown-editor';
 import { writingDestinationKey } from '../../core/writing/writing.models';
@@ -18,6 +18,14 @@ const DEFAULT_ASSISTANT_WIDTH = 320;
 export class WritingPanel {
   private readonly writingService = inject(WritingService);
   private readonly markdownEditor = viewChild(MarkdownEditor);
+
+  constructor() {
+    afterNextRender(() => {
+      this.writingService.registerContentFlusher(
+        () => this.markdownEditor()?.flushMarkdown() ?? this.content(),
+      );
+    });
+  }
 
   protected readonly title = this.writingService.title;
   protected readonly content = this.writingService.content;
@@ -79,7 +87,7 @@ export class WritingPanel {
   });
 
   protected close(): void {
-    this.writingService.closePanel();
+    void this.writingService.closePanelAsync();
   }
 
   protected onTitleInput(event: Event): void {

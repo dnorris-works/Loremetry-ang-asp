@@ -23,6 +23,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<DocumentType> DocumentTypes => Set<DocumentType>();
 
+    public DbSet<WritingDraft> WritingDrafts => Set<WritingDraft>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserSetting>(entity =>
@@ -165,6 +167,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.Property(type => type.AppliesToStory).HasColumnName("applies_to_story");
             entity.Property(type => type.AppliesToSeries).HasColumnName("applies_to_series");
             entity.Property(type => type.Active).HasColumnName("active");
+        });
+
+        modelBuilder.Entity<WritingDraft>(entity =>
+        {
+            entity.ToTable("writing_drafts", "lore");
+            entity.HasKey(draft => draft.Id);
+            entity.Property(draft => draft.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(draft => draft.UserId).HasColumnName("user_id");
+            entity.Property(draft => draft.DraftKey).HasColumnName("draft_key").HasMaxLength(500).IsRequired();
+            entity.Property(draft => draft.Mode).HasColumnName("mode").HasMaxLength(20).IsRequired();
+            entity.Property(draft => draft.Source).HasColumnName("source").HasMaxLength(20);
+            entity.Property(draft => draft.ParentId).HasColumnName("parent_id");
+            entity.Property(draft => draft.DocumentId).HasColumnName("document_id");
+            entity.Property(draft => draft.Category).HasColumnName("category").HasMaxLength(20).IsRequired();
+            entity.Property(draft => draft.Title).HasColumnName("title").HasMaxLength(500).IsRequired();
+            entity.Property(draft => draft.FileName).HasColumnName("file_name").HasMaxLength(500).IsRequired();
+            entity.Property(draft => draft.TextContent).HasColumnName("text_content").IsRequired();
+            entity.Property(draft => draft.DestinationKey).HasColumnName("destination_key").HasMaxLength(120).IsRequired();
+            entity.Property(draft => draft.MimeType).HasColumnName("mime_type").HasMaxLength(127).IsRequired();
+            entity.Property(draft => draft.UpdatedAt).HasColumnName("updated_at");
+            entity.HasIndex(draft => new { draft.UserId, draft.DraftKey }).IsUnique();
+            entity.HasOne(draft => draft.User)
+                .WithMany()
+                .HasForeignKey(draft => draft.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
