@@ -53,6 +53,10 @@
     <p class="writing-assistant__catalog-error" role="alert">{{ catalogError() }}</p>
   }
 
+  @if (chatError()) {
+    <p class="writing-assistant__catalog-error" role="alert">{{ chatError() }}</p>
+  }
+
   <form class="writing-assistant__composer" aria-label="Assistant message" (submit)="onSubmit($event)">
     @if (pendingMatches().length > 0) {
       <ul class="writing-assistant__pending" aria-label="Detected lore references">

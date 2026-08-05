@@ -27,6 +27,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString));
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PlatformConnectionTests>();
+builder.Services.AddScoped<TokenMixCompletionService>();
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "postgres");
 
@@ -260,6 +261,7 @@ app.MapSettingsEndpoints();
 app.MapStoryEndpoints();
 app.MapSeriesEndpoints();
 app.MapDocumentTypeEndpoints();
+app.MapWritingAssistantEndpoints();
 app.MapAuthEndpoints();
 
 app.Run();

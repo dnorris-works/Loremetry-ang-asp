@@ -57,6 +57,7 @@ public static class PlatformSettingsService
         var login = Value(PlatformSettingKeys.DataForSeoLogin);
         var password = Value(PlatformSettingKeys.DataForSeoPassword);
         var provider = Value(PlatformSettingKeys.DefaultProvider);
+        var model = Value(PlatformSettingKeys.DefaultModel);
 
         return new PlatformSettingsDto(
             anthropic,
@@ -65,6 +66,7 @@ public static class PlatformSettingsService
             login,
             password,
             provider,
+            model,
             !string.IsNullOrWhiteSpace(anthropic),
             !string.IsNullOrWhiteSpace(tokenmix),
             !string.IsNullOrWhiteSpace(canopy),
@@ -90,6 +92,7 @@ public static class PlatformSettingsService
             [PlatformSettingKeys.DataForSeoLogin] = request.DataForSeoLogin.Trim(),
             [PlatformSettingKeys.DataForSeoPassword] = request.DataForSeoPassword.Trim(),
             [PlatformSettingKeys.DefaultProvider] = provider,
+            [PlatformSettingKeys.DefaultModel] = request.DefaultModel.Trim(),
         };
 
         var now = DateTimeOffset.UtcNow;

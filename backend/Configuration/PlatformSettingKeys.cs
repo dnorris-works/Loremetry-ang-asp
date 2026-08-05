@@ -8,6 +8,7 @@ public static class PlatformSettingKeys
     public const string DataForSeoLogin = "dataforseo_login";
     public const string DataForSeoPassword = "dataforseo_password";
     public const string DefaultProvider = "default_provider";
+    public const string DefaultModel = "default_model";
 
     public static readonly string[] All =
     [
@@ -17,6 +18,7 @@ public static class PlatformSettingKeys
         DataForSeoLogin,
         DataForSeoPassword,
         DefaultProvider,
+        DefaultModel,
     ];
 
     public static string DefaultValue(string key) =>

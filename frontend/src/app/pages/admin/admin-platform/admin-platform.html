@@ -42,6 +42,10 @@
           <span>Default provider</span>
           <span class="admin-platform__status-ok">{{ defaultProvider() }}</span>
         </li>
+        <li class="admin-platform__status-item">
+          <span>Default model</span>
+          <span class="admin-platform__status-ok">{{ defaultModel() || 'gpt-4o-mini (fallback)' }}</span>
+        </li>
       </ul>
     </div>
   }
@@ -160,6 +164,21 @@
         <option value="tokenmix">TokenMix</option>
         <option value="anthropic">Anthropic</option>
       </select>
+    </label>
+
+    <label class="admin-platform__field">
+      <span class="admin-platform__label">Default model</span>
+      <input
+        class="admin-platform__input"
+        type="text"
+        autocomplete="off"
+        spellcheck="false"
+        placeholder="gpt-4o-mini"
+        [disabled]="isLoading() || isSaving()"
+        [ngModel]="defaultModel()"
+        (ngModelChange)="defaultModel.set($event)"
+        name="defaultModel"
+      />
     </label>
 
     <div class="admin-platform__actions">

@@ -28,6 +28,7 @@ export interface PlatformSettings {
   dataForSeoLogin: string;
   dataForSeoPassword: string;
   defaultProvider: string;
+  defaultModel: string;
   anthropicConfigured: boolean;
   tokenmixConfigured: boolean;
   canopyConfigured: boolean;
@@ -41,6 +42,7 @@ export interface UpdatePlatformSettingsRequest {
   dataForSeoLogin: string;
   dataForSeoPassword: string;
   defaultProvider: string;
+  defaultModel: string;
 }
 
 export type TestPlatformSettingsRequest = UpdatePlatformSettingsRequest;

@@ -16,11 +16,7 @@ Angular + ASP.NET Core monorepo for the Loremetry book-analysis workspace.
 
 ## Quick start
 
-1. Copy environment template and fill in values:
-
-   ```bash
-   cp .env.example .env
-   ```
+1. Edit [`.env`](.env) in the repo root and fill in your values (Clerk, operator key, provider keys).
 
 2. Start Postgres:
 
@@ -49,7 +45,7 @@ Or use the **Full Stack + Postgres** launch configuration in VS Code / Cursor.
 
 ## Environment variables
 
-See [`.env.example`](.env.example). Key variables:
+See [`.env`](.env). Key variables:
 
 | Variable | Purpose |
 |----------|---------|
@@ -57,8 +53,28 @@ See [`.env.example`](.env.example). Key variables:
 | `CLERK_JWT_ISSUER` | Clerk Frontend API URL (issuer), without `/.well-known/...` |
 | `OPERATOR_KEY` | Break-glass operator token for admin access |
 | `anthropic_api_key`, `tokenmix_api_key`, etc. | Provider credentials (seeded to DB on startup) |
+| `default_provider` | AI provider for chat (`tokenmix` or `anthropic`; assistant uses TokenMix today) |
+| `default_model` | TokenMix model id for writing assistant chat (optional; backend falls back to `gpt-4o-mini`) |
 
-`.env` is gitignored. On deployment, set the same names in your host environment.
+`.env` is gitignored. On deployment (Miget), set the **same variable names** in your host app environment.
+
+### TokenMix / AI (local testing)
+
+1. Add your key to `.env`:
+
+   ```bash
+   tokenmix_api_key=your-key-here
+   default_provider=tokenmix
+   default_model=gpt-4o-mini   # optional
+   ```
+
+2. Restart the backend so values seed into `lore.platform_settings` (or paste the key in **Admin → Platform**).
+
+3. Verify: sign in as operator → **Admin → Platform** → **Test all AI & API**. TokenMix should show **Connected** (`GET /v1/models`).
+
+4. Use the Write panel assistant chat — requests go through `POST /api/writing/assistant/chat`; the API key never reaches the browser.
+
+On Miget, set `tokenmix_api_key`, `default_provider`, and optionally `default_model` as app environment variables (no `.env` file in the container).
 
 ## Auth
 

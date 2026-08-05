@@ -21,6 +21,7 @@ export class AdminPlatform implements OnInit {
   protected readonly dataForSeoLogin = signal('');
   protected readonly dataForSeoPassword = signal('');
   protected readonly defaultProvider = signal('tokenmix');
+  protected readonly defaultModel = signal('');
 
   protected readonly configured = signal<Pick<
     PlatformSettings,
@@ -147,6 +148,7 @@ export class AdminPlatform implements OnInit {
       dataForSeoLogin: this.dataForSeoLogin(),
       dataForSeoPassword: this.dataForSeoPassword(),
       defaultProvider: this.defaultProvider(),
+      defaultModel: this.defaultModel(),
     };
   }
 
@@ -157,6 +159,7 @@ export class AdminPlatform implements OnInit {
     this.dataForSeoLogin.set(settings.dataForSeoLogin);
     this.dataForSeoPassword.set(settings.dataForSeoPassword);
     this.defaultProvider.set(settings.defaultProvider);
+    this.defaultModel.set(settings.defaultModel);
     this.configured.set({
       anthropicConfigured: settings.anthropicConfigured,
       tokenmixConfigured: settings.tokenmixConfigured,
