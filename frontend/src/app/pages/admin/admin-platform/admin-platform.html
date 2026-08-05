@@ -64,6 +64,48 @@
     </div>
   }
 
+  <div class="admin-card admin-platform__winningcat">
+    <h3 class="admin-card__title">WinningCat catalog</h3>
+    <p class="admin-platform__status-note">
+      Import browse-node CSV into the database (Kindle Store and Books departments only).
+      Expected row format:
+      <code>Books (1000),Arts &amp; Photography (1),…</code>
+    </p>
+
+    <div class="admin-platform__winningcat-actions">
+      <label class="admin-button admin-button--ghost admin-platform__file-label">
+        {{ isImportingWinningCat() ? 'Importing…' : 'Import CSV' }}
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          class="admin-platform__file-input"
+          [disabled]="isLoading() || isImportingWinningCat() || isRemovingStale()"
+          (change)="onWinningCatFileSelected($event)"
+        />
+      </label>
+    </div>
+
+    @if (winningCatImportMessage()) {
+      <p class="admin-platform__import-message" role="status">{{ winningCatImportMessage() }}</p>
+    }
+
+    @if (showStaleCleanup()) {
+      <div class="admin-platform__stale-row">
+        @if (winningCatStaleMessage()) {
+          <p class="admin-platform__import-message">{{ winningCatStaleMessage() }}</p>
+        }
+        <button
+          type="button"
+          class="admin-button admin-button--danger"
+          [disabled]="isImportingWinningCat() || isRemovingStale()"
+          (click)="removeStaleWinningCatCategories()"
+        >
+          {{ isRemovingStale() ? 'Removing…' : 'Remove stale' }}
+        </button>
+      </div>
+    }
+  </div>
+
   @if (testResults().length > 0) {
     <div class="admin-card admin-platform__tests">
       <h3 class="admin-card__title">Connection test results</h3>

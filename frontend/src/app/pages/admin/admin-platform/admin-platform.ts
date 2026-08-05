@@ -32,9 +32,15 @@ export class AdminPlatform implements OnInit {
   protected readonly isLoading = signal(false);
   protected readonly isSaving = signal(false);
   protected readonly isTesting = signal(false);
+  protected readonly isImportingWinningCat = signal(false);
+  protected readonly isRemovingStale = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
   protected readonly saveMessage = signal<string | null>(null);
   protected readonly testResults = signal<PlatformServiceTestResult[]>([]);
+  protected readonly winningCatImportMessage = signal<string | null>(null);
+  protected readonly winningCatStaleMessage = signal<string | null>(null);
+  protected readonly showStaleCleanup = signal(false);
+  protected readonly lastWinningCatImportAt = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadSettings();
@@ -172,6 +178,117 @@ export class AdminPlatform implements OnInit {
 
     const date = new Date(testedAt);
     return Number.isNaN(date.getTime()) ? null : date.toLocaleString();
+  }
+
+  protected onWinningCatFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+
+    if (!file) {
+      return;
+    }
+
+    this.isImportingWinningCat.set(true);
+    this.errorMessage.set(null);
+    this.saveMessage.set(null);
+    this.winningCatImportMessage.set('Importing…');
+    this.winningCatStaleMessage.set(null);
+    this.showStaleCleanup.set(false);
+
+    this.adminApi
+      .uploadWinningCatCsv(file)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          const message =
+            typeof error.error?.error === 'string'
+              ? error.error.error
+              : typeof error.error?.message === 'string'
+                ? error.error.message
+                : 'Failed to import WinningCat CSV.';
+          this.winningCatImportMessage.set(message);
+          return of(null);
+        }),
+      )
+      .subscribe((result) => {
+        this.isImportingWinningCat.set(false);
+
+        if (!result) {
+          return;
+        }
+
+        if (!result.success) {
+          this.winningCatImportMessage.set(result.error ?? 'Import failed.');
+          return;
+        }
+
+        this.winningCatImportMessage.set(
+          `Imported ${result.imported.toLocaleString()} categories. Skipped ${result.skippedOtherDepartment.toLocaleString()} (other department), ${result.skippedUnparseable.toLocaleString()} (unparseable).`,
+        );
+        this.lastWinningCatImportAt.set(result.importedAt);
+
+        if (result.staleCount > 0) {
+          this.showStaleCleanup.set(true);
+          const word = result.staleCount === 1 ? 'y was' : 'ies were';
+          this.winningCatStaleMessage.set(
+            `${result.staleCount.toLocaleString()} categor${word} in the catalog from a previous import but missing from this one.`,
+          );
+        }
+
+        this.loadSettings();
+      });
+  }
+
+  protected removeStaleWinningCatCategories(): void {
+    const since = this.lastWinningCatImportAt();
+    if (!since) {
+      return;
+    }
+
+    if (
+      !confirm(
+        'Remove stale categories from the catalog? Only reference data is affected.',
+      )
+    ) {
+      return;
+    }
+
+    this.isRemovingStale.set(true);
+    this.winningCatStaleMessage.set(null);
+
+    this.adminApi
+      .removeStaleWinningCatCategories(since)
+      .pipe(
+        catchError((error: HttpErrorResponse) => {
+          const message =
+            typeof error.error?.error === 'string'
+              ? error.error.error
+              : typeof error.error?.message === 'string'
+                ? error.error.message
+                : 'Failed to remove stale categories.';
+          this.winningCatStaleMessage.set(message);
+          return of(null);
+        }),
+      )
+      .subscribe((result) => {
+        this.isRemovingStale.set(false);
+
+        if (!result) {
+          return;
+        }
+
+        if (!result.success) {
+          this.winningCatStaleMessage.set(result.error ?? 'Cleanup failed.');
+          return;
+        }
+
+        const word = result.removed === 1 ? 'y' : 'ies';
+        this.winningCatStaleMessage.set(
+          `Removed ${result.removed.toLocaleString()} stale categor${word}.`,
+        );
+        this.showStaleCleanup.set(false);
+        this.loadSettings();
+      });
   }
 
   private currentSettingsPayload() {

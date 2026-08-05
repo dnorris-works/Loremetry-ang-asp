@@ -12,6 +12,8 @@ import {
   SqlQueryResult,
   TestPlatformSettingsRequest,
   UpdatePlatformSettingsRequest,
+  WinningCatImportResult,
+  WinningCatStaleCleanupResult,
 } from './admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -58,5 +60,15 @@ export class AdminApiService {
 
   testPlatformSettings(settings: TestPlatformSettingsRequest): Observable<PlatformConnectionTestResult> {
     return this.http.post<PlatformConnectionTestResult>(`${this.baseUrl}/platform-settings/test`, settings);
+  }
+
+  uploadWinningCatCsv(file: File): Observable<WinningCatImportResult> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    return this.http.post<WinningCatImportResult>(`${this.baseUrl}/winningcat/upload`, formData);
+  }
+
+  removeStaleWinningCatCategories(since: string): Observable<WinningCatStaleCleanupResult> {
+    return this.http.post<WinningCatStaleCleanupResult>(`${this.baseUrl}/winningcat/remove-stale`, { since });
   }
 }

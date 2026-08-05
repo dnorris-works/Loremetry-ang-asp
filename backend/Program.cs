@@ -269,6 +269,7 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken cancellationT
 .WithName("GetDatabaseHealth");
 
 app.MapAdminEndpoints();
+app.MapWinningCatEndpoints();
 app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
 app.MapStoryEndpoints();

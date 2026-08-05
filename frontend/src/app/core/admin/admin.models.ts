@@ -68,3 +68,31 @@ export interface PlatformServiceTestResult {
 export interface PlatformConnectionTestResult {
   results: PlatformServiceTestResult[];
 }
+
+export interface WinningCatCatalogStatus {
+  success: boolean;
+  hasData: boolean;
+  ready: boolean;
+  kindleCount: number;
+  booksCount: number;
+  totalCount: number;
+  lastImportAt: string | null;
+  message: string;
+  error: string | null;
+}
+
+export interface WinningCatImportResult {
+  success: boolean;
+  imported: number;
+  skippedOtherDepartment: number;
+  skippedUnparseable: number;
+  staleCount: number;
+  importedAt: string;
+  error: string | null;
+}
+
+export interface WinningCatStaleCleanupResult {
+  success: boolean;
+  removed: number;
+  error: string | null;
+}
