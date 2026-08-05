@@ -25,6 +25,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<WritingDraft> WritingDrafts => Set<WritingDraft>();
 
+    public DbSet<ProviderModel> ProviderModels => Set<ProviderModel>();
+
+    public DbSet<AiUsageEvent> AiUsageEvents => Set<AiUsageEvent>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<UserSetting>(entity =>
@@ -191,6 +195,46 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             entity.HasOne(draft => draft.User)
                 .WithMany()
                 .HasForeignKey(draft => draft.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProviderModel>(entity =>
+        {
+            entity.ToTable("provider_models", "lore");
+            entity.HasKey(model => new { model.Id, model.Provider });
+            entity.Property(model => model.Id).HasColumnName("id").HasMaxLength(200);
+            entity.Property(model => model.Provider).HasColumnName("provider").HasMaxLength(50);
+            entity.Property(model => model.OwnedBy).HasColumnName("owned_by").HasMaxLength(100).IsRequired();
+            entity.Property(model => model.DisplayName).HasColumnName("display_name").HasMaxLength(200).IsRequired();
+            entity.Property(model => model.ModelType).HasColumnName("model_type").HasMaxLength(50).IsRequired();
+            entity.Property(model => model.InputPrice).HasColumnName("input_price");
+            entity.Property(model => model.OutputPrice).HasColumnName("output_price");
+            entity.Property(model => model.InputPriceUnit).HasColumnName("input_price_unit").HasMaxLength(20).IsRequired();
+            entity.Property(model => model.OutputPriceUnit).HasColumnName("output_price_unit").HasMaxLength(20).IsRequired();
+            entity.Property(model => model.SortOrder).HasColumnName("sort_order");
+            entity.Property(model => model.SyncedAt).HasColumnName("synced_at");
+            entity.HasIndex(model => new { model.Provider, model.SortOrder });
+        });
+
+        modelBuilder.Entity<AiUsageEvent>(entity =>
+        {
+            entity.ToTable("ai_usage_events", "lore");
+            entity.HasKey(usage => usage.Id);
+            entity.Property(usage => usage.Id).HasColumnName("id").ValueGeneratedOnAdd();
+            entity.Property(usage => usage.UserId).HasColumnName("user_id");
+            entity.Property(usage => usage.Kind).HasColumnName("kind").HasMaxLength(40).IsRequired();
+            entity.Property(usage => usage.Provider).HasColumnName("provider").HasMaxLength(50).IsRequired();
+            entity.Property(usage => usage.Model).HasColumnName("model").HasMaxLength(200).IsRequired();
+            entity.Property(usage => usage.Feature).HasColumnName("feature").HasMaxLength(120).IsRequired();
+            entity.Property(usage => usage.InputTokens).HasColumnName("input_tokens");
+            entity.Property(usage => usage.OutputTokens).HasColumnName("output_tokens");
+            entity.Property(usage => usage.CostUsd).HasColumnName("cost_usd");
+            entity.Property(usage => usage.MetadataJson).HasColumnName("metadata_json");
+            entity.Property(usage => usage.CreatedAt).HasColumnName("created_at");
+            entity.HasIndex(usage => new { usage.UserId, usage.CreatedAt }).IsDescending(false, true);
+            entity.HasOne(usage => usage.User)
+                .WithMany()
+                .HasForeignKey(usage => usage.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

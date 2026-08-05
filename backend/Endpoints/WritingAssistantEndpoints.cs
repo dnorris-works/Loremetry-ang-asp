@@ -49,14 +49,24 @@ public static class WritingAssistantEndpoints
 
         try
         {
-            var text = await completionService.CompleteChatAsync(
+            var completion = await completionService.CompleteChatAsync(
                 db,
                 SystemPrompt,
                 completionUserPrompt,
                 modelOverride: null,
                 cancellationToken);
 
-            return Results.Ok(new WritingAssistantChatResponse(text));
+            await ProviderModelPricingService.RecordLlmUsageAsync(
+                db,
+                authResult.User!.DbUserId,
+                provider: "tokenmix",
+                model: completion.Model,
+                feature: "writing_assistant",
+                completion.InputTokens,
+                completion.OutputTokens,
+                cancellationToken);
+
+            return Results.Ok(new WritingAssistantChatResponse(completion.Text));
         }
         catch (InvalidOperationException ex) when (IsConfigurationError(ex.Message))
         {

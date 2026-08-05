@@ -2,7 +2,10 @@ using backend.Auth;
 using backend.Configuration;
 using backend.Data;
 using backend.Endpoints;
+using backend.Jobs;
 using backend.Services;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +31,19 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<PlatformConnectionTests>();
 builder.Services.AddScoped<TokenMixCompletionService>();
+builder.Services.AddScoped<TokenMixPricingSyncService>();
+builder.Services.AddScoped<TokenMixPricingSyncJob>();
+builder.Services.AddHangfire(configuration => configuration
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(
+        options => options.UseNpgsqlConnection(connectionString),
+        new PostgreSqlStorageOptions
+        {
+            SchemaName = "hangfire",
+        }));
+builder.Services.AddHangfireServer();
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString, name: "postgres");
 
@@ -38,6 +54,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     await db.Database.ExecuteSqlRawAsync("CREATE SCHEMA IF NOT EXISTS lore;");
+    await db.Database.ExecuteSqlRawAsync("CREATE SCHEMA IF NOT EXISTS hangfire;");
     await db.Database.ExecuteSqlRawAsync("""
         CREATE TABLE IF NOT EXISTS lore.users (
             id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -265,10 +282,67 @@ using (var scope = app.Services.CreateScope())
             CONSTRAINT writing_drafts_user_key_unique UNIQUE (user_id, draft_key)
         );
         """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.provider_models (
+            id VARCHAR(200) NOT NULL,
+            provider VARCHAR(50) NOT NULL DEFAULT 'tokenmix',
+            owned_by VARCHAR(100) NOT NULL DEFAULT '',
+            display_name VARCHAR(200) NOT NULL DEFAULT '',
+            model_type VARCHAR(50) NOT NULL DEFAULT '',
+            input_price DOUBLE PRECISION,
+            output_price DOUBLE PRECISION,
+            input_price_unit VARCHAR(20) NOT NULL DEFAULT 'per_million',
+            output_price_unit VARCHAR(20) NOT NULL DEFAULT 'per_million',
+            sort_order INT NOT NULL DEFAULT 0,
+            synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            PRIMARY KEY (id, provider)
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE TABLE IF NOT EXISTS lore.ai_usage_events (
+            id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+            user_id BIGINT NOT NULL REFERENCES lore.users(id) ON DELETE CASCADE,
+            kind VARCHAR(40) NOT NULL DEFAULT 'llm',
+            provider VARCHAR(50) NOT NULL,
+            model VARCHAR(200) NOT NULL,
+            feature VARCHAR(120) NOT NULL,
+            input_tokens INT NOT NULL DEFAULT 0,
+            output_tokens INT NOT NULL DEFAULT 0,
+            cost_usd DOUBLE PRECISION NOT NULL DEFAULT 0,
+            metadata_json TEXT,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        );
+        """);
+    await db.Database.ExecuteSqlRawAsync("""
+        CREATE INDEX IF NOT EXISTS ai_usage_events_user_created_idx
+        ON lore.ai_usage_events (user_id, created_at DESC);
+        """);
     await PlatformSettingsService.SeedFromEnvironmentAsync(db, cancellationToken: default);
 }
 
+using (var hangfireScope = app.Services.CreateScope())
+{
+    var recurringJobs = hangfireScope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+    var backgroundJobs = hangfireScope.ServiceProvider.GetRequiredService<IBackgroundJobClient>();
+    var pricingSyncCron = HangfireOptions.ReadPricingSyncCron();
+
+    recurringJobs.AddOrUpdate<TokenMixPricingSyncJob>(
+        TokenMixPricingSyncJob.JobId,
+        job => job.SyncAsync(CancellationToken.None),
+        pricingSyncCron);
+    backgroundJobs.Enqueue<TokenMixPricingSyncJob>(job => job.SyncAsync(CancellationToken.None));
+
+    app.Logger.LogInformation(
+        "TokenMix pricing sync scheduled (cron: {Cron}); enqueued startup run.",
+        pricingSyncCron);
+}
+
 app.UseHttpsRedirection();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = [new OperatorHangfireAuthorizationFilter()],
+    DashboardTitle = "Loremetry Jobs",
+});
 app.UseCors();
 
 app.MapHealthChecks("/health");
@@ -289,6 +363,7 @@ app.MapGet("/health/db", async (AppDbContext db, CancellationToken cancellationT
 
 app.MapAdminEndpoints();
 app.MapWinningCatEndpoints();
+app.MapProviderModelEndpoints();
 app.MapPlatformSettingsEndpoints();
 app.MapSettingsEndpoints();
 app.MapStoryEndpoints();

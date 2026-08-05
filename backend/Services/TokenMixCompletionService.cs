@@ -18,7 +18,7 @@ public sealed class TokenMixCompletionService(IHttpClientFactory httpClientFacto
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
 
-    public async Task<string> CompleteChatAsync(
+    public async Task<TokenMixCompletionResult> CompleteChatAsync(
         AppDbContext db,
         string systemPrompt,
         string userPrompt,
@@ -40,14 +40,12 @@ public sealed class TokenMixCompletionService(IHttpClientFactory httpClientFacto
         }
 
         var model = ResolveModel(settings.DefaultModel, modelOverride);
-        var responseText = await SendCompletionAsync(
+        return await SendCompletionAsync(
             settings.TokenmixApiKey,
             model,
             systemPrompt,
             userPrompt,
             cancellationToken);
-
-        return responseText;
     }
 
     private static string ResolveModel(string configuredModel, string? modelOverride)
@@ -65,7 +63,7 @@ public sealed class TokenMixCompletionService(IHttpClientFactory httpClientFacto
         return FallbackModel;
     }
 
-    private async Task<string> SendCompletionAsync(
+    private async Task<TokenMixCompletionResult> SendCompletionAsync(
         string apiKey,
         string model,
         string systemPrompt,
@@ -124,7 +122,27 @@ public sealed class TokenMixCompletionService(IHttpClientFactory httpClientFacto
             throw new InvalidOperationException("TokenMix returned an empty response.");
         }
 
-        return text;
+        var (inputTokens, outputTokens) = ParseUsage(root);
+
+        return new TokenMixCompletionResult(text, model, inputTokens, outputTokens);
+    }
+
+    private static (int InputTokens, int OutputTokens) ParseUsage(JsonElement root)
+    {
+        if (!root.TryGetProperty("usage", out var usage))
+        {
+            return (0, 0);
+        }
+
+        var inputTokens = usage.TryGetProperty("prompt_tokens", out var promptTokens)
+            ? promptTokens.GetInt32()
+            : 0;
+
+        var outputTokens = usage.TryGetProperty("completion_tokens", out var completionTokens)
+            ? completionTokens.GetInt32()
+            : 0;
+
+        return (inputTokens, outputTokens);
     }
 
     private static string? ExtractErrorMessage(string payload)
