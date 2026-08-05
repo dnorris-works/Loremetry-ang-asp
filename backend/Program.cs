@@ -333,7 +333,7 @@ using (var hangfireScope = app.Services.CreateScope())
     backgroundJobs.Enqueue<TokenMixPricingSyncJob>(job => job.SyncAsync(CancellationToken.None));
 
     app.Logger.LogInformation(
-        "TokenMix pricing sync scheduled (cron: {Cron}); enqueued startup run.",
+        "TokenMix pricing sync scheduled weekly (cron: {Cron}, UTC); enqueued startup run.",
         pricingSyncCron);
 }
 
