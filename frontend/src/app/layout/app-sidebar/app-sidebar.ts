@@ -5,6 +5,7 @@ import { AddStoryToSeriesDialog } from '../add-story-to-series-dialog/add-story-
 import { SeriesService } from '../../core/series/series.service';
 import { Story } from '../../core/stories/story.models';
 import { StoriesService } from '../../core/stories/stories.service';
+import { ReviewPanelService } from '../../core/review/review-panel.service';
 import { WritingService } from '../../core/writing/writing.service';
 
 @Component({
@@ -17,6 +18,7 @@ export class AppSidebar {
   private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
   private readonly writingService = inject(WritingService);
+  private readonly reviewPanelService = inject(ReviewPanelService);
 
   protected readonly series = this.seriesService.series;
   protected readonly stories = this.storiesService.stories;
@@ -42,7 +44,7 @@ export class AppSidebar {
 
   protected openAddSeriesPanel(event: Event): void {
     event.stopPropagation();
-    void this.navigateFromWriting(() => {
+    void this.navigateFromMainPanel(() => {
       this.storiesService.closePanel();
       this.seriesService.openAddPanel();
     });
@@ -50,27 +52,28 @@ export class AppSidebar {
 
   protected openAddStoryPanel(event: Event): void {
     event.stopPropagation();
-    void this.navigateFromWriting(() => {
+    void this.navigateFromMainPanel(() => {
       this.seriesService.closePanel();
       this.storiesService.openAddPanel();
     });
   }
 
   protected openEditSeries(id: number): void {
-    void this.navigateFromWriting(() => {
+    void this.navigateFromMainPanel(() => {
       this.storiesService.closePanel();
       void this.seriesService.openEditPanel(id);
     });
   }
 
   protected openEditStory(id: number): void {
-    void this.navigateFromWriting(() => {
+    void this.navigateFromMainPanel(() => {
       this.seriesService.closePanel();
       void this.storiesService.openEditPanel(id);
     });
   }
 
-  private async navigateFromWriting(action: () => void): Promise<void> {
+  private async navigateFromMainPanel(action: () => void): Promise<void> {
+    this.reviewPanelService.closePanel();
     await this.writingService.closePanelAsync();
     action();
   }

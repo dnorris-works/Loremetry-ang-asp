@@ -1,0 +1,28 @@
+<section class="review-panel" aria-labelledby="review-panel-title">
+  <header class="review-panel__header">
+    <div>
+      <h2 id="review-panel-title" class="review-panel__title theme-heading">Review</h2>
+      <p class="review-panel__subtitle">
+        Read-only suggested changes with insertions and deletions. Copy what you want into your manuscript.
+      </p>
+    </div>
+
+    <button type="button" class="review-panel__close" aria-label="Close review panel" (click)="close()">
+      &times;
+    </button>
+  </header>
+
+  <div class="review-panel__content">
+    @if (hunks().length === 0) {
+      <p class="review-panel__empty">No suggestions yet. Run a report to see proposed changes here.</p>
+    } @else {
+      <ul class="review-panel__list">
+        @for (hunk of hunks(); track hunk.id) {
+          <li class="review-panel__item">
+            <app-diff-hunk-view [hunk]="hunk" />
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</section>

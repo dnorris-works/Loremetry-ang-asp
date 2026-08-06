@@ -1,0 +1,180 @@
+.diff-hunk {
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.diff-hunk--high {
+  border-color: color-mix(in srgb, var(--color-danger) 45%, var(--color-border));
+}
+
+.diff-hunk--medium {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+}
+
+.diff-hunk__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-muted) 65%, var(--color-surface));
+}
+
+.diff-hunk__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.diff-hunk__report {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-heading);
+}
+
+.diff-hunk__location {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.diff-hunk__severity {
+  flex-shrink: 0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+}
+
+.diff-hunk__severity--high {
+  border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
+  color: color-mix(in srgb, var(--color-danger) 85%, var(--color-text));
+  background: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+}
+
+.diff-hunk__severity--medium {
+  border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+  color: color-mix(in srgb, var(--color-primary) 85%, var(--color-text));
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface));
+}
+
+.diff-hunk__context {
+  margin: 0;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: color-mix(in srgb, var(--color-surface-muted) 40%, var(--color-surface));
+}
+
+.diff-hunk__context-label {
+  display: block;
+  margin-bottom: 0.125rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.diff-hunk__body {
+  padding: 0.75rem;
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+}
+
+.diff-hunk--high .diff-hunk__body {
+  border-left-color: color-mix(in srgb, var(--color-danger) 55%, var(--color-border));
+}
+
+.diff-hunk__passage {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--color-text);
+}
+
+.diff-hunk__equal {
+  white-space: pre-wrap;
+}
+
+.diff-hunk__delete {
+  white-space: pre-wrap;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: color-mix(in srgb, var(--color-danger) 75%, var(--color-text));
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+  border-radius: 0.125rem;
+}
+
+.diff-hunk__insert {
+  white-space: pre-wrap;
+  text-decoration: none;
+  color: color-mix(in srgb, var(--color-primary) 80%, var(--color-text));
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  border-radius: 0.125rem;
+  border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 45%, transparent);
+}
+
+.diff-hunk__footer {
+  padding: 0.625rem 0.75rem;
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface-muted) 35%, var(--color-surface));
+}
+
+.diff-hunk__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.diff-hunk__button {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--color-primary);
+  border-radius: 0.375rem;
+  background: var(--color-primary);
+  color: oklch(100% 0 0);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.diff-hunk__button--secondary {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.diff-hunk__button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.diff-hunk__copy-status {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .diff-hunk__delete,
+  .diff-hunk__insert {
+    transition: background-color 0.15s ease;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .diff-hunk__delete {
+    outline: 1px solid color-mix(in srgb, var(--color-danger) 50%, transparent);
+  }
+
+  .diff-hunk__insert {
+    outline: 1px solid color-mix(in srgb, var(--color-primary) 50%, transparent);
+  }
+}

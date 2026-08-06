@@ -6,7 +6,9 @@ import { StoriesService } from '../../core/stories/stories.service';
 import { AppFooter } from '../app-footer/app-footer';
 import { AppHeader } from '../app-header/app-header';
 import { AppSidebar } from '../app-sidebar/app-sidebar';
+import { ReviewPanelService } from '../../core/review/review-panel.service';
 import { WritingService } from '../../core/writing/writing.service';
+import { ReviewPanel } from '../review-panel/review-panel';
 import { SeriesPanel } from '../series-panel/series-panel';
 import { StoryPanel } from '../story-panel/story-panel';
 import { WritingPanel } from '../writing-panel/writing-panel';
@@ -20,6 +22,7 @@ const DEFAULT_SIDEBAR_WIDTH = 220;
   imports: [
     AppHeader,
     AppSidebar,
+    ReviewPanel,
     SeriesPanel,
     StoryPanel,
     WritingPanel,
@@ -33,7 +36,9 @@ export class AppShell {
   private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
   private readonly writingService = inject(WritingService);
+  private readonly reviewPanelService = inject(ReviewPanelService);
 
+  protected readonly isReviewPanelOpen = this.reviewPanelService.isPanelOpen;
   protected readonly isSeriesPanelOpen = this.seriesService.isPanelOpen;
   protected readonly isStoryPanelOpen = this.storiesService.isPanelOpen;
   protected readonly isWritingPanelOpen = this.writingService.isPanelOpen;

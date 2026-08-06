@@ -22,6 +22,17 @@
         <button
           type="button"
           class="app-header__nav-link app-header__nav-button"
+          [class.app-header__nav-link--active]="isReviewMenuActive()"
+          [attr.aria-current]="isReviewMenuActive() ? 'page' : null"
+          (click)="openReviewPanel()"
+        >
+          Review
+        </button>
+      </li>
+      <li>
+        <button
+          type="button"
+          class="app-header__nav-link app-header__nav-button"
           [class.app-header__nav-link--active]="isWriteMenuActive()"
           [attr.aria-current]="isWriteMenuActive() ? 'page' : null"
           (click)="openWritingPanel()"

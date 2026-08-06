@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { SeriesService } from '../../core/series/series.service';
 import { StoriesService } from '../../core/stories/stories.service';
+import { ReviewPanelService } from '../../core/review/review-panel.service';
 import { WritingService } from '../../core/writing/writing.service';
 
 interface NavItem {
@@ -23,8 +24,10 @@ export class AppHeader {
   private readonly seriesService = inject(SeriesService);
   private readonly storiesService = inject(StoriesService);
   private readonly writingService = inject(WritingService);
+  private readonly reviewPanelService = inject(ReviewPanelService);
 
   protected readonly appName = 'Loremetry';
+  protected readonly isReviewMenuActive = computed(() => this.reviewPanelService.isPanelOpen());
   protected readonly isWriteMenuActive = computed(
     () => this.writingService.isPanelOpen() && !this.writingService.isDocumentMode(),
   );
@@ -50,7 +53,7 @@ export class AppHeader {
   }
 
   protected isRouteNavActive(route: string): boolean {
-    if (this.isWriteMenuActive()) {
+    if (this.isReviewMenuActive() || this.isWriteMenuActive()) {
       return false;
     }
 
@@ -63,7 +66,7 @@ export class AppHeader {
   }
 
   protected onNavClick(event: MouseEvent, route: string): void {
-    if (!this.writingService.isPanelOpen()) {
+    if (!this.reviewPanelService.isPanelOpen() && !this.writingService.isPanelOpen()) {
       return;
     }
 
@@ -71,17 +74,30 @@ export class AppHeader {
     void this.navigateAway(route);
   }
 
+  protected openReviewPanel(): void {
+    void this.openReviewPanelAsync();
+  }
+
   protected openWritingPanel(): void {
     void this.openWritingPanelAsync();
   }
 
+  private async openReviewPanelAsync(): Promise<void> {
+    await this.writingService.closePanelAsync();
+    this.seriesService.closePanel();
+    this.storiesService.closePanel();
+    this.reviewPanelService.openPanel();
+  }
+
   private async openWritingPanelAsync(): Promise<void> {
+    this.reviewPanelService.closePanel();
     this.seriesService.closePanel();
     this.storiesService.closePanel();
     this.writingService.openPanel();
   }
 
   private async navigateAway(route: string): Promise<void> {
+    this.reviewPanelService.closePanel();
     await this.writingService.closePanelAsync();
     await this.router.navigateByUrl(route);
   }

@@ -1,0 +1,61 @@
+<article
+  class="diff-hunk"
+  [class.diff-hunk--high]="hunk().severity === 'high'"
+  [class.diff-hunk--medium]="hunk().severity === 'medium'"
+  [class.diff-hunk--low]="hunk().severity === 'low'"
+>
+  <header class="diff-hunk__header">
+    <div class="diff-hunk__meta">
+      <span class="diff-hunk__report">{{ hunk().reportLabel }}</span>
+      <span class="diff-hunk__location">{{ hunk().locationLabel }}</span>
+    </div>
+    <span
+      class="diff-hunk__severity"
+      [class.diff-hunk__severity--high]="hunk().severity === 'high'"
+      [class.diff-hunk__severity--medium]="hunk().severity === 'medium'"
+      [class.diff-hunk__severity--low]="hunk().severity === 'low'"
+    >
+      {{ severityLabel(hunk().severity) }}
+    </span>
+  </header>
+
+  @if (hunk().contextBefore) {
+    <p class="diff-hunk__context">
+      <span class="diff-hunk__context-label">Context</span>
+      {{ hunk().contextBefore }}
+    </p>
+  }
+
+  <div class="diff-hunk__body" aria-label="Suggested change">
+    <p class="diff-hunk__passage">
+      @for (segment of hunk().segments; track $index) {
+        @switch (segment.type) {
+          @case ('equal') {
+            <span class="diff-hunk__equal">{{ segment.text }}</span>
+          }
+          @case ('delete') {
+            <del class="diff-hunk__delete">{{ segment.text }}</del>
+          }
+          @case ('insert') {
+            <ins class="diff-hunk__insert">{{ segment.text }}</ins>
+          }
+        }
+      }
+    </p>
+  </div>
+
+  <footer class="diff-hunk__footer">
+    <div class="diff-hunk__actions">
+      <button type="button" class="diff-hunk__button" (click)="copySuggestion()">
+        Copy suggestion
+      </button>
+      <button type="button" class="diff-hunk__button diff-hunk__button--secondary" (click)="copyInsertion()">
+        Copy insertion only
+      </button>
+    </div>
+
+    @if (copyMessage()) {
+      <p class="diff-hunk__copy-status" role="status">{{ copyMessage() }}</p>
+    }
+  </footer>
+</article>
